@@ -271,6 +271,7 @@ cairo.cairo_reset_clip.argtypes = (ct.c_void_p,)
 cairo.cairo_fill.argtypes = (ct.c_void_p,)
 cairo.cairo_fill_preserve.argtypes = (ct.c_void_p,)
 cairo.cairo_fill_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+cairo.cairo_in_fill.restype = ct.c_bool
 cairo.cairo_in_fill.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
 cairo.cairo_mask.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_mask_surface.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_double, ct.c_double)
@@ -279,6 +280,7 @@ cairo.cairo_paint_with_alpha.argtypes = (ct.c_void_p, ct.c_double)
 cairo.cairo_stroke.argtypes = (ct.c_void_p,)
 cairo.cairo_stroke_preserve.argtypes = (ct.c_void_p,)
 cairo.cairo_stroke_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+cairo.cairo_in_stroke.restype = ct.c_bool
 cairo.cairo_in_stroke.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
 
 cairo.cairo_surface_destroy.argtypes = (ct.c_void_p,)
@@ -986,7 +988,7 @@ class Context :
     #end clip_extents
 
     def in_clip(self, pt) :
-        "is the given Vector pt within the clip."
+        "is the given Vector pt within the current clip."
         return \
             cairo.cairo_in_clip(self._cairobj, pt.x, pt.y)
     #end in_clip
@@ -1014,7 +1016,23 @@ class Context :
         cairo.cairo_fill_preserve(self._cairobj)
     #end fill_preserve
 
-    # TODO: fill_extents, in_fill
+    @property
+    def fill_extents(self) :
+        "returns a Rect bounding the current path if filled."
+        x1 = ct.c_double()
+        x2 = ct.c_double()
+        y1 = ct.c_double()
+        y2 = ct.c_double()
+        cairo.cairo_fill_extents(self._cairobj, ct.byref(x1), ct.byref(y1), ct.byref(x2), ct.byref(y2))
+        return \
+            Rect(x1.value, y1.value, x2.value - x1.value, y2.value - y1.value)
+    #end fill_extents
+
+    def in_fill(self, pt) :
+        "is the given Vector pt within the current path if filled."
+        return \
+            cairo.cairo_in_fill(self._cairobj, pt.x, pt.y)
+    #end in_fill
 
     def mask(self, pattern) :
         if not isinstance(pattern, Pattern) :
@@ -1046,7 +1064,24 @@ class Context :
         cairo.cairo_stroke_preserve(self._cairobj)
     #end stroke_preserve
 
-    # TODO: stroke_extents, in_stroke
+    @property
+    def stroke_extents(self) :
+        "returns a Rect bounding the current path if stroked."
+        x1 = ct.c_double()
+        x2 = ct.c_double()
+        y1 = ct.c_double()
+        y2 = ct.c_double()
+        cairo.cairo_stroke_extents(self._cairobj, ct.byref(x1), ct.byref(y1), ct.byref(x2), ct.byref(y2))
+        return \
+            Rect(x1.value, y1.value, x2.value - x1.value, y2.value - y1.value)
+    #end stroke_extents
+
+    def in_stroke(self, pt) :
+        "is the given Vector pt within the current path if stroked."
+        return \
+            cairo.cairo_in_stroke(self._cairobj, pt.x, pt.y)
+    #end in_stroke
+
     # TODO: copy/show page, user_data
 
     # paths <http://cairographics.org/manual/cairo-Paths.html>
