@@ -32,6 +32,49 @@ class CAIRO :
     # can get prematurely disposed. Always store the object reference into a local
     # variable, and pass the value of the variable instead.
 
+    # cairo_status_t codes
+    STATUS_SUCCESS = 0
+
+    STATUS_NO_MEMORY = 1
+    STATUS_INVALID_RESTORE = 2
+    STATUS_INVALID_POP_GROUP = 3
+    STATUS_NO_CURRENT_POINT = 4
+    STATUS_INVALID_MATRIX = 5
+    STATUS_INVALID_STATUS = 6
+    STATUS_NULL_POINTER = 7
+    STATUS_INVALID_STRING = 8
+    STATUS_INVALID_PATH_DATA = 9
+    STATUS_READ_ERROR = 10
+    STATUS_WRITE_ERROR = 11
+    STATUS_SURFACE_FINISHED = 12
+    STATUS_SURFACE_TYPE_MISMATCH = 13
+    STATUS_PATTERN_TYPE_MISMATCH = 14
+    STATUS_INVALID_CONTENT = 15
+    STATUS_INVALID_FORMAT = 16
+    STATUS_INVALID_VISUAL = 17
+    STATUS_FILE_NOT_FOUND = 18
+    STATUS_INVALID_DASH = 19
+    STATUS_INVALID_DSC_COMMENT = 20
+    STATUS_INVALID_INDEX = 21
+    STATUS_CLIP_NOT_REPRESENTABLE = 22
+    STATUS_TEMP_FILE_ERROR = 23
+    STATUS_INVALID_STRIDE = 24
+    STATUS_FONT_TYPE_MISMATCH = 25
+    STATUS_USER_FONT_IMMUTABLE = 26
+    STATUS_USER_FONT_ERROR = 27
+    STATUS_NEGATIVE_COUNT = 28
+    STATUS_INVALID_CLUSTERS = 29
+    STATUS_INVALID_SLANT = 30
+    STATUS_INVALID_WEIGHT = 31
+    STATUS_INVALID_SIZE = 32
+    STATUS_USER_FONT_NOT_IMPLEMENTED = 33
+    STATUS_DEVICE_TYPE_MISMATCH = 34
+    STATUS_DEVICE_ERROR = 35
+    STATUS_INVALID_MESH_CONSTRUCTION = 36
+    STATUS_DEVICE_FINISHED = 37
+
+    STATUS_LAST_STATUS = 38
+
     # cairo_format_t codes
     FORMAT_INVALID = -1
     FORMAT_ARGB32 = 0
@@ -108,6 +151,7 @@ class CAIRO :
 #end CAIRO
 
 cairo.cairo_version_string.restype = ct.c_char_p
+cairo.cairo_status_to_string.restype = ct.c_char_p
 
 cairo.cairo_status.argtypes = (ct.c_void_p,)
 cairo.cairo_create.argtypes = (ct.c_void_p,)
@@ -197,6 +241,30 @@ cairo.cairo_pattern_set_matrix.argtypes = (ct.c_void_p, ct.c_void_p)
 
 cairo.cairo_path_destroy.argtypes = (ct.c_void_p,)
 
+def version() :
+    "the Cairo version as a single integer."
+    return \
+        cairo.cairo_version()
+#end version
+
+def version_tuple() :
+    "the Cairo version as a triple of integers."
+    vers = cairo.cairo_version()
+    return \
+        (vers // 10000, vers // 100 % 100, vers % 100)
+#end version_tuple
+
+def version_string() :
+    "the Cairo version string."
+    return \
+        cairo.cairo_version_string().decode("utf-8")
+#end version_string
+
+def status_to_string(status) :
+    return \
+        cairo.cairo_status_to_string(status).decode("utf-8")
+#end status_to_string
+
 def check(status) :
     if status != 0 :
         raise CairoError(status)
@@ -207,31 +275,10 @@ class CairoError(Exception) :
     "just to identify a Cairo-specific error exception."
 
     def __init__(self, code) :
-        self.args = (("Cairo error %d" % code),)
+        self.args = ("Cairo error %d -- %s" % (code, status_to_string(code)),)
     #end __init__
 
 #end CairoError
-
-def cairo_version() :
-    "the Cairo version as a single integer."
-    return \
-        cairo.cairo_version()
-#end cairo_version
-
-def cairo_version_tuple() :
-    "the Cairo version as a triple of integers."
-    vers = cairo.cairo_version()
-    return \
-        (vers // 10000, vers // 100 % 100, vers % 100)
-#end cairo_version_tuple
-
-def cairo_version_string() :
-    "the Cairo version string."
-    return \
-        cairo.cairo_version_string().decode("utf-8")
-#end cairo_version
-
-# TODO: Error Handling <http://cairographics.org/manual/cairo-Error-handling.html>
 
 deg = 180 / math.pi
   # All angles are in radians. You can use the standard Python functions math.degrees
