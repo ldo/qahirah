@@ -865,8 +865,7 @@ class Context :
             x = ct.c_double()
             y = ct.c_double()
             cairo.cairo_get_current_point(self._cairobj, ct.byref(x), ct.byref(y))
-            return \
-                Vector(x.value, y.value)
+            result = Vector(x.value, y.value)
         else :
             result = None
         #end if
