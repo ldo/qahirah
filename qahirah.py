@@ -164,6 +164,54 @@ class CAIRO :
     LINE_JOIN_ROUND = 1
     LINE_JOIN_BEVEL = 2
 
+    # cairo_path_data_type_t codes
+    PATH_MOVE_TO = 0
+    PATH_LINE_TO = 1
+    PATH_CURVE_TO = 2
+    PATH_CLOSE_PATH = 3
+    path_data_type_t = ct.c_uint
+
+    class path_data_t(ct.Union) :
+
+        class header_t(ct.Structure) :
+            "followed by header_t.length point_t structs."
+            _fields_ = \
+                [
+                    ("type", ct.c_uint), # path_data_type_t
+                    ("length", ct.c_int), # number of following points
+                ]
+        #end header_t
+        header_ptr_t = ct.POINTER(header_t)
+
+        class point_t(ct.Structure) :
+            _fields_ = \
+                [
+                    ("x", ct.c_double),
+                    ("y", ct.c_double),
+                ]
+        #end point_t
+        point_ptr_t = ct.POINTER(point_t)
+
+        _fields_ = \
+            [
+                ("header", header_t),
+                ("point" , point_t),
+            ]
+
+    #end path_data_t
+    path_data_t_ptr = ct.POINTER(path_data_t)
+
+    class path_t(ct.Structure) :
+        pass
+    path_t._fields_ = \
+        [
+            ("status", status_t),
+            ("data", ct.c_void_p), # path_data_t_ptr
+            ("num_data", ct.c_int), # number of elements in data
+        ]
+    #end path_t
+    path_ptr_t = ct.POINTER(path_t)
+
     class rectangle_t(ct.Structure) :
         _fields_ = \
             [
@@ -1434,6 +1482,7 @@ class Path :
 
     def __init__(self, _cairobj) :
         self._cairobj = _cairobj
+        check(ct.cast(self._cairobj, CAIRO.path_ptr_t).contents.status)
     #end __init__
 
     def __del__(self) :
@@ -1443,7 +1492,134 @@ class Path :
         #end if
     #end __del__
 
-    # TODO: cairo_path_data_t
+    class Element :
+        "base class for Path elements. Do not instantiate directly."
+
+        def __init__(self, typ) :
+            self.typ = typ
+        #end __init__
+
+        def draw(self, g) :
+            raise NotImplementedError("subclass forgot to override")
+        #end draw
+
+    #end Element
+
+    class MoveTo(Element) :
+        "represents a move_to the specified Vector position."
+
+        def __init__(self, p) :
+            super().__init__(CAIRO.PATH_MOVE_TO)
+            self.p = p
+        #end __init__
+
+        def draw(self, g) :
+            "draws the element into the Context g."
+            g.move_to(self.p)
+        #end draw
+
+        def __repr__(self) :
+            return \
+                "MoveTo(%s)" % self.p
+        #end __repr__
+
+    #end MoveTo
+
+    class LineTo(Element) :
+        "represents a line_to the specified Vector position."
+
+        def __init__(self, p) :
+            super().__init__(CAIRO.PATH_LINE_TO)
+            self.p = p
+        #end __init__
+
+        def draw(self, g) :
+            "draws the element into the Context g."
+            g.line_to(self.p)
+        #end draw
+
+        def __repr__(self) :
+            return \
+                "LineTo(%s)" % self.p
+        #end __repr__
+
+    #end LineTo
+
+    class CurveTo(Element) :
+        "represents a curve_to via the specified three Vector positions."
+
+        def __init__(self, p1, p2, p3) :
+            super().__init__(CAIRO.PATH_CURVE_TO)
+            self.p1 = p1
+            self.p2 = p2
+            self.p3 = p3
+        #end __init__
+
+        def draw(self, g) :
+            "draws the element into the Context g."
+            g.curve_to(self.p1, self.p2, self.p3)
+        #end draw
+
+        def __repr__(self) :
+            return \
+                "CurveTo(%s, %s, %s)" % (self.p1, self.p2, self.p3)
+        #end __repr__
+
+    #end CurveTo
+
+    class Close(Element) :
+        "represents a closing of the current path."
+
+        def __init__(self) :
+            super().__init__(CAIRO.PATH_CLOSE_PATH)
+        #end __init__
+
+        def draw(self, g) :
+            "draws the element into the Context g."
+            g.close_path()
+        #end draw
+
+        def __repr__(self) :
+            return \
+                "Close()"
+        #end __repr__
+
+    #end Close
+
+    element_types = \
+        { # number of control points and Element subclass for each path element type
+            CAIRO.PATH_MOVE_TO : {"nr" : 1, "type" : MoveTo},
+            CAIRO.PATH_LINE_TO : {"nr" : 1, "type" : LineTo},
+            CAIRO.PATH_CURVE_TO : {"nr" : 3, "type" : CurveTo},
+            CAIRO.PATH_CLOSE_PATH : {"nr" : 0, "type" : Close},
+        }
+
+    @property
+    def elements(self) :
+        "yields the elements of the path in turn, as a sequence of" \
+        " Path.MoveTo, Path.LineTo, Path.CurveTo and Path.Close objects" \
+        " as appropriate."
+        data = ct.cast(self._cairobj, CAIRO.path_ptr_t).contents.data
+        nrelts = ct.cast(self._cairobj, CAIRO.path_ptr_t).contents.num_data
+        i = 0
+        while True :
+            if i == nrelts :
+                break
+            i += 1
+            header = ct.cast(data, CAIRO.path_data_t.header_ptr_t).contents
+            assert header.length == self.element_types[header.type]["nr"] + 1, "expecting %d control points for path elt type %d, got %d" % (self.element_types[header.type]["nr"] + 1, header.type, header.length)
+            data += ct.sizeof(CAIRO.path_data_t)
+            points = []
+            for j in range(header.length - 1) :
+                assert i < nrelts, "buffer overrun"
+                i += 1
+                point = ct.cast(data, CAIRO.path_data_t.point_ptr_t).contents
+                points.append(Vector(point.x, point.y))
+                data += ct.sizeof(CAIRO.path_data_t)
+            #end for
+            yield self.element_types[header.type]["type"](*points)
+        #end for
+    #end elements
 
 #end Path
 
