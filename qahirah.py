@@ -556,12 +556,6 @@ class Matrix :
             (self.xx * self.yy - self.xy * self.yx)
     #end det
 
-    def __abs__(self) :
-        "the absolute value of a Matrix is its determinant."
-        return \
-            self.det()
-    #end __abs__
-
     def adj(self) :
         "matrix adjoint."
         return Matrix \
