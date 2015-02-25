@@ -528,9 +528,9 @@ class Matrix :
           (
             xx = self.yy,
             yx = - self.yx,
-            x0 = self.xy * self.y0 - self.yy * self.x0,
             xy = - self.xy,
             yy = self.xx,
+            x0 = self.xy * self.y0 - self.yy * self.x0,
             y0 = self.yx * self.x0 - self.xx * self.y0,
           )
     #end adj
@@ -544,9 +544,9 @@ class Matrix :
           (
             xx = adj.xx / det,
             yx = adj.yx / det,
-            x0 = adj.x0 / det,
             xy = adj.xy / det,
             yy = adj.yy / det,
+            x0 = adj.x0 / det,
             y0 = adj.y0 / det,
           )
     #end inv
