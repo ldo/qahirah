@@ -148,6 +148,20 @@ class CAIRO :
     ANTIALIAS_GOOD = 5
     ANTIALIAS_BEST = 6
 
+    # cairo_fill_rule_t codes
+    FILL_RULE_WINDING = 0
+    FILL_RULE_EVEN_ODD = 1
+
+    # cairo_line_cap_t codes
+    LINE_CAP_BUTT = 0
+    LINE_CAP_ROUND = 1
+    LINE_CAP_SQUARE = 2
+
+    # cairo_line_join_t codes
+    LINE_JOIN_MITER = 0
+    LINE_JOIN_ROUND = 1
+    LINE_JOIN_BEVEL = 2
+
 #end CAIRO
 
 cairo.cairo_version_string.restype = ct.c_char_p
@@ -206,6 +220,12 @@ cairo.cairo_set_dash.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_double
 cairo.cairo_get_dash_count.argtypes = (ct.c_void_p,)
 cairo.cairo_get_dash.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p)
 cairo.cairo_set_antialias.argtypes = (ct.c_void_p, ct.c_int)
+cairo.cairo_set_fill_rule.argtypes = (ct.c_void_p, ct.c_int)
+cairo.cairo_get_fill_rule.argtypes = (ct.c_void_p,)
+cairo.cairo_set_line_cap.argtypes = (ct.c_void_p, ct.c_int)
+cairo.cairo_get_line_cap.argtypes = (ct.c_void_p,)
+cairo.cairo_set_line_join.argtypes = (ct.c_void_p, ct.c_int)
+cairo.cairo_get_line_join.argtypes = (ct.c_void_p,)
 cairo.cairo_get_line_width.argtypes = (ct.c_void_p,)
 cairo.cairo_get_line_width.restype = ct.c_double
 cairo.cairo_set_line_width.argtypes = (ct.c_void_p, ct.c_double)
@@ -667,7 +687,38 @@ class Context :
         cairo.cairo_set_dash(self._cairobj, ct.byref(csegs), nrsegs, offset)
     #end dash
 
-    # TODO: fill_rule, line_cap, line_join
+    @property
+    def fill_rule(self) :
+        return \
+            cairo.cairo_get_fill_rule(self._cairobj)
+    #end fill_rule
+
+    @fill_rule.setter
+    def fill_rule(self, fill_rule) :
+        cairo.cairo_set_fill_rule(self._cairobj, fill_rule)
+    #end fill_rule
+
+    @property
+    def line_cap(self) :
+        return \
+            cairo.cairo_get_line_cap(self._cairobj)
+    #end line_cap
+
+    @line_cap.setter
+    def line_cap(self, line_cap) :
+        cairo.cairo_set_line_cap(self._cairobj, line_cap)
+    #end line_cap
+
+    @property
+    def line_join(self) :
+        return \
+            cairo.cairo_get_line_join(self._cairobj)
+    #end line_join
+
+    @line_join.setter
+    def line_join(self, line_join) :
+        cairo.cairo_set_line_join(self._cairobj, line_join)
+    #end line_join
 
     @property
     def line_width(self) :
