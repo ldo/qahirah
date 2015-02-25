@@ -107,6 +107,8 @@ class CAIRO :
 
 #end CAIRO
 
+cairo.cairo_version_string.restype = ct.c_char_p
+
 cairo.cairo_status.argtypes = (ct.c_void_p,)
 cairo.cairo_create.argtypes = (ct.c_void_p,)
 cairo.cairo_create.restype = ct.c_void_p
@@ -209,6 +211,25 @@ class CairoError(Exception) :
     #end __init__
 
 #end CairoError
+
+def cairo_version() :
+    "the Cairo version as a single integer."
+    return \
+        cairo.cairo_version()
+#end cairo_version
+
+def cairo_version_tuple() :
+    "the Cairo version as a triple of integers."
+    vers = cairo.cairo_version()
+    return \
+        (vers // 10000, vers // 100 % 100, vers % 100)
+#end cairo_version_tuple
+
+def cairo_version_string() :
+    "the Cairo version string."
+    return \
+        cairo.cairo_version_string().decode("utf-8")
+#end cairo_version
 
 deg = 180 / math.pi
   # All angles are in radians. You can use the standard Python functions math.degrees
@@ -824,6 +845,9 @@ class ImageSurface(Surface) :
 
 #end ImageSurface
 
+# TODO: PDF Surfaces, PNG Surfaces, PostScript Surfaces,
+# Recording Surfaces, SVG Surfaces, Script Surfaces
+
 class Pattern :
     "a Cairo Pattern object. Do not instantiate directly; use one of the create methods."
     # <http://cairographics.org/manual/cairo-cairo-pattern-t.html>
@@ -908,4 +932,4 @@ class Path :
 
 #end Path
 
-# more TBD
+# TODO: font_face_t, scaled_font_face_t, font_options_t, FreeType fonts, user fonts
