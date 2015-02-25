@@ -32,6 +32,8 @@ class CAIRO :
     # can get prematurely disposed. Always store the object reference into a local
     # variable, and pass the value of the variable instead.
 
+    status_t = ct.c_uint
+
     # cairo_status_t codes
     STATUS_SUCCESS = 0
 
@@ -162,6 +164,28 @@ class CAIRO :
     LINE_JOIN_ROUND = 1
     LINE_JOIN_BEVEL = 2
 
+    class rectangle_t(ct.Structure) :
+        _fields_ = \
+            [
+                ("x", ct.c_double),
+                ("y", ct.c_double),
+                ("width", ct.c_double),
+                ("height", ct.c_double),
+            ]
+    #end rectangle_t
+    rectangle_ptr_t = ct.POINTER(rectangle_t)
+
+    class rectangle_list_t(ct.Structure) :
+        pass
+    rectangle_list_t._fields_ = \
+        [
+            ("status", status_t),
+            ("rectangles", rectangle_ptr_t),
+            ("num_rectangles", ct.c_int),
+        ]
+    #end rectangle_list_t
+    rectangle_list_ptr_t = ct.POINTER(rectangle_list_t)
+
 #end CAIRO
 
 cairo.cairo_version_string.restype = ct.c_char_p
@@ -238,6 +262,10 @@ cairo.cairo_set_tolerance.argtypes = (ct.c_void_p, ct.c_double)
 cairo.cairo_clip.argtypes = (ct.c_void_p,)
 cairo.cairo_clip_preserve.argtypes = (ct.c_void_p,)
 cairo.cairo_clip_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+cairo.cairo_in_clip.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
+cairo.cairo_copy_clip_rectangle_list.restype = CAIRO.rectangle_list_ptr_t
+cairo.cairo_copy_clip_rectangle_list.argtypes = (ct.c_void_p,)
+cairo.cairo_rectangle_list_destroy.argtypes = (CAIRO.rectangle_list_ptr_t,)
 cairo.cairo_reset_clip.argtypes = (ct.c_void_p,)
 cairo.cairo_fill.argtypes = (ct.c_void_p,)
 cairo.cairo_fill_preserve.argtypes = (ct.c_void_p,)
@@ -359,7 +387,7 @@ class Vector :
     #end __add__
 
     def __neg__(self) :
-        """reflect across origin."""
+        "reflect across origin."
         return Vector \
           (
             x = - self.x,
@@ -601,6 +629,159 @@ class Matrix :
 
 #end Matrix
 
+def interp(fract, p1, p2) :
+    "returns the point along p1 to p2 at relative position fract."
+    return (p2 - p1) * fract + p1
+#end interp
+
+def distribute(nrdivs, p1 = 0.0, p2 = 1.0, endincl = False) :
+    "returns a sequence of nrdivs values evenly distributed over" \
+    " [p1, p2) (if not endincl) or nrdivs + 1 values over [p1, p2] (if endincl)."
+    interval = p2 - p1
+    return tuple \
+      (
+        interval * (i / nrdivs) + p1
+            for i in range(0, nrdivs + int(endincl))
+      )
+#end distribute
+
+class Rect :
+    "an axis-aligned rectangle. The constructor takes the left and top coordinates," \
+    " and the width and height. Or use from_corners to construct one from two Vectors" \
+    " representing opposite corners."
+
+    def __init__(self, left, top, width, height) :
+        self.left = left
+        self.top = top
+        self.width = width
+        self.height = height
+    #end __init__
+
+    @staticmethod
+    def from_corners(pt1, pt2) :
+        min_x = min(pt1.x, pt2.x)
+        max_x = max(pt1.x, pt2.x)
+        min_y = min(pt1.y, pt2.y)
+        max_y = max(pt1.y, pt2.y)
+        return \
+            Rect(min_x, min_y, max_x - min_x, max_y - min_y)
+    #end from_corners
+
+    @property
+    def topleft(self) :
+        "the top-left corner point."
+        return \
+            Vector(self.left, self.top)
+    #end topleft
+
+    @property
+    def botright(self) :
+        "the bottom-right corner point."
+        return \
+            Vector(self.left + self.width, self.top + self.height)
+    #end botright
+
+    @property
+    def dimensions(self) :
+        "the dimensions of the Rect as a Vector."
+        return \
+            Vector(self.width, self.height)
+    #end dimensions
+
+    @property
+    def middle(self) :
+        "the midpoint as a Vector."
+        return \
+            Vector(self.left + self.width / 2, self.top + self.height / 2)
+    #end middle
+
+    def __round__(self) :
+        "returns the Rect with all coordinates rounded to integers."
+        return \
+            Rect(round(self.left), round(self.top), round(self.width), round(self.height))
+    #end __round__
+
+    def __add__(self, v) :
+        "add a Rect to a Vector to return the Rect offset by the Vector."
+        if isinstance(v, Vector) :
+            result = Rect(self.left + v.x, self.top + v.y, self.width, self.height)
+        else :
+            result = NotImplemented
+        #end if
+        return \
+            result
+    #end __add__
+
+    def __sub__(self, v) :
+        "subtract a Vector from a Rect to return the Rect offset in the" \
+        " opposite direction to the Vector."
+        if isinstance(v, Vector) :
+            result = Rect(self.left - v.x, self.top - v.y, self.width, self.height)
+        else :
+            result = NotImplemented
+        #end if
+        return \
+            result
+    #end __sub__
+
+    def __eq__(r1, r2) :
+        "equality of two rectangles."
+        return \
+            (
+                r1.left == r2.left
+            and
+                r1.top == r2.top
+            and
+                r1.width == r2.width
+            and
+                r1.height == r2.height
+            )
+    #end __eq__
+
+    def __repr__(self) :
+        return "Rect(%f, %f, %f, %f)" % (self.left, self.top, self.width, self.height)
+    #end __repr__
+
+    def position(self, relpt, halign = None, valign = None) :
+        "returns a copy of this Rect repositioned relative to Vector relpt, horizontally" \
+        " according to halign and vertically according to valign (if not None" \
+        " in each case). halign = 0 means the left edge is on the point, while" \
+        " halign = 1 means the right edge is on the point. Similarly valign = 0" \
+        " means the top edge is on the point, while valign = 1 means the bottom" \
+        " edge is on the point. Intermediate values correspond to intermediate" \
+        " linearly-interpolated positions."
+        left = self.left
+        top = self.top
+        if halign != None :
+            left = relpt.x - interp(halign, 0, self.width)
+        #end if
+        if valign != None :
+            top = relpt.y - interp(valign, 0, self.height)
+        #end if
+        return Rect(left = left, top = top, width = self.width, height = self.height)
+    #end position
+
+    def align(self, within, halign = None, valign = None) :
+        "returns a copy of this Rect repositioned relative to within, which is" \
+        " another Rect, horizontally according to halign and vertically according" \
+        " to valign (if not None in each case). halign = 0 means the left edges" \
+        " coincide, while halign = 1 means the right edges coincide. Similarly" \
+        " valign = 0 means the top edges coincide, while valign = 1 means the" \
+        " bottom edges coincide. Intermediate values correspond to intermediate" \
+        " linearly-interpolated positions."
+        left = self.left
+        top = self.top
+        if halign != None :
+            left = interp(halign, within.left, within.left + within.width - self.width)
+        #end if
+        if valign != None :
+            top = interp(valign, within.top, within.top + within.height - self.height)
+        #end if
+        return Rect(left = left, top = top, width = self.width, height = self.height)
+    #end align
+
+#end Rect
+
 class Context :
     "a Cairo drawing context. Instantiate with a Surface object."
     # <http://cairographics.org/manual/cairo-cairo-t.html>
@@ -784,7 +965,25 @@ class Context :
         cairo.cairo_clip_preserve(self._cairobj)
     #end clip_preserve
 
-    # TODO: in_clip, clip_extents, rectangle_list
+    # TODO: in_clip, clip_extents
+
+    @property
+    def clip_rectangle_list(self) :
+        "returns a copy of the current clip region as a list of Rects."
+        rects = cairo.cairo_copy_clip_rectangle_list(self._cairobj)
+        check(rects.contents.status)
+        result = []
+        for i in range(rects.contents.num_rectangles) :
+            thisrect = rects.contents.rectangles[i]
+            result.append \
+              (
+                Rect(thisrect.x, thisrect.y, thisrect.width, thisrect.height)
+              )
+        #end for
+        cairo.cairo_rectangle_list_destroy(rects)
+        return \
+            result
+    #end clip_rectangle_list
 
     def reset_clip(self) :
         cairo.cairo_reset_clip(self._cairobj)
