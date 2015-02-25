@@ -1136,7 +1136,17 @@ class Context :
         cairo.cairo_close_path(self._cairobj)
     #end close_path
 
-    # TODO: arc, arc_negative
+    def arc(self, centre, radius, angle1, angle2) :
+        cairo.cairo_arc(self._cairobj, centre.x, centre.y, radius, angle1, angle2)
+    #end arc
+
+    def arc_xy(self, xc, yc, radius, angle1, angle2) :
+        cairo.cairo_arc(self._cairobj, xc, yc, radius, angle1, angle2)
+    #end arc
+
+    def arc_negative_xy(self, xc, yc, radius, angle1, angle2) :
+        cairo.cairo_arc_negative(self._cairobj, xc, yc, radius, angle1, angle2)
+    #end arc_negative_xy
 
     def curve_to(self, p1, p2, p3) :
         cairo.cairo_curve_to(self._cairobj, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y)
