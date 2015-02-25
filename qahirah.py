@@ -231,6 +231,8 @@ def cairo_version_string() :
         cairo.cairo_version_string().decode("utf-8")
 #end cairo_version
 
+# TODO: Error Handling <http://cairographics.org/manual/cairo-Error-handling.html>
+
 deg = 180 / math.pi
   # All angles are in radians. You can use the standard Python functions math.degrees
   # and math.radians to convert back and forth, or multiply and divide by this deg
