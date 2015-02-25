@@ -229,8 +229,12 @@ cairo.cairo_get_line_join.argtypes = (ct.c_void_p,)
 cairo.cairo_get_line_width.argtypes = (ct.c_void_p,)
 cairo.cairo_get_line_width.restype = ct.c_double
 cairo.cairo_set_line_width.argtypes = (ct.c_void_p, ct.c_double)
+cairo.cairo_get_miter_limit.restype = ct.c_double
+cairo.cairo_set_miter_limit.argtypes = (ct.c_void_p, ct.c_double)
 cairo.cairo_get_operator.argtypes = (ct.c_void_p,)
 cairo.cairo_set_operator.argtypes = (ct.c_void_p, ct.c_int)
+cairo.cairo_get_tolerance.restype = ct.c_double
+cairo.cairo_set_tolerance.argtypes = (ct.c_void_p, ct.c_double)
 cairo.cairo_fill.argtypes = (ct.c_void_p,)
 cairo.cairo_fill_preserve.argtypes = (ct.c_void_p,)
 cairo.cairo_fill_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
@@ -732,7 +736,16 @@ class Context :
         cairo.cairo_set_line_width(self._cairobj, width)
     #end line_width
 
-    # TODO: miter_limit
+    @property
+    def miter_limit(self) :
+        return \
+            cairo.cairo_get_miter_limit(self._cairobj)
+    #end miter_limit
+
+    @miter_limit.setter
+    def miter_limit(self, width) :
+        cairo.cairo_set_miter_limit(self._cairobj, width)
+    #end miter_limit
 
     @property
     def operator(self) :
@@ -748,7 +761,18 @@ class Context :
         self._check()
     #end operator
 
-    # TODO: tolerance, clip, rectangle_list
+    @property
+    def tolerance(self) :
+        return \
+            cairo.cairo_get_tolerance(self._cairobj)
+    #end tolerance
+
+    @tolerance.setter
+    def tolerance(self, width) :
+        cairo.cairo_set_tolerance(self._cairobj, width)
+    #end tolerance
+
+    # TODO: clip, rectangle_list
 
     def fill(self) :
         cairo.cairo_fill(self._cairobj)
