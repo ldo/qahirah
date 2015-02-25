@@ -235,6 +235,10 @@ cairo.cairo_get_operator.argtypes = (ct.c_void_p,)
 cairo.cairo_set_operator.argtypes = (ct.c_void_p, ct.c_int)
 cairo.cairo_get_tolerance.restype = ct.c_double
 cairo.cairo_set_tolerance.argtypes = (ct.c_void_p, ct.c_double)
+cairo.cairo_clip.argtypes = (ct.c_void_p,)
+cairo.cairo_clip_preserve.argtypes = (ct.c_void_p,)
+cairo.cairo_clip_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+cairo.cairo_reset_clip.argtypes = (ct.c_void_p,)
 cairo.cairo_fill.argtypes = (ct.c_void_p,)
 cairo.cairo_fill_preserve.argtypes = (ct.c_void_p,)
 cairo.cairo_fill_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
@@ -772,7 +776,19 @@ class Context :
         cairo.cairo_set_tolerance(self._cairobj, width)
     #end tolerance
 
-    # TODO: clip, rectangle_list
+    def clip(self) :
+        cairo.cairo_clip(self._cairobj)
+    #end clip
+
+    def clip_preserve(self) :
+        cairo.cairo_clip_preserve(self._cairobj)
+    #end clip_preserve
+
+    # TODO: in_clip, clip_extents, rectangle_list
+
+    def reset_clip(self) :
+        cairo.cairo_reset_clip(self._cairobj)
+    #end reset_clip
 
     def fill(self) :
         cairo.cairo_fill(self._cairobj)
@@ -783,7 +799,20 @@ class Context :
     #end fill_preserve
 
     # TODO: fill_extents, in_fill
-    # TODO: mask, mask_surface
+
+    def mask(self, pattern) :
+        if not isinstance(pattern, Pattern) :
+            raise TypeError("pattern is not a Pattern")
+        #end if
+        cairo.cairo_mask(self._cairobj, pattern._cairobj)
+    #end mask
+
+    def mask_surface(self, surface, origin) :
+        if not isinstance(surface, Surface) :
+            raise TypeError("surface is not a Surface")
+        #end if
+        cairo.cairo_mask_surface(self._cairobj, surface._cairobj, origin.x, origin.y)
+    #end mask_surface
 
     def paint(self) :
         cairo.cairo_paint(self._cairobj)
