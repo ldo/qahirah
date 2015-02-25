@@ -262,6 +262,7 @@ cairo.cairo_set_tolerance.argtypes = (ct.c_void_p, ct.c_double)
 cairo.cairo_clip.argtypes = (ct.c_void_p,)
 cairo.cairo_clip_preserve.argtypes = (ct.c_void_p,)
 cairo.cairo_clip_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+cairo.cairo_in_clip.restype = ct.c_bool
 cairo.cairo_in_clip.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
 cairo.cairo_copy_clip_rectangle_list.restype = CAIRO.rectangle_list_ptr_t
 cairo.cairo_copy_clip_rectangle_list.argtypes = (ct.c_void_p,)
@@ -667,6 +668,13 @@ class Rect :
             Rect(min_x, min_y, max_x - min_x, max_y - min_y)
     #end from_corners
 
+    @staticmethod
+    def from_cairo(r) :
+        "converts a CAIRO.rectangle_t to a Rect."
+        return \
+            Rect(r.x, r.y, r.width, r.height)
+    #end from_cairo
+
     @property
     def topleft(self) :
         "the top-left corner point."
@@ -965,21 +973,30 @@ class Context :
         cairo.cairo_clip_preserve(self._cairobj)
     #end clip_preserve
 
-    # TODO: in_clip, clip_extents
+    @property
+    def clip_extents(self) :
+        "returns a Rect bounding the current clip."
+        x1 = ct.c_double()
+        x2 = ct.c_double()
+        y1 = ct.c_double()
+        y2 = ct.c_double()
+        cairo.cairo_clip_extents(self._cairobj, ct.byref(x1), ct.byref(y1), ct.byref(x2), ct.byref(y2))
+        return \
+            Rect(x1.value, y1.value, x2.value - x1.value, y2.value - y1.value)
+    #end clip_extents
+
+    def in_clip(self, pt) :
+        "is the given Vector pt within the clip."
+        return \
+            cairo.cairo_in_clip(self._cairobj, pt.x, pt.y)
+    #end in_clip
 
     @property
     def clip_rectangle_list(self) :
         "returns a copy of the current clip region as a list of Rects."
         rects = cairo.cairo_copy_clip_rectangle_list(self._cairobj)
         check(rects.contents.status)
-        result = []
-        for i in range(rects.contents.num_rectangles) :
-            thisrect = rects.contents.rectangles[i]
-            result.append \
-              (
-                Rect(thisrect.x, thisrect.y, thisrect.width, thisrect.height)
-              )
-        #end for
+        result = list(Rect.from_cairo(rects.contents.rectangles[i]) for i in range(rects.contents.num_rectangles))
         cairo.cairo_rectangle_list_destroy(rects)
         return \
             result
