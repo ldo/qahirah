@@ -265,6 +265,10 @@ def status_to_string(status) :
         cairo.cairo_status_to_string(status).decode("utf-8")
 #end status_to_string
 
+def debug_reset_static_data() :
+    cairo.cairo_debug_reset_static_data()
+#end debug_reset_static_data
+
 def check(status) :
     if status != 0 :
         raise CairoError(status)
