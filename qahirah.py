@@ -1,8 +1,15 @@
+"""A Python 3 wrapper for the Cairo graphics library <http://cairographics.org/>
+using ctypes. This is modelled on Pycairo, but differs from that in
+some important ways. It also operates at a higher level than the underlying
+Cairo API where this makes sense. For example, it defines a “Vector”
+class for representing a 2D point, with operations on the Vector as a
+whole, rather than having to operate on individual x- and y-coordinates.
+Also, get/set API calls are collapsed into read/write Python properties
+where this makes sense; for example, instead of Context.get_line_width()
+and Context.set_line_width() calls, there is a Context.line_width property
+that may be read and written.
+"""
 #+
-# Qahirah -- a high-level Pythonic API wrapper for the Cairo graphics
-# library <http://cairographics.org/> done entirely in Python 3 using
-# ctypes.
-#
 # Copyright 2015 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 # Licensed under the GNU Lesser General Public License v2.1 or later.
 #-
