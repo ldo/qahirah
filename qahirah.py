@@ -186,6 +186,15 @@ class CAIRO :
     #end rectangle_list_t
     rectangle_list_ptr_t = ct.POINTER(rectangle_list_t)
 
+    class glyph_t(ct.Structure) :
+        _fields_ = \
+            [
+                ("index", ct.c_ulong), # glyph index
+                ("x", ct.c_double), # position relative to origin
+                ("y", ct.c_double),
+            ]
+    #end glyph_t
+
 #end CAIRO
 
 cairo.cairo_version_string.restype = ct.c_char_p
@@ -792,6 +801,19 @@ class Rect :
 
 #end Rect
 
+class Glyph :
+    "specifies a glyph index and position relative to the origin."
+
+    def __init__(self, index, pos) :
+        if not isinstance(pos, Vector) :
+            raise TypeError("pos is not a Vector")
+        #end if
+        self.index = index
+        self.pos = pos
+    #end __init__
+
+#end Glyph
+
 class Context :
     "a Cairo drawing context. Instantiate with a Surface object."
     # <http://cairographics.org/manual/cairo-cairo-t.html>
@@ -1172,7 +1194,20 @@ class Context :
         cairo.cairo_move_to(self._cairobj, x, y)
     #end move_to_xy
 
-    # TODO: glyph_paths
+    def rectangle(self, rect) :
+        cairo.cairo_rectangle(self._cairobj, rect.left, rect.top, rect.width, rect.height)
+    #end rectangle
+
+    def glyph_path(self, glyphs) :
+        "glyphs is a sequence of Glyph objects."
+        nr_glyphs = len(glyphs)
+        buf = (nr_glyphs * CAIRO.glyph_t)()
+        for i in range(nr_glyphs) :
+            src = glyphs[i]
+            buf[i] = CAIRO.glyph_t(src.index, src.pos.x, src.pos.y)
+        #end for
+        cairo.cairo_glyph_path(self._cairobj, ct.byref(buf), nr_glyphs)
+    #end glyph_path
 
     def text_path(self, text) :
         cairo.cairo_text_path(self._cairobj, text.encode("utf-8"))
