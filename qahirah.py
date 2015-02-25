@@ -1237,13 +1237,36 @@ class Context :
         cairo.cairo_rel_move_to(self._cairobj, x, y)
     #end rel_move_to_xy
 
-    # TODO: path_extents
+    @property
+    def path_extents(self) :
+        "returns a Rect bounding the current path."
+        x1 = ct.c_double()
+        x2 = ct.c_double()
+        y1 = ct.c_double()
+        y2 = ct.c_double()
+        cairo.cairo_path_extents(self._cairobj, ct.byref(x1), ct.byref(y1), ct.byref(x2), ct.byref(y2))
+        return \
+            Rect(x1.value, y1.value, x2.value - x1.value, y2.value - y1.value)
+    #end path_extents
 
     # TODO: Regions <http://cairographics.org/manual/cairo-Regions.html>
 
     # Transformations <http://cairographics.org/manual/cairo-Transformations.html>
 
-    # TODO: translate, scale, rotate
+    def translate(self, t) :
+        "applies a translation by the Vector t to the current coordinate system."
+        cairo.cairo_translate(self._cairobj, t.x, t.y)
+    #end translate
+
+    def scale(self, s) :
+        "applies a scaling by the Vector s to the current coordinate system."
+        cairo.cairo_scale(self._cairobj, s.x, s.y)
+    #end scale
+
+    def rotate(self, angle) :
+        "applies a rotation by the specified angle to the current coordinate system."
+        cairo.cairo_rotate(self._cairobj, angle)
+    #end rotate
 
     def transform(self, m) :
         m = m.to_cairo()
