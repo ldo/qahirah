@@ -201,6 +201,11 @@ cairo.cairo_get_source.restype = ct.c_void_p
 cairo.cairo_set_source_rgb.argtypes = (ct.c_void_p, ct.c_double, ct.c_double, ct.c_double)
 cairo.cairo_set_source_rgba.argtypes = (ct.c_void_p, ct.c_double, ct.c_double, ct.c_double, ct.c_double)
 cairo.cairo_set_source.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_get_antialias.argtypes = (ct.c_void_p,)
+cairo.cairo_set_dash.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_double)
+cairo.cairo_get_dash_count.argtypes = (ct.c_void_p,)
+cairo.cairo_get_dash.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p)
+cairo.cairo_set_antialias.argtypes = (ct.c_void_p, ct.c_int)
 cairo.cairo_get_line_width.argtypes = (ct.c_void_p,)
 cairo.cairo_get_line_width.restype = ct.c_double
 cairo.cairo_set_line_width.argtypes = (ct.c_void_p, ct.c_double)
@@ -627,7 +632,42 @@ class Context :
         self._check()
     #end set_source_rgba
 
-    # TODO: antialias, dash, fill_rule, line_cap, line_join
+    @property
+    def antialias(self) :
+        "the current antialias mode."
+        return \
+            cairo.cairo_get_antialias(self._cairobj)
+    #end antialias
+
+    @antialias.setter
+    def antialias(self, antialias) :
+        cairo.cairo_set_antialias(self._cairobj, antialias)
+    #end antialias
+
+    @property
+    def dash(self) :
+        "the current line dash setting, as a tuple of two items: the first is a tuple" \
+        " of reals specifying alternating on- and off-lengths, the second is a real" \
+        " specifying the starting offset."
+        segs = (cairo.cairo_get_dash_count(self._cairobj) * ct.c_double)()
+        offset = ct.c_double()
+        cairo.cairo_get_dash(self._cairobj, ct.byref(segs), ct.byref(offset))
+        return \
+            (tuple(i for i in segs), offset.value)
+    #end dash
+
+    @dash.setter
+    def dash(self, dashes) :
+        segs, offset = dashes
+        nrsegs = len(segs)
+        csegs = (nrsegs * ct.c_double)()
+        for i in range(nrsegs) :
+            csegs[i] = segs[i]
+        #end for
+        cairo.cairo_set_dash(self._cairobj, ct.byref(csegs), nrsegs, offset)
+    #end dash
+
+    # TODO: fill_rule, line_cap, line_join
 
     @property
     def line_width(self) :
