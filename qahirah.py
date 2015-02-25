@@ -1297,8 +1297,8 @@ class Surface :
     "base class for Cairo surfaces. Do not instantiate directly."
 
     def __init__(self, _cairobj) :
-        check(cairo.cairo_surface_status(_cairobj))
         self._cairobj = _cairobj
+        check(cairo.cairo_surface_status(_cairobj))
     #end __init__
 
     def __del__(self) :
