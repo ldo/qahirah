@@ -260,6 +260,12 @@ class Vector :
             "Vector(%.3f, %.3f)" % (self.x, self.y)
     #end __repr__
 
+    def __getitem__(self, i) :
+        "being able to access elements by index allows a Vector to be cast to a tuple or list."
+        return \
+            (self.x, self.y)[i]
+    #end __getitem__
+
     def __add__(v1, v2) :
         return \
             (
