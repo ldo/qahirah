@@ -1411,6 +1411,9 @@ class Surface :
             self._cairobj == other._cairobj
     #end __eq__
 
+    # TODO: create_similar, device, font_options etc
+    # <http://cairographics.org/manual/cairo-cairo-surface-t.html>
+
     def flush(self) :
         cairo.cairo_surface_flush(self._cairobj)
     #end flush
