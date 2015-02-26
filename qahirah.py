@@ -404,25 +404,26 @@ cairo.cairo_pattern_set_matrix.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_path_destroy.argtypes = (ct.c_void_p,)
 
 def version() :
-    "the Cairo version as a single integer."
+    "returns the Cairo version as a single integer."
     return \
         cairo.cairo_version()
 #end version
 
 def version_tuple() :
-    "the Cairo version as a triple of integers."
+    "returns the Cairo version as a triple of integers."
     vers = cairo.cairo_version()
     return \
         (vers // 10000, vers // 100 % 100, vers % 100)
 #end version_tuple
 
 def version_string() :
-    "the Cairo version string."
+    "returns the Cairo version string."
     return \
         cairo.cairo_version_string().decode("utf-8")
 #end version_string
 
 def status_to_string(status) :
+    "returns the message for a given Cairo status code."
     return \
         cairo.cairo_status_to_string(status).decode("utf-8")
 #end status_to_string
