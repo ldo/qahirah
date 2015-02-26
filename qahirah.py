@@ -355,7 +355,6 @@ cairo.cairo_user_to_device_distance.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_v
 cairo.cairo_device_to_user.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p)
 cairo.cairo_device_to_user_distance.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p)
 
-cairo.cairo_image_surface_create.restype = ct.c_void_p
 cairo.cairo_get_source.argtypes = (ct.c_void_p,)
 cairo.cairo_get_source.restype = ct.c_void_p
 cairo.cairo_set_source_rgb.argtypes = (ct.c_void_p, ct.c_double, ct.c_double, ct.c_double)
@@ -413,6 +412,8 @@ cairo.cairo_surface_destroy.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_flush.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_write_to_png.argtypes = (ct.c_void_p, ct.c_char_p)
 cairo.cairo_image_surface_create.restype = ct.c_void_p
+cairo.cairo_image_surface_create_for_data.restype = ct.c_void_p
+cairo.cairo_image_surface_create_for_data.argtypes = (ct.c_void_p, ct.c_int, ct.c_int, ct.c_int, ct.c_int)
 cairo.cairo_image_surface_get_format.argtypes = (ct.c_void_p,)
 cairo.cairo_image_surface_get_width.argtypes = (ct.c_void_p,)
 cairo.cairo_image_surface_get_height.argtypes = (ct.c_void_p,)
@@ -1649,12 +1650,15 @@ class Surface :
 #end Surface
 
 class ImageSurface(Surface) :
-    "A Cairo image surface. Instantiate with a suitable CAIRO.FORMAT_xxx code" \
-    " and desired integer dimensions."
+    "A Cairo image surface. Do not instantiate directly; instead," \
+    " call one of the create methods."
 
-    def __init__(self, format, width, height) :
-        super().__init__(cairo.cairo_image_surface_create(int(format), int(width), int(height)))
-    #end __init__
+    @staticmethod
+    def create(format, width, height) :
+        "creates a new ImageSurface with dynamically-allocated memory for the pixels."
+        return \
+            ImageSurface(cairo.cairo_image_surface_create(int(format), int(width), int(height)))
+    #end create
 
     @staticmethod
     def format_stride_for_width(format, width) :
@@ -1662,7 +1666,7 @@ class ImageSurface(Surface) :
             cairo.cairo_format_stride_for_width(int(format), int(width))
     #end format_stride_for_width
 
-    # TODO: create_for_data, get_data
+    # TODO: get_data
 
     @property
     def format(self) :
@@ -1687,6 +1691,20 @@ class ImageSurface(Surface) :
         return \
             cairo.cairo_image_surface_get_stride(self._cairobj)
     #end stride
+
+    @staticmethod
+    def create_for_array(arr, format, width, height, stride) :
+        "calls cairo_image_surface_create_for_data on arr, which must be" \
+        " a Python array.array object."
+        address, length = arr.buffer_info()
+        assert height * stride <= length * arr.itemsize
+        result = ImageSurface(cairo.cairo_image_surface_create_for_data(ct.c_void_p(address), format, width, height, stride))
+        result._arr = arr # to ensure it doesn't go away prematurely
+        return \
+            result
+    #end create_for_array
+
+    # do I need a more general interface to create_for_data than create_for_array?
 
 #end ImageSurface
 
@@ -1785,8 +1803,10 @@ class Pattern :
         if not isinstance(surface, Surface) :
             raise TypeError("surface is not a Surface")
         #end if
+        result = Pattern(cairo.cairo_pattern_create_for_surface(surface._cairobj))
+        result._surface = surface # to ensure any storage attached to it doesn't go away prematurely
         return \
-            Pattern(cairo.cairo_pattern_create_for_surface(surface._cairobj))
+            result
     #end create_for_surface
 
     @property
