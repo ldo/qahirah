@@ -86,6 +86,11 @@ class CAIRO :
     FORMAT_RGB16_565 = 4
     FORMAT_RGB30 = 5
 
+    # cairo_content_t codes
+    CONTENT_COLOR =  0x1000
+    CONTENT_ALPHA = 0x2000
+    CONTENT_COLOR_ALPHA = 0x3000
+
     # cairo_extend_t codes
     EXTEND_NONE = 0
     EXTEND_REPEAT = 1
@@ -254,6 +259,15 @@ cairo.cairo_create.restype = ct.c_void_p
 cairo.cairo_destroy.restype = ct.c_void_p
 cairo.cairo_save.argtypes = (ct.c_void_p,)
 cairo.cairo_restore.argtypes = (ct.c_void_p,)
+cairo.cairo_get_target.restype = ct.c_void_p
+cairo.cairo_get_target.argtypes = (ct.c_void_p,)
+cairo.cairo_push_group.argtypes = (ct.c_void_p,)
+cairo.cairo_push_group_with_content.argtypes = (ct.c_void_p, ct.c_int)
+cairo.cairo_pop_group.restype = ct.c_void_p
+cairo.cairo_pop_group.argtypes = (ct.c_void_p,)
+cairo.cairo_pop_group_to_source.argtypes = (ct.c_void_p,)
+cairo.cairo_get_group_target.restype = ct.c_void_p
+cairo.cairo_get_group_target.argtypes = (ct.c_void_p,)
 
 cairo.cairo_copy_path.argtypes = (ct.c_void_p,)
 cairo.cairo_copy_path.restype = ct.c_void_p
@@ -340,6 +354,8 @@ cairo.cairo_stroke_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct
 cairo.cairo_in_stroke.restype = ct.c_bool
 cairo.cairo_in_stroke.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
 
+cairo.cairo_surface_reference.restype = ct.c_void_p
+cairo.cairo_surface_reference.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_destroy.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_flush.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_write_to_png.argtypes = (ct.c_void_p, ct.c_char_p)
@@ -883,9 +899,41 @@ class Context :
 
     def restore(self) :
         cairo.cairo_restore(self._cairobj)
+        self._check()
     #end restore
 
-    # TODO: get_target, push/pop group
+    @property
+    def target(self) :
+        "a copy of the current target Surface. Will not return the same" \
+        " wrapper object each time, but Surface objects can be compared for equality," \
+        " which means they reference the same underlying Cairo surface_t object."
+        return \
+            Surface(cairo.cairo_surface_reference(cairo.cairo_get_target(self._cairobj)))
+    #end target
+
+    def push_group(self) :
+        cairo.cairo_push_group(self._cairobj)
+    #end push_group
+
+    def push_group_with_content(self, content) :
+        "content is a CAIRO.CONTENT_xxx value."
+        cairo.cairo_push_group_with_content(self._cairobj, content)
+    #end push_group_with_content
+
+    def pop_group(self) :
+        return \
+            Pattern(cairo.cairo_pop_group(self._cairobj))
+    #end pop_group
+
+    def pop_group_to_source(self) :
+        cairo.cairo_pop_group_to_source(self._cairobj)
+    #end pop_group_to_source
+
+    @property
+    def group_target(self) :
+        return \
+            Surface(cairo.cairo_get_group_target(self._cairobj))
+    #end group_target
 
     @property
     def source(self) :
@@ -1356,6 +1404,13 @@ class Surface :
         #end if
     #end __del__
 
+    def __eq__(self, other) :
+        "do the two Surface objects refer to the same surface. Needed because" \
+        " Context.target cannot return the same Surface object each time."
+        return \
+            self._cairobj == other._cairobj
+    #end __eq__
+
     def flush(self) :
         cairo.cairo_surface_flush(self._cairobj)
     #end flush
@@ -1434,7 +1489,7 @@ class Pattern :
 
     def __eq__(self, other) :
         "do the two Pattern objects refer to the same Pattern. Needed because" \
-        " Context.get_source cannot return the same Pattern object each time."
+        " Context.source cannot return the same Pattern object each time."
         return \
             self._cairobj == other._cairobj
     #end __eq__
