@@ -163,6 +163,25 @@ class CAIRO :
     ANTIALIAS_GOOD = 5
     ANTIALIAS_BEST = 6
 
+    # cairo_subpixel_order_t codes
+    SUBPIXEL_ORDER_DEFAULT = 0
+    SUBPIXEL_ORDER_RGB = 1
+    SUBPIXEL_ORDER_BGR = 2
+    SUBPIXEL_ORDER_VRGB = 3
+    SUBPIXEL_ORDER_VBGR = 4
+
+    # cairo_hint_style_t codes
+    HINT_STYLE_DEFAULT = 0
+    HINT_STYLE_NONE = 1
+    HINT_STYLE_SLIGHT = 2
+    HINT_STYLE_MEDIUM = 3
+    HINT_STYLE_FULL = 4
+
+    # cairo_hint_metrics_t codes
+    HINT_METRICS_DEFAULT = 0
+    HINT_METRICS_OFF = 1
+    HINT_METRICS_ON = 2
+
     # cairo_fill_rule_t codes
     FILL_RULE_WINDING = 0
     FILL_RULE_EVEN_ODD = 1
@@ -362,6 +381,8 @@ cairo.cairo_stroke_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct
 cairo.cairo_in_stroke.restype = ct.c_bool
 cairo.cairo_in_stroke.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
 
+cairo.cairo_path_destroy.argtypes = (ct.c_void_p,)
+
 cairo.cairo_surface_reference.restype = ct.c_void_p
 cairo.cairo_surface_reference.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_destroy.argtypes = (ct.c_void_p,)
@@ -401,7 +422,22 @@ cairo.cairo_pattern_get_surface.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_pattern_get_matrix.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_pattern_set_matrix.argtypes = (ct.c_void_p, ct.c_void_p)
 
-cairo.cairo_path_destroy.argtypes = (ct.c_void_p,)
+cairo.cairo_font_options_status.argtypes = (ct.c_void_p,)
+cairo.cairo_font_options_create.restype = ct.c_void_p
+cairo.cairo_font_options_destroy.argtypes = (ct.c_void_p,)
+cairo.cairo_font_options_copy.restype = ct.c_void_p
+cairo.cairo_font_options_copy.argtypes = (ct.c_void_p,)
+cairo.cairo_font_options_merge.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_font_options_equal.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_font_options_equal.restype = ct.c_bool
+cairo.cairo_font_options_get_antialias.argtypes = (ct.c_void_p,)
+cairo.cairo_font_options_set_antialias.argtypes = (ct.c_void_p, ct.c_int)
+cairo.cairo_font_options_get_subpixel_order.argtypes = (ct.c_void_p,)
+cairo.cairo_font_options_set_subpixel_order.argtypes = (ct.c_void_p, ct.c_int)
+cairo.cairo_font_options_get_hint_style.argtypes = (ct.c_void_p,)
+cairo.cairo_font_options_set_hint_style.argtypes = (ct.c_void_p, ct.c_int)
+cairo.cairo_font_options_get_hint_metrics.argtypes = (ct.c_void_p,)
+cairo.cairo_font_options_set_hint_metrics.argtypes = (ct.c_void_p, ct.c_int)
 
 def version() :
     "returns the Cairo version as a single integer."
@@ -1863,4 +1899,116 @@ class Path :
 
 #end Path
 
-# TODO: font_face_t, scaled_font_face_t, font_options_t, FreeType fonts, user fonts
+class FontOptions :
+    "Cairo font options. Instantiate with no arguments to create a new font_options_t object."
+    # <http://cairographics.org/manual/cairo-cairo-font-options-t.html>
+
+    def _check(self) :
+        # check for error from last operation on this FontOptions.
+        check(cairo.cairo_font_options_status(self._cairobj))
+    #end _check
+
+    def __init__(self, existing = None) :
+        if existing == None :
+            self._cairobj = cairo.cairo_font_options_create()
+        else :
+            self._cairobj = existing
+        #end if
+        self._check()
+    #end __init__
+
+    def __del__(self) :
+        if self._cairobj != None :
+            cairo.cairo_font_options_destroy(self._cairobj)
+            self._cairobj = None
+        #end if
+    #end __del__
+
+    def copy(self) :
+        "returns a copy of this FontOptions in a new object."
+        return \
+            FontOptions(cairo.cairo_font_options_copy(self._cairobj))
+    #end copy
+
+    def merge(self, other) :
+        "merges non-default options from another FontOptions object."
+        if not isinstance(other, FontOptions) :
+            raise TypeError("can only merge with another FontOptions object")
+        #end if
+        cairo.cairo_font_options_merge(self._cairobj, other._cairobj)
+        self._check()
+    #end merge
+
+    def __eq__(self, other) :
+        "equality of settings in two FontOptions objects."
+        if not isinstance(other, FontOptions) :
+            raise TypeError("can only compare equality with another FontOptions object")
+        #end if
+        return \
+            cairo.cairo_font_options_equal(self._cairobj, other._cairobj)
+    #end __eq__
+
+    @property
+    def antialias(self) :
+        "antialias mode for this FontOptions."
+        return \
+            cairo.cairo_font_options_get_antialias(self._cairobj)
+    #end antialias
+
+    @antialias.setter
+    def antialias(self, anti) :
+        cairo.cairo_font_options_set_antialias(self._cairobj, anti)
+    #end antialias
+
+    @property
+    def subpixel_order(self) :
+        "subpixel order for this FontOptions."
+        return \
+            cairo.cairo_font_options_get_subpixel_order(self._cairobj)
+    #end subpixel_order
+
+    @subpixel_order.setter
+    def subpixel_order(self, sub) :
+        cairo.cairo_font_options_set_subpixel_order(self._cairobj, sub)
+    #end subpixel_order
+
+    @property
+    def hint_style(self) :
+        "hint style for this FontOptions."
+        return \
+            cairo.cairo_font_options_get_hint_style(self._cairobj)
+    #end hint_style
+
+    @hint_style.setter
+    def hint_style(self, hint) :
+        cairo.cairo_font_options_set_hint_style(self._cairobj, hint)
+    #end hint_style
+
+    @property
+    def hint_metrics(self) :
+        "hint metrics for this FontOptions."
+        return \
+            cairo.cairo_font_options_get_hint_metrics(self._cairobj)
+    #end hint_metrics
+
+    @hint_metrics.setter
+    def hint_metrics(self, hint) :
+        cairo.cairo_font_options_set_hint_metrics(self._cairobj, hint)
+    #end hint_metrics
+
+    def __repr__(self) :
+        return \
+            (
+                "FontOptions({%s})"
+            %
+                ", ".join
+                  (
+                    "%s = %d" % (name, getattr(self, name))
+                    for name in ("antialias", "subpixel_order", "hint_style", "hint_metrics")
+                  )
+            )
+    #end __repr__
+
+#end FontOptions
+
+# TODO: font_face_t, scaled_font_face_t, FreeType fonts, user fonts
