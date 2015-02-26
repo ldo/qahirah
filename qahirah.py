@@ -1463,6 +1463,10 @@ class Context :
         cairo.cairo_arc(self._cairobj, xc, yc, radius, angle1, angle2)
     #end arc
 
+    def arc_negative(self, centre, radius, angle1, angle2) :
+        cairo.cairo_arc_negative(self._cairobj, centre.x, centre.y, radius, angle1, angle2)
+    #end arc_negative
+
     def arc_negative_xy(self, xc, yc, radius, angle1, angle2) :
         cairo.cairo_arc_negative(self._cairobj, xc, yc, radius, angle1, angle2)
     #end arc_negative_xy
