@@ -536,13 +536,19 @@ def _ensure_ft() :
     #end if
 #end _ensure_ft
 
+fc_inited = False
+
 def _ensure_fc() :
     # ensures Fontconfig is usable, raising suitable exceptions if not.
-    if fc == None :
-        raise NotImplementedError("Fontconfig not available")
-    #end if
-    if not fc.FcInit() :
-        raise RuntimeError("failed to initialize Fontconfig.")
+    global fc_inited
+    if not fc_inited :
+        if fc == None :
+            raise NotImplementedError("Fontconfig not available")
+        #end if
+        if not fc.FcInit() :
+            raise RuntimeError("failed to initialize Fontconfig.")
+        #end if
+        fc_inited = True
     #end if
 #end _ensure_fc
 
