@@ -97,6 +97,14 @@ class CAIRO :
     EXTEND_REFLECT = 2
     EXTEND_PAD = 3
 
+    # cairo_filter_t codes
+    FILTER_FAST = 0
+    FILTER_GOOD = 1
+    FILTER_BEST = 2
+    FILTER_NEAREST = 3
+    FILTER_BILINEAR = 4
+    FILTER_GAUSSIAN = 5
+
     # cairo_operator_t codes
     OPERATOR_CLEAR = 0
 
@@ -369,10 +377,27 @@ cairo.cairo_pattern_status.argtypes = (ct.c_void_p,)
 cairo.cairo_pattern_destroy.argtypes = (ct.c_void_p,)
 cairo.cairo_pattern_reference.argtypes = (ct.c_void_p,)
 cairo.cairo_pattern_reference.restype = ct.c_void_p
+cairo.cairo_pattern_add_color_stop_rgb.argtypes = (ct.c_void_p, ct.c_double, ct.c_double, ct.c_double, ct.c_double)
+cairo.cairo_pattern_add_color_stop_rgba.argtypes = (ct.c_void_p, ct.c_double, ct.c_double, ct.c_double, ct.c_double, ct.c_double)
+cairo.cairo_pattern_get_color_stop_count.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_pattern_get_color_stop_rgba.argtypes = (ct.c_void_p, ct.c_int, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 cairo.cairo_pattern_create_rgb.argtypes = (ct.c_double, ct.c_double, ct.c_double)
 cairo.cairo_pattern_create_rgb.restype = ct.c_void_p
 cairo.cairo_pattern_create_rgba.argtypes = (ct.c_double, ct.c_double, ct.c_double, ct.c_double)
 cairo.cairo_pattern_create_rgba.restype = ct.c_void_p
+cairo.cairo_pattern_get_rgba.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+cairo.cairo_pattern_create_for_surface.restype = ct.c_void_p
+cairo.cairo_pattern_create_for_surface.argtypes = (ct.c_void_p,)
+cairo.cairo_pattern_create_linear.argtypes = (ct.c_double, ct.c_double, ct.c_double, ct.c_double)
+cairo.cairo_pattern_create_linear.restype = ct.c_void_p
+cairo.cairo_pattern_get_linear_points.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+cairo.cairo_pattern_create_radial.argtypes = (ct.c_double, ct.c_double, ct.c_double, ct.c_double, ct.c_double, ct.c_double)
+cairo.cairo_pattern_get_radial_circles.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+cairo.cairo_pattern_get_extend.argtypes = (ct.c_void_p,)
+cairo.cairo_pattern_set_extend.argtypes = (ct.c_void_p, ct.c_int)
+cairo.cairo_pattern_get_filter.argtypes = (ct.c_void_p,)
+cairo.cairo_pattern_set_filter.argtypes = (ct.c_void_p, ct.c_int)
+cairo.cairo_pattern_get_surface.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_pattern_get_matrix.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_pattern_set_matrix.argtypes = (ct.c_void_p, ct.c_void_p)
 
@@ -1406,7 +1431,8 @@ class Surface :
 
     def __eq__(self, other) :
         "do the two Surface objects refer to the same surface. Needed because" \
-        " Context.target cannot return the same Surface object each time."
+        " methods like Context.target and Pattern.surface cannot return the same" \
+        " Surface object each time."
         return \
             self._cairobj == other._cairobj
     #end __eq__
@@ -1497,7 +1523,38 @@ class Pattern :
             self._cairobj == other._cairobj
     #end __eq__
 
-    # TODO: color_stops
+    def add_color_stop_rgb(self, offset, r, g, b) :
+        "adds an opaque colour stop. This must be a gradient Pattern."
+        cairo.cairo_pattern_add_color_stop_rgb(self._cairobj, offset, r, g, b)
+        self._check()
+    #end add_color_stop_rgb
+
+    def add_color_stop_rgba(self, offset, r, g, b, a) :
+        "adds a colour stop. This must be a gradient Pattern."
+        cairo.cairo_pattern_add_color_stop_rgba(self._cairobj, offset, r, g, b, a)
+        self._check()
+    #end add_color_stop_rgba
+
+    @property
+    def color_stops_rgba(self) :
+        "a tuple of the currently-defined (offset, r, g, b, a) colour stops. This must" \
+        " be a gradient Pattern."
+        count = ct.c_int()
+        check(cairo.cairo_pattern_get_color_stop_count(self._cairobj, ct.byref(count)))
+        count = count.value
+        result = []
+        offset = ct.c_double()
+        r = ct.c_double()
+        g = ct.c_double()
+        b = ct.c_double()
+        a = ct.c_double()
+        for i in range(count) :
+            check(cairo.cairo_pattern_get_color_stop_rgba(self._cairobj, i, ct.byref(offset), ct.byref(r), ct.byref(g), ct.byref(b), ct.byref(a)))
+            result.append((offset.value, r.value, g.value, b.value, a.value))
+        #end for
+        return \
+            tuple(result)
+    #end color_stops_rgba
 
     @staticmethod
     def create_rgb(r, g, b) :
@@ -1513,9 +1570,133 @@ class Pattern :
             Pattern(cairo.cairo_pattern_create_rgba(r, g, b, a))
     #end create_rgb
 
-    # TODO: create linear, radial, mesh
+    @property
+    def rgba(self) :
+        "assumes the Pattern is a solid-colour pattern, returns its (r, g, b, a) colour."
+        r = ct.c_double()
+        g = ct.c_double()
+        b = ct.c_double()
+        a = ct.c_double()
+        check(cairo.cairo_pattern_get_rgba(self._cairobj, ct.byref(r), ct.byref(g), ct.byref(g), ct.byref(a)))
+        return \
+            (r.value, g.value, b.value, a.value)
+    #end rgba
 
-    # TODO: extend, filter
+    @staticmethod
+    def create_for_surface(surface) :
+        if not isinstance(surface, Surface) :
+            raise TypeError("surface is not a Surface")
+        #end if
+        return \
+            Pattern(cairo.cairo_pattern_create_for_surface(surface._cairobj))
+    #end create_for_surface
+
+    @property
+    def surface(self) :
+        "assuming there is a Surface for which this Pattern was created, returns the Surface."
+        surf = ct.c_void_p()
+        check(cairo.cairo_pattern_get_surface(self._cairobj, ct.byref(surf)))
+        return \
+            Surface(cairo.cairo_surface_reference(surf.value))
+    #end surface
+
+    @staticmethod
+    def create_linear(p0, p1) :
+        "creates a linear gradient Pattern that varies between the specified Vector" \
+        " points in pattern space."
+        return \
+            Pattern(cairo.cairo_pattern_create_linear(p0.x, p0.y, p1.x, p1.y))
+    #end create_linear
+
+    @property
+    def linear_p0(self) :
+        "the first Vector point for a linear gradient Pattern."
+        x = ct.c_double()
+        y = ct.c_double()
+        check(cairo.cairo_pattern_get_linear_points(self._cairobj, ct.byref(x), ct.byref(y), None, None))
+        return \
+            Vector(x.value, y.value)
+    #end linear_p0
+
+    @property
+    def linear_p1(self) :
+        "the second Vector point for a linear gradient Pattern."
+        x = ct.c_double()
+        y = ct.c_double()
+        check(cairo.cairo_pattern_get_linear_points(self._cairobj, None, None, ct.byref(x), ct.byref(y)))
+        return \
+            Vector(x.value, y.value)
+    #end linear_p1
+
+    @staticmethod
+    def create_radial(c0, r0, c1, r1) :
+        "creates a radial gradient Pattern varying between the circle centred at Vector c0," \
+        " radius r0 and the one centred at Vector c1, radius r1."
+        return \
+            Pattern(cairo.cairo_pattern_create_radial(c0.x, c0.y, r0, c1.x, c1.y, r1))
+    #end create_radial
+
+    @property
+    def radial_c0(self) :
+        "the centre of the start circle for a radial gradient Pattern."
+        x = ct.c_double()
+        y = ct.c_double()
+        check(cairo.cairo_pattern_get_radial_circles(self._cairobj, ct.byref(x), ct.byref(y), None, None, None, None))
+        return \
+            Vector(x.value, y.value)
+    #end radial_c0
+
+    @property
+    def radial_r0(self) :
+        "the radius of the start circle for a radial gradient Pattern."
+        r = ct.c_double()
+        check(cairo.cairo_pattern_get_radial_circles(self._cairobj, None, None, ct.byref(r), None, None, None))
+        return \
+            r.value
+    #end radial_r0
+
+    @property
+    def radial_c1(self) :
+        "the centre of the end circle for a radial gradient Pattern."
+        x = ct.c_double()
+        y = ct.c_double()
+        check(cairo.cairo_pattern_get_radial_circles(self._cairobj, None, None, None, ct.byref(x), ct.byref(y), None))
+        return \
+            Vector(x.value, y.value)
+    #end radial_c1
+
+    @property
+    def radial_r1(self) :
+        "the radius of the end circle for a radial gradient Pattern."
+        r = ct.c_double()
+        check(cairo.cairo_pattern_get_radial_circles(self._cairobj, None, None, None, None, None, ct.byref(r)))
+        return \
+            r.value
+    #end radial_r1
+
+    # TODO: mesh patterns
+
+    @property
+    def extend(self) :
+        return \
+            cairo.cairo_pattern_get_extend(self._cairobj)
+    #end extend
+
+    @extend.setter
+    def extend(self, ext) :
+        cairo.cairo_pattern_set_extend(self._cairobj, ext)
+    #end extend
+
+    @property
+    def filter(self) :
+        return \
+            cairo.cairo_pattern_get_filter(self._cairobj)
+    #end filter
+
+    @filter.setter
+    def filter(self, filt) :
+        cairo.cairo_pattern_set_filter(self._cairobj, filt)
+    #end filter
 
     @property
     def matrix(self) :
