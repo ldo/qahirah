@@ -759,12 +759,12 @@ class Matrix :
         "returns concatenation with another Matrix."
         return Matrix \
           (
-            xx = m2.xx * m1.xx + m2.xy * m1.yx,
-            yx = m2.yx * m1.xx + m2.yy * m1.yx,
-            xy = m2.xx * m1.xy + m2.xy * m1.yy,
-            yy = m2.yx * m1.xy + m2.yy * m1.yy,
-            x0 = m2.xx * m1.x0 + m2.xy * m1.y0 + m2.x0,
-            y0 = m2.yx * m1.x0 + m2.yy * m1.y0 + m2.y0,
+            xx = m1.xx * m2.xx + m1.xy * m2.yx,
+            yx = m1.yx * m2.xx + m1.yy * m2.yx,
+            xy = m1.xx * m2.xy + m1.xy * m2.yy,
+            yy = m1.yx * m2.xy + m1.yy * m2.yy,
+            x0 = m1.xx * m2.x0 + m1.xy * m2.y0 + m1.x0,
+            y0 = m1.yx * m2.x0 + m1.yy * m2.y0 + m1.y0,
           )
     #end __mul__
 
