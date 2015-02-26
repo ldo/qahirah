@@ -1052,15 +1052,15 @@ class Rect :
         return Rect(left = left, top = top, width = self.width, height = self.height)
     #end align
 
-    def transform_to(self, dst) :
+    def transform_to(src, dst) :
         "returns a Matrix which maps this Rect into dst Rect."
         return \
             (
                 Matrix.translation(dst.topleft)
             *
-                Matrix.scaling(dst.dimensions / self.dimensions)
+                Matrix.scaling(dst.dimensions / src.dimensions)
             *
-                Matrix.translation(- self.topleft)
+                Matrix.translation(- src.topleft)
             )
     #end transform_to
 
@@ -1593,6 +1593,7 @@ class Context :
     # TODO: user to/from device
 
     # TODO: Text <http://cairographics.org/manual/cairo-text.html>
+    # (except toy_font_face stuff, which goes in FontFace)
 
 #end Context
 
@@ -2245,6 +2246,8 @@ class FontFace :
     #end create_for_pattern
 
     # TODO: synthesize, user data
+
+    # TODO: toy font face functions from <http://cairographics.org/manual/cairo-text.html>
 
 #end FontFace
 
