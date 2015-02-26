@@ -297,6 +297,10 @@ class CAIRO :
 
 #end CAIRO
 
+#+
+# Routine arg/result types
+#-
+
 cairo.cairo_version_string.restype = ct.c_char_p
 cairo.cairo_status_to_string.restype = ct.c_char_p
 
@@ -551,6 +555,10 @@ def _ensure_fc() :
         fc_inited = True
     #end if
 #end _ensure_fc
+
+#+
+# Higher-level stuff begins here
+#-
 
 def version() :
     "returns the Cairo version as a single integer."
