@@ -1471,29 +1471,38 @@ class Context :
         cairo.cairo_arc_negative(self._cairobj, xc, yc, radius, angle1, angle2)
     #end arc_negative_xy
 
-    def curve_to(self, p1, p2, p3) :
-        cairo.cairo_curve_to(self._cairobj, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y)
+    def curve_to(self, *args) :
+        "curve_to(p1, p2, p3) or curve_to(x1, y1, x2, y2, x3, y3)."
+        if len(args) == 3 :
+            cairo.cairo_curve_to(self._cairobj, args[0].x, args[0].y, args[1].x, args[1].y, args[2].x, args[2].y)
+        elif len(args) == 6 :
+            cairo.cairo_curve_to(self._cairobj, args[0], args[1], args[2], args[3], args[4], args[5])
+        else :
+            raise TypeError("either pass 3 Vectors or 6 coordinates")
+        #end if
     #end curve_to
 
-    def curve_to_xy(self, x1, y1, x2, y2, x3, y3) :
-        cairo.cairo_curve_to(self._cairobj, x1, y1, x2, y2, x3, y3)
-    #end curve_to_xy
-
-    def line_to(self, p) :
-        cairo.cairo_line_to(self._cairobj, p.x, p.y)
+    def line_to(self, *args) :
+        "line_to(p) or line_to(x, y)"
+        if len(args) == 1 :
+            cairo.cairo_line_to(self._cairobj, args[0].x, args[0].y)
+        elif len(args) == 2 :
+            cairo.cairo_line_to(self._cairobj, args[0], args[1])
+        else :
+            raise TypeError("either pass 1 Vector or 2 coordinates")
+        #end if
     #end line_to
 
-    def line_to_xy(self, x, y) :
-        cairo.cairo_line_to(self._cairobj, x, y)
-    #end line_to_xy
-
-    def move_to(self, p) :
-        cairo.cairo_move_to(self._cairobj, p.x, p.y)
+    def move_to(self, *args) :
+        "move_to(p) or move_to(x, y)"
+        if len(args) == 1 :
+            cairo.cairo_move_to(self._cairobj, args[0].x, args[0].y)
+        elif len(args) == 2 :
+            cairo.cairo_move_to(self._cairobj, args[0], args[1])
+        else :
+            raise TypeError("either pass 1 Vector or 2 coordinates")
+        #end if
     #end move_to
-
-    def move_to_xy(self, x, y) :
-        cairo.cairo_move_to(self._cairobj, x, y)
-    #end move_to_xy
 
     def rectangle(self, rect) :
         cairo.cairo_rectangle(self._cairobj, rect.left, rect.top, rect.width, rect.height)
