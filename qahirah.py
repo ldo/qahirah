@@ -476,15 +476,8 @@ if fc != None :
     fc.FcConfigSubstitute.restype = ct.c_bool
     fc.FcDefaultSubstitute.argtypes = (ct.c_void_p,)
     fc.FcDefaultSubstitute.restype = None
-    fc.FcPatternGetString.argtypes = (ct.c_void_p, ct.c_char_p, ct.c_int, ct.c_void_p)
-    fc.FcPatternGetString.restype = ct.c_int
-    fc.FcPatternGetInteger.argtypes = (ct.c_void_p, ct.c_char_p, ct.c_int, ct.c_void_p)
-    fc.FcPatternGetInteger.restype = ct.c_int
     fc.FcPatternDestroy.argtypes = (ct.c_void_p,)
     fc.FcPatternDestroy.restype = None
-    fc.FcFreeTypeQueryFace.restype = ct.c_void_p
-    fc.FcNameUnparse.argtypes = (ct.c_void_p,)
-    fc.FcNameUnparse.restype = ct.c_void_p
 
     class _FC :
         # minimal Fontconfig interface, just sufficient for my needs.
