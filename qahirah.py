@@ -928,6 +928,18 @@ class Rect :
     #end from_cairo
 
     @property
+    def bottom(self) :
+        return \
+            self.top + self.height
+    #end bottom
+
+    @property
+    def right(self) :
+        return \
+            self.left + self.width
+    #end right
+
+    @property
     def topleft(self) :
         "the top-left corner point."
         return \
