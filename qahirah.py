@@ -1040,6 +1040,18 @@ class Rect :
         return Rect(left = left, top = top, width = self.width, height = self.height)
     #end align
 
+    def transform_to(self, dst) :
+        "returns a Matrix which maps this Rect into dst Rect."
+        return \
+            (
+                Matrix.translation(dst.topleft)
+            *
+                Matrix.scaling(dst.dimensions / self.dimensions)
+            *
+                Matrix.translation(- self.topleft)
+            )
+    #end transform_to
+
 #end Rect
 
 class Glyph :
