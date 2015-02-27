@@ -524,6 +524,7 @@ cairo.cairo_font_extents.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_text_extents.argtypes = (ct.c_void_p, ct.c_char_p, ct.c_void_p)
 cairo.cairo_glyph_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_void_p)
 
+cairo.cairo_surface_status.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_reference.restype = ct.c_void_p
 cairo.cairo_surface_reference.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_destroy.argtypes = (ct.c_void_p,)
@@ -1935,9 +1936,14 @@ class Context :
 class Surface :
     "base class for Cairo surfaces. Do not instantiate directly."
 
+    def _check(self) :
+        # check for error from last operation on this Surface.
+        check(cairo.cairo_surface_status(self._cairobj))
+    #end _check
+
     def __init__(self, _cairobj) :
         self._cairobj = _cairobj
-        check(cairo.cairo_surface_status(_cairobj))
+        self._check()
     #end __init__
 
     def __del__(self) :
@@ -1991,26 +1997,34 @@ class ImageSurface(Surface) :
 
     @property
     def format(self) :
+        result = cairo.cairo_image_surface_get_format(self._cairobj)
+        self._check()
         return \
-            cairo.cairo_image_surface_get_format(self._cairobj)
+            result
     #end format
 
     @property
     def width(self) :
+        result = cairo.cairo_image_surface_get_width(self._cairobj)
+        self._check()
         return \
-            cairo.cairo_image_surface_get_width(self._cairobj)
+            result
     #end width
 
     @property
     def height(self) :
+        result = cairo.cairo_image_surface_get_height(self._cairobj)
+        self._check()
         return \
-            cairo.cairo_image_surface_get_height(self._cairobj)
+            result
     #end height
 
     @property
     def stride(self) :
+        result = cairo.cairo_image_surface_get_stride(self._cairobj)
+        self._check()
         return \
-            cairo.cairo_image_surface_get_stride(self._cairobj)
+            result
     #end stride
 
     @staticmethod
