@@ -967,7 +967,7 @@ class Matrix :
 
     @staticmethod
     def scaling(factor) :
-        "returns a matrix that scales by the specified scalar or Vector factors."
+        "returns a Matrix that scales by the specified scalar or Vector factors."
         if isinstance(factor, Number) :
             result = Matrix(factor, 0, 0, factor, 0, 0)
         elif isinstance(factor, Vector) :
@@ -987,6 +987,16 @@ class Matrix :
         sin = math.sin(angle)
         return Matrix(cos, -sin, sin, cos, 0, 0)
     #end rotation
+
+    @staticmethod
+    def skewing(vec) :
+        "returns a Matrix that skews by the specified vec.x and vec.y factors."
+        if not isinstance(vec, Vector) :
+            raise TypeError("vec must be a Vector")
+        #end if
+        return \
+            Matrix(1, vec.y, 0, vec.x, 1, 0)
+    #end skewing
 
     def det(self) :
         "matrix determinant."
