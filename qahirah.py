@@ -545,6 +545,9 @@ cairo.cairo_get_font_options.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_set_font_face.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_get_font_face.restype = ct.c_void_p
 cairo.cairo_get_font_face.argtypes = (ct.c_void_p,)
+cairo.cairo_set_scaled_font.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_get_scaled_font.restype = ct.c_void_p
+cairo.cairo_get_scaled_font.argtypes = (ct.c_void_p,)
 cairo.cairo_show_text.argtypes = (ct.c_void_p, ct.c_char_p)
 cairo.cairo_show_glyphs.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_font_extents.argtypes = (ct.c_void_p, ct.c_void_p)
@@ -626,6 +629,20 @@ cairo.cairo_ft_font_face_create_for_ft_face.restype = ct.c_void_p
 cairo.cairo_ft_font_face_create_for_pattern.argtypes = (ct.c_void_p,)
 cairo.cairo_ft_font_face_create_for_pattern.restype = ct.c_void_p
 cairo.cairo_ft_font_options_substitute.argtypes = (ct.c_void_p, ct.c_void_p)
+
+cairo.cairo_scaled_font_destroy.argtypes = (ct.c_void_p,)
+cairo.cairo_scaled_font_status.argtypes = (ct.c_void_p,)
+cairo.cairo_scaled_font_create.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+cairo.cairo_scaled_font_extents.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_scaled_font_text_extents.argtypes = (ct.c_void_p, ct.c_char_p, ct.c_void_p)
+cairo.cairo_scaled_font_glyph_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_void_p)
+cairo.cairo_scaled_font_get_font_face.restype = ct.c_void_p
+cairo.cairo_scaled_font_get_font_face.argtypes = (ct.c_void_p,)
+cairo.cairo_scaled_font_get_font_options.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_scaled_font_get_font_matrix.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_scaled_font_get_ctm.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_scaled_font_get_scale_matrix.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_scaled_font_get_type.argtypes = (ct.c_void_p,)
 
 if fc != None :
     fc.FcInit.restype = ct.c_bool
@@ -1918,7 +1935,20 @@ class Context :
         cairo.cairo_set_font_face(self._cairobj, font_face._cairobj)
     #end font_face
 
-    # TODO: scaled_font
+    @property
+    def scaled_font(self) :
+        "the current scaled font."
+        return \
+            FontFace(cairo.cairo_get_scaled_font(self._cairobj))
+    #end scaled_font
+
+    @scaled_font.setter
+    def scaled_font(self, scaled_font) :
+        if not isinstance(scaled_font, ScaledFont) :
+            raise TypeError("scaled_font must be a ScaledFont")
+        #end if
+        cairo.cairo_set_scaled_font(self._cairobj, scaled_font._cairobj)
+    #end scaled_font
 
     def show_text(self, text) :
         cairo.cairo_show_text(self._cairobj, text.encode("utf-8"))
@@ -2588,6 +2618,13 @@ class FontFace :
         #end if
     #end __del__
 
+    def __eq__(self, other) :
+        "do the two FontFace objects refer to the same FontFace. Needed because" \
+        " ScaledFont.font_face cannot return the same FontFace object each time."
+        return \
+            self._cairobj == other._cairobj
+    #end __eq__
+
     @property
     def type(self) :
         "the type of font underlying this FontFace."
@@ -2698,7 +2735,129 @@ class FontFace :
 
 #end FontFace
 
-# TODO: scaled_font_face_t, user fonts
+class ScaledFont :
+    "a representation of a Cairo scaled_font_t, which is a font with particular" \
+    " size and option settings. Do not instantiate directly; use the create method," \
+    " or get one from Context.scaled_font."
+
+    def _check(self) :
+        # check for error from last operation on this ScaledFont.
+        check(cairo.cairo_scaled_font_status(self._cairobj))
+    #end _check
+
+    def __init__(self, _cairobj) :
+        self._cairobj = _cairobj
+        self._check()
+    #end __init__
+
+    def __del__(self) :
+        if self._cairobj != None :
+            cairo.cairo_scaled_font_destroy(self._cairobj)
+            self._cairobj = None
+        #end if
+    #end __del__
+
+    @staticmethod
+    def create(font_face, font_matrix, ctm, options) :
+        "creates a ScaledFont from the specified FontFace, Matrix font_matrix" \
+        " and ctm, and FontOptions options."
+        if not isinstance(font_face, FontFace) :
+            raise TypeError("font_face must be a FontFace")
+        #end if
+        if not isinstance(font_matrix, Matrix) or not isinstance(ctm, Matrix) :
+            raise TypeError("font_matrix and ctm must be Matrix objects")
+        #end if
+        if not isinstance(options, FontOptions) :
+            raise TypeError("options must be a FontOptions")
+        #end if
+        font_matrix = font_matrix.to_cairo()
+        ctm = ctm.to_cairo()
+        return \
+            ScaledFont(cairo.cairo_scaled_font_create(self._cairobj, ct.byref(font_matrix), ct.byref(ctm), options._cairobj))
+    #end create
+
+    @property
+    def font_extents(self) :
+        "returns a FontExtents object giving information about the font settings."
+        result = CAIRO.font_extents_t()
+        cairo.cairo_scaled_font_extents(self._cairobj, ct.byref(result))
+        return \
+            FontExtents.from_cairo(result)
+    #end font_extents
+
+    def text_extents(self, text) :
+        "returns a TextExtents object giving information about drawing the" \
+        " specified text at the font settings."
+        result = CAIRO.text_extents_t()
+        cairo.cairo_scaled_font_text_extents(self._cairobj, text.encode("utf-8"), ct.byref(result))
+        return \
+            TextExtents.from_cairo(result)
+    #end text_extents
+
+    def glyph_extents(self, glyphs) :
+        "returns a TextExtents object giving information about drawing the" \
+        " specified glyphs at the font settings."
+        buf, nr_glyphs = glyphs_to_cairo(glyphs)
+        result = CAIRO.text_extents_t()
+        cairo.cairo_scaled_font_glyph_extents(self._cairobj, buf, nr_glyphs, ct.byref(result))
+        return \
+            TextExtents.from_cairo(result)
+    #end glyph_extents
+
+    @property
+    def font_face(self) :
+        return \
+            FontFace(cairo.cairo_scaled_font_get_font_face(self._cairobj))
+    #end font_face
+
+    @property
+    def font_options(self) :
+        "a copy of the font options."
+        result = FontOptions()
+        cairo.cairo_scaled_font_get_font_options(self._cairobj, result._cairobj)
+        return \
+            result
+    #end font_options
+
+    @property
+    def font_matrix(self) :
+        "the font matrix."
+        result = CAIRO.matrix_t()
+        cairo.cairo_scaled_font_get_font_matrix(self._cairobj, ct.byref(result))
+        return \
+            Matrix.from_cairo(result)
+    #end font_matrix
+
+    @property
+    def ctm(self) :
+        "the transformation matrix."
+        result = CAIRO.matrix_t()
+        cairo.cairo_scaled_font_get_ctm(self._cairobj, ct.byref(result))
+        return \
+            Matrix.from_cairo(result)
+    #end ctm
+
+    @property
+    def scale_matrix(self) :
+        "the scale matrix."
+        result = CAIRO.matrix_t()
+        cairo.cairo_scaled_font_get_scale_matrix(self._cairobj, ct.byref(result))
+        return \
+            Matrix.from_cairo(result)
+    #end scale_matrix
+
+    @property
+    def type(self) :
+        "the type of font underlying this FontFace."
+        return \
+            cairo.cairo_scaled_font_get_type(self._cairobj)
+    #end type
+
+    # TODO: user data
+
+#end ScaledFont
+
+# TODO: user fonts
 
 FontExtents = def_struct_class \
   (
