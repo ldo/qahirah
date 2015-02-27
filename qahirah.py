@@ -295,7 +295,108 @@ class CAIRO :
 
     destroy_func_t = ct.CFUNCTYPE(None, ct.c_void_p)
 
+    class font_extents_t(ct.Structure) :
+        _fields_ = \
+            [
+                ("ascent", ct.c_double),
+                ("descent", ct.c_double),
+                ("height", ct.c_double),
+                ("max_x_advance", ct.c_double),
+                ("max_y_advance", ct.c_double),
+            ]
+    #end font_extents_t
+
+    class text_extents_t(ct.Structure) :
+        _fields_ = \
+            [
+                ("x_bearing", ct.c_double),
+                ("y_bearing", ct.c_double),
+                ("width", ct.c_double),
+                ("height", ct.c_double),
+                ("x_advance", ct.c_double),
+                ("y_advance", ct.c_double),
+            ]
+    #end text_extents_t
+
+    # codes for cairo_font_slant_t
+    FONT_SLANT_NORMAL = 0
+    FONT_SLANT_ITALIC = 1
+    FONT_SLANT_OBLIQUE = 2
+
+    # codes for cairo_font_weight_t
+    FONT_WEIGHT_NORMAL = 0
+    FONT_WEIGHT_BOLD = 1
+
 #end CAIRO
+
+def def_struct_class(name, ctname) :
+    # defines a class with attributes that are a straightforward mapping
+    # of a ctypes struct.
+
+    decode_cttypes = {ct.c_double : float} # the only field types I need to handle
+
+    ctstruct = getattr(CAIRO, ctname)
+
+    class result_class :
+
+        def to_cairo(self) :
+            "returns a Cairo representation of the structure."
+            result = ctstruct()
+            for name, cttype in ctstruct._fields_ :
+                setattr(result, name, getattr(self, name))
+            #end for
+            return \
+                result
+        #end to_cairo
+
+        @staticmethod
+        def from_cairo(r) :
+            "decodes the Cairo representation of the structure."
+            result = result_class()
+            for name, cttype in ctstruct._fields_ :
+                if cttype not in decode_cttypes :
+                    raise NotImplemented("cannot handle field type")
+                #end if
+                setattr(result, name, decode_cttypes[cttype](getattr(r, name)))
+            #end for
+            return \
+                result
+        #end from_cairo
+
+        def __repr__(self) :
+            return \
+                (
+                    "%s(%s)"
+                %
+                    (
+                        name,
+                        ", ".join
+                          (
+                            "%s = %s" % (field[0], getattr(self, field[0]))
+                            for field in ctstruct._fields_
+                          ),
+                    )
+                )
+        #end __repr__
+
+    #end result_class
+
+#begin def_struct_class
+    result_class.__name__ = name
+    result_class.__doc__ = \
+        (
+            "representation of a Cairo %s structure. Fields are %s."
+            "\nCreate by decoding the Cairo form with the from_cairo method;"
+            " convert an instance to Cairo form with the to_cairo method."
+        %
+            (
+                ctname,
+                ", ".join(f[0] for f in ctstruct._fields_),
+            )
+        )
+    return \
+        result_class
+#end def_struct_class
 
 #+
 # Routine arg/result types
@@ -406,6 +507,21 @@ cairo.cairo_in_stroke.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
 
 cairo.cairo_path_destroy.argtypes = (ct.c_void_p,)
 
+cairo.cairo_set_font_size.argtypes = (ct.c_void_p, ct.c_double)
+cairo.cairo_set_font_matrix.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_get_font_matrix.argtypes = (ct.c_void_p,)
+cairo.cairo_get_font_matrix.restype = ct.c_void_p
+cairo.cairo_set_font_options.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_get_font_options.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_set_font_face.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_get_font_face.restype = ct.c_void_p
+cairo.cairo_get_font_face.argtypes = (ct.c_void_p,)
+cairo.cairo_show_text.argtypes = (ct.c_void_p, ct.c_char_p)
+cairo.cairo_show_glyphs.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_font_extents.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_text_extents.argtypes = (ct.c_void_p, ct.c_char_p, ct.c_void_p)
+cairo.cairo_glyph_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_void_p)
+
 cairo.cairo_surface_reference.restype = ct.c_void_p
 cairo.cairo_surface_reference.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_destroy.argtypes = (ct.c_void_p,)
@@ -466,11 +582,17 @@ cairo.cairo_font_options_set_hint_metrics.argtypes = (ct.c_void_p, ct.c_int)
 
 cairo.cairo_font_face_status.argtypes = (ct.c_void_p,)
 cairo.cairo_font_face_get_type.argtypes = (ct.c_void_p,)
+cairo.cairo_font_face_set_user_data.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+cairo.cairo_toy_font_face_create.argtypes = (ct.c_char_p, ct.c_int, ct.c_int)
+cairo.cairo_toy_font_face_create.restype = ct.c_void_p
+cairo.cairo_toy_font_face_get_family.argtypes = (ct.c_void_p,)
+cairo.cairo_toy_font_face_get_family.restype = ct.c_char_p
+cairo.cairo_toy_font_face_get_slant.argtypes = (ct.c_void_p,)
+cairo.cairo_toy_font_face_get_weight.argtypes = (ct.c_void_p,)
 cairo.cairo_ft_font_face_create_for_ft_face.argtypes = (ct.c_void_p, ct.c_int)
 cairo.cairo_ft_font_face_create_for_ft_face.restype = ct.c_void_p
 cairo.cairo_ft_font_face_create_for_pattern.argtypes = (ct.c_void_p,)
 cairo.cairo_ft_font_face_create_for_pattern.restype = ct.c_void_p
-cairo.cairo_font_face_set_user_data.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 cairo.cairo_ft_font_options_substitute.argtypes = (ct.c_void_p, ct.c_void_p)
 
 if fc != None :
@@ -1110,6 +1232,18 @@ class Glyph :
 
 #end Glyph
 
+def glyphs_to_cairo(glyphs) :
+    "converts a sequence of Glyph objects to Cairo form."
+    nr_glyphs = len(glyphs)
+    buf = (nr_glyphs * CAIRO.glyph_t)()
+    for i in range(nr_glyphs) :
+        src = glyphs[i]
+        buf[i] = CAIRO.glyph_t(src.index, src.pos.x, src.pos.y)
+    #end for
+    return \
+        buf, nr_glyphs
+#end glyphs_to_cairo
+
 class Context :
     "a Cairo drawing context. Instantiate with a Surface object."
     # <http://cairographics.org/manual/cairo-cairo-t.html>
@@ -1541,12 +1675,7 @@ class Context :
 
     def glyph_path(self, glyphs) :
         "glyphs is a sequence of Glyph objects."
-        nr_glyphs = len(glyphs)
-        buf = (nr_glyphs * CAIRO.glyph_t)()
-        for i in range(nr_glyphs) :
-            src = glyphs[i]
-            buf[i] = CAIRO.glyph_t(src.index, src.pos.x, src.pos.y)
-        #end for
+        buf, nr_glyphs = glyphs_to_cairo(glyphs)
         cairo.cairo_glyph_path(self._cairobj, ct.byref(buf), nr_glyphs)
     #end glyph_path
 
@@ -1636,8 +1765,100 @@ class Context :
 
     # TODO: user to/from device
 
-    # TODO: Text <http://cairographics.org/manual/cairo-text.html>
+    # Text <http://cairographics.org/manual/cairo-text.html>
     # (except toy_font_face stuff, which goes in FontFace)
+
+    def set_font_size(self, size) :
+        "sets the font matrix to a scaling by the specified size."
+        cairo.cairo_set_font_size(self._cairobj, size)
+    #end set_font_size
+
+    @property
+    def font_matrix(self) :
+        "the current font matrix."
+        result = CAIRO.matrix_t()
+        cairo.cairo_get_font_matrix(self._cairobj, ct.byref(result))
+        return \
+            Matrix.from_cairo(result)
+    #end font_matrix
+
+    @font_matrix.setter
+    def font_matrix(self, matrix) :
+        if not isinstance(matrix, Matrix) :
+            raise TypeError("matrix must be a Matrix")
+        #end if
+        matrix = matrix.from_cairo()
+        cairo.cairo_set_font_matrix(self._cairobj, ct.byref(matrix))
+    #end font_matrix
+
+    @property
+    def font_options(self) :
+        "a copy of the current font options."
+        result = FontOptions()
+        cairo.cairo_get_font_options(self._cairobj, result._cairobj)
+        return \
+            result
+    #end font_options
+
+    @font_options.setter
+    def font_options(self, options) :
+        if not isinstance(options, FontOptions) :
+            raise TypeError("options must be a FontOptions")
+        #end if
+        cairo.cairo_set_font_options(self._cairobj, options._cairobj)
+    #end font_options
+
+    @property
+    def font_face(self) :
+        "the current font face."
+        return \
+            FontFace(cairo.cairo_get_font_face(self._cairobj))
+    #end font_face
+
+    @font_face.setter
+    def font_face(self, font_face) :
+        if not isinstance(font_face, FontFace) :
+            raise TypeError("font_face must be a FontFace")
+        #end if
+        cairo.cairo_set_font_face(self._cairobj, font_face._cairobj)
+    #end font_face
+
+    # TODO: scaled_font
+
+    def show_text(self, text) :
+        cairo.cairo_show_text(self._cairobj, text.encode("utf-8"))
+    #end show_text
+
+    def show_glyphs(self, glyphs) :
+        "glyphs must be a sequence of Glyph objects."
+        buf, nr_glyphs = glyphs_to_cairo(glyphs)
+        cairo.cairo_show_glyphs(self._cairobj, ct.byref(buf), nr_glyphs)
+    #end show_glyphs
+
+    # TODO: show_text_glyphs
+
+    @property
+    def font_extents(self) :
+        result = CAIRO.font_extents_t()
+        cairo.cairo_font_extents(self._cairobj, ct.byref(result))
+        return \
+            FontExtents.from_cairo(result)
+    #end font_extents
+
+    def text_extents(self, text) :
+        result = CAIRO.text_extents_t()
+        cairo.cairo_text_extents(self._cairobj, text.encode("utf-8"), ct.byref(result))
+        return \
+            TextExtents.from_cairo(result)
+    #end text_extents
+
+    def glyph_extents(self, glyphs) :
+        buf, nr_glyphs = glyphs_to_cairo(glyphs)
+        result = CAIRO.text_extents_t()
+        cairo.cairo_glyph_extents(self._cairobj, buf, nr_glyphs, ct.byref(result))
+        return \
+            TextExtents.from_cairo(result)
+    #end glyph_extents
 
 #end Context
 
@@ -2310,8 +2531,51 @@ class FontFace :
 
     # TODO: synthesize, user data
 
-    # TODO: toy font face functions from <http://cairographics.org/manual/cairo-text.html>
+    # toy font face functions from <http://cairographics.org/manual/cairo-text.html>
+
+    @staticmethod
+    def toy_font_face_create(family, slant, weight) :
+        return \
+            FontFace(cairo.cairo_toy_font_face_create(family.encode("utf-8"), slant, weight))
+    #end toy_font_face_create
+
+    @property
+    def toy_font_face_family(self) :
+        result = cairo.cairo_toy_font_face_get_family(self._cairobj)
+        self._check()
+        return \
+            result.decode("utf-8")
+    #end toy_font_face_family
+
+    @property
+    def toy_font_face_slant(self) :
+        result = cairo.cairo_toy_font_face_get_slant(self._cairobj)
+        self._check()
+        return \
+            result
+    #end toy_font_face_slant
+
+    @property
+    def toy_font_face_weight(self) :
+        result = cairo.cairo_toy_font_face_get_weight(self._cairobj)
+        self._check()
+        return \
+            result
+    #end toy_font_face_slant
 
 #end FontFace
 
 # TODO: scaled_font_face_t, user fonts
+
+FontExtents = def_struct_class \
+  (
+    name = "FontExtents",
+    ctname = "font_extents_t"
+  )
+TextExtents = def_struct_class \
+  (
+    name = "TextExtents",
+    ctname = "text_extents_t"
+  )
+
+del def_struct_class # my work is done
