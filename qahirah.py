@@ -1428,20 +1428,20 @@ class Context :
 
     @property
     def operator(self) :
-        "the current drawing operator."
+        "the current drawing operator, as a CAIRO.OPERATOR_xxx code."
         return \
             cairo.cairo_get_operator(self._cairobj)
     #end operator
 
     @operator.setter
     def operator(self, op) :
-        "sets a new drawing operator."
         cairo.cairo_set_operator(self._cairobj, int(op))
         self._check()
     #end operator
 
     @property
     def tolerance(self) :
+        "the curve-flattening tolerance."
         return \
             cairo.cairo_get_tolerance(self._cairobj)
     #end tolerance
@@ -1452,10 +1452,14 @@ class Context :
     #end tolerance
 
     def clip(self) :
+        "sets the current clip to the intersection of itself and the" \
+        " current path, clearing the latter."
         cairo.cairo_clip(self._cairobj)
     #end clip
 
     def clip_preserve(self) :
+        "sets the current clip to the intersection of itself and the" \
+        " current path, preserving the latter."
         cairo.cairo_clip_preserve(self._cairobj)
     #end clip_preserve
 
@@ -1493,10 +1497,12 @@ class Context :
     #end reset_clip
 
     def fill(self) :
+        "fills the current path, then clears it."
         cairo.cairo_fill(self._cairobj)
     #end fill
 
     def fill_preserve(self) :
+        "fills the current path, preserving it."
         cairo.cairo_fill_preserve(self._cairobj)
     #end fill_preserve
 
@@ -1541,10 +1547,12 @@ class Context :
     #end paint_with_alpha
 
     def stroke(self) :
+        "strokes the current path, and clears it."
         cairo.cairo_stroke(self._cairobj)
     #end stroke
 
     def stroke_preserve(self) :
+        "strokes the current path, preserving it."
         cairo.cairo_stroke_preserve(self._cairobj)
     #end stroke_preserve
 
@@ -1609,18 +1617,22 @@ class Context :
     #end current_point
 
     def new_path(self) :
+        "clears the current path."
         cairo.cairo_new_path(self._cairobj)
     #end new_path
 
     def new_sub_path(self) :
+        "clears the current_point without actually affecting the current path."
         cairo.cairo_new_sub_path(self._cairobj)
     #end new_sub_path
 
     def close_path(self) :
+        "draws a line from the current point back to the start of the current path segment."
         cairo.cairo_close_path(self._cairobj)
     #end close_path
 
     def arc(self, centre, radius, angle1, angle2) :
+        "draws a segment of a circular arc in the clockwise direction."
         cairo.cairo_arc(self._cairobj, centre.x, centre.y, radius, angle1, angle2)
     #end arc
 
@@ -1629,6 +1641,7 @@ class Context :
     #end arc
 
     def arc_negative(self, centre, radius, angle1, angle2) :
+        "draws a segment of a circular arc in the anticlockwise direction."
         cairo.cairo_arc_negative(self._cairobj, centre.x, centre.y, radius, angle1, angle2)
     #end arc_negative
 
@@ -1680,6 +1693,7 @@ class Context :
     #end glyph_path
 
     def text_path(self, text) :
+        "adds text outlines to the current path."
         cairo.cairo_text_path(self._cairobj, text.encode("utf-8"))
     #end text_path
 
@@ -1739,13 +1753,14 @@ class Context :
     #end rotate
 
     def transform(self, m) :
+        "appends Matrix m onto the current coordinate transformation."
         m = m.to_cairo()
         cairo.cairo_transform(self._cairobj, ct.byref(m))
     #end transform
 
     @property
     def matrix(self) :
-        "the current transformation matrix."
+        "the current transformation Matrix."
         result = CAIRO.matrix_t()
         cairo.cairo_get_matrix(self._cairobj, ct.byref(result))
         return \
@@ -1760,6 +1775,7 @@ class Context :
     #end matrix
 
     def identity_matrix(self) :
+        "resets the coordinate transformation to the identity Matrix."
         cairo.cairo_identity_matrix(self._cairobj)
     #end identity_matrix
 
@@ -1839,6 +1855,7 @@ class Context :
 
     @property
     def font_extents(self) :
+        "returns a FontExtents object giving information about the current font settings."
         result = CAIRO.font_extents_t()
         cairo.cairo_font_extents(self._cairobj, ct.byref(result))
         return \
@@ -1846,6 +1863,8 @@ class Context :
     #end font_extents
 
     def text_extents(self, text) :
+        "returns a TextExtents object giving information about drawing the" \
+        " specified text at the current font settings."
         result = CAIRO.text_extents_t()
         cairo.cairo_text_extents(self._cairobj, text.encode("utf-8"), ct.byref(result))
         return \
@@ -1853,6 +1872,8 @@ class Context :
     #end text_extents
 
     def glyph_extents(self, glyphs) :
+        "returns a TextExtents object giving information about drawing the" \
+        " specified glyphs at the current font settings."
         buf, nr_glyphs = glyphs_to_cairo(glyphs)
         result = CAIRO.text_extents_t()
         cairo.cairo_glyph_extents(self._cairobj, buf, nr_glyphs, ct.byref(result))
@@ -2147,6 +2168,7 @@ class Pattern :
 
     @property
     def extend(self) :
+        "how to extend the Pattern to cover a larger area, as a CAIRO.EXTEND_xxx code."
         return \
             cairo.cairo_pattern_get_extend(self._cairobj)
     #end extend
@@ -2158,6 +2180,7 @@ class Pattern :
 
     @property
     def filter(self) :
+        "how to resize the Pattern, as a CAIRO.FILTER_xxx code."
         return \
             cairo.cairo_pattern_get_filter(self._cairobj)
     #end filter
@@ -2169,6 +2192,7 @@ class Pattern :
 
     @property
     def matrix(self) :
+        "the transformation from user space to Pattern space."
         result = CAIRO.matrix_t()
         cairo.cairo_pattern_get_matrix(self._cairobj, ct.byref(result))
         return \
@@ -2181,9 +2205,9 @@ class Pattern :
         cairo.cairo_pattern_set_matrix(self._cairobj, ct.byref(m))
     #end matrix
 
-    # TODO: Raster Sources <http://cairographics.org/manual/cairo-Raster-Sources.html>
-
     # TODO: user data
+
+    # TODO: Raster Sources <http://cairographics.org/manual/cairo-Raster-Sources.html>
 
 #end Pattern
 
@@ -2535,12 +2559,14 @@ class FontFace :
 
     @staticmethod
     def toy_font_face_create(family, slant, weight) :
+        "creates a “toy” FontFace."
         return \
             FontFace(cairo.cairo_toy_font_face_create(family.encode("utf-8"), slant, weight))
     #end toy_font_face_create
 
     @property
     def toy_font_face_family(self) :
+        "the family name (only for “toy” fonts)"
         result = cairo.cairo_toy_font_face_get_family(self._cairobj)
         self._check()
         return \
@@ -2549,6 +2575,7 @@ class FontFace :
 
     @property
     def toy_font_face_slant(self) :
+        "the slant setting (only for “toy” fonts)"
         result = cairo.cairo_toy_font_face_get_slant(self._cairobj)
         self._check()
         return \
@@ -2557,6 +2584,7 @@ class FontFace :
 
     @property
     def toy_font_face_weight(self) :
+        "the weight setting (only for “toy” fonts)"
         result = cairo.cairo_toy_font_face_get_weight(self._cairobj)
         self._check()
         return \
