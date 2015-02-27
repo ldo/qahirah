@@ -629,7 +629,13 @@ class Vector :
 
     def __repr__(self) :
         return \
-            "Vector(%.3f, %.3f)" % (self.x, self.y)
+            (
+                "Vector(%%%(fmt)s, %%%(fmt)s)"
+            %
+                {"fmt" : (".3f", "d")[isinstance(self.x, int) and isinstance(self.y, int)]}
+            %
+                (self.x, self.y)
+            )
     #end __repr__
 
     def __getitem__(self, i) :
@@ -687,6 +693,12 @@ class Vector :
         return \
             result
     #end __truediv__
+
+    def __round__(self) :
+        "returns the Vector with all coordinates rounded to integers."
+        return \
+            Vector(round(self.x), round(self.y))
+    #end __round__
 
     @staticmethod
     def unit(angle) :
@@ -1012,7 +1024,25 @@ class Rect :
     #end __eq__
 
     def __repr__(self) :
-        return "Rect(%f, %f, %f, %f)" % (self.left, self.top, self.width, self.height)
+        return \
+            (
+                "Rect(%%%(fmt)s, %%%(fmt)s, %%%(fmt)s, %%%(fmt)s)"
+            %
+                {"fmt" :
+                    (".3f", "d")
+                    [
+                        isinstance(self.left, int)
+                    and
+                        isinstance(self.top, int)
+                    and
+                        isinstance(self.width, int)
+                    and
+                        isinstance(self.height, int)
+                    ]
+                }
+            %
+                (self.left, self.top, self.width, self.height)
+            )
     #end __repr__
 
     def position(self, relpt, halign = None, valign = None) :
