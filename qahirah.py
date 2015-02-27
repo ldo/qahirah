@@ -2016,6 +2016,7 @@ class Surface :
         "do the two Surface objects refer to the same surface. Needed because" \
         " methods like Context.target and Pattern.surface cannot return the same" \
         " Surface object each time."
+        # don't bother checking isinstance(other, Surface) -- won't be equal if wrong type
         return \
             self._cairobj == other._cairobj
     #end __eq__
@@ -2135,6 +2136,7 @@ class Pattern :
     def __eq__(self, other) :
         "do the two Pattern objects refer to the same Pattern. Needed because" \
         " Context.source cannot return the same Pattern object each time."
+        # don't bother checking isinstance(other, Pattern) -- won't be equal if wrong type
         return \
             self._cairobj == other._cairobj
     #end __eq__
@@ -2621,6 +2623,7 @@ class FontFace :
     def __eq__(self, other) :
         "do the two FontFace objects refer to the same FontFace. Needed because" \
         " ScaledFont.font_face cannot return the same FontFace object each time."
+        # don't bother checking isinstance(other, ScaledFont) -- won't be equal if wrong type
         return \
             self._cairobj == other._cairobj
     #end __eq__
@@ -2761,6 +2764,7 @@ class ScaledFont :
     def create(font_face, font_matrix, ctm, options) :
         "creates a ScaledFont from the specified FontFace, Matrix font_matrix" \
         " and ctm, and FontOptions options."
+        # TODO: are any of these optional?
         if not isinstance(font_face, FontFace) :
             raise TypeError("font_face must be a FontFace")
         #end if
