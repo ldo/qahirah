@@ -1579,16 +1579,19 @@ class Context :
     # paths <http://cairographics.org/manual/cairo-Paths.html>
 
     def copy_path(self) :
+        "returns a copy of the current path."
         return \
             Path(cairo.cairo_copy_path(self._cairobj))
     #end copy_path
 
     def copy_path_flat(self) :
+        "returns a copy of the current path, with curves flattened to line segments."
         return \
             Path(cairo.cairo_copy_path_flat(self._cairobj))
     #end copy_path_flat
 
     def append_path(self, path) :
+        "appends another Path onto the current path."
         if not isinstance(source, Path) :
             raise TypeError("path is not a Path")
         #end if
@@ -1598,12 +1601,14 @@ class Context :
 
     @property
     def has_current_point(self) :
+        "is current_point currently defined."
         return \
             bool(cairo.cairo_has_current_point(self._cairobj))
     #end has_current_point
 
     @property
     def current_point(self) :
+        "returns the current point if defined, else None."
         if self.has_current_point :
             x = ct.c_double()
             y = ct.c_double()
@@ -1698,28 +1703,37 @@ class Context :
     #end text_path
 
     def rel_curve_to(self, p1, p2, p3) :
-        cairo.cairo_rel_curve_to(self._cairobj, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y)
+        "rel_curve_to(p1, p2, p3) or rel_curve_to(x1, y1, x2, y2, x3, y3)."
+        if len(args) == 3 :
+            cairo.cairo_rel_curve_to(self._cairobj, args[0].x, args[0].y, args[1].x, args[1].y, args[2].x, args[2].y)
+        elif len(args) == 6 :
+            cairo.cairo_rel_curve_to(self._cairobj, args[0], args[1], args[2], args[3], args[4], args[5])
+        else :
+            raise TypeError("either pass 3 Vectors or 6 coordinates")
+        #end if
     #end rel_curve_to
 
-    def rel_curve_to_xy(self, x1, y1, x2, y2, x3, y3) :
-        cairo.cairo_rel_curve_to(self._cairobj, x1, y1, x2, y2, x3, y3)
-    #end rel_curve_to_xy
-
     def rel_line_to(self, p) :
-        cairo.cairo_rel_line_to(self._cairobj, p.x, p.y)
+        "rel_line_to(p) or rel_line_to(x, y)"
+        if len(args) == 1 :
+            cairo.cairo_rel_line_to(self._cairobj, args[0].x, args[0].y)
+        elif len(args) == 2 :
+            cairo.cairo_rel_line_to(self._cairobj, args[0], args[1])
+        else :
+            raise TypeError("either pass 1 Vector or 2 coordinates")
+        #end if
     #end rel_line_to
 
-    def rel_line_to_xy(self, x, y) :
-        cairo.cairo_rel_line_to(self._cairobj, x, y)
-    #end rel_line_to_xy
-
     def rel_move_to(self, p) :
-        cairo.cairo_rel_move_to(self._cairobj, p.x, p.y)
+        "rel_move_to(p) or rel_move_to(x, y)"
+        if len(args) == 1 :
+            cairo.cairo_rel_move_to(self._cairobj, args[0].x, args[0].y)
+        elif len(args) == 2 :
+            cairo.cairo_rel_move_to(self._cairobj, args[0], args[1])
+        else :
+            raise TypeError("either pass 1 Vector or 2 coordinates")
+        #end if
     #end rel_move_to
-
-    def rel_move_to_xy(self, x, y) :
-        cairo.cairo_rel_move_to(self._cairobj, x, y)
-    #end rel_move_to_xy
 
     @property
     def path_extents(self) :
