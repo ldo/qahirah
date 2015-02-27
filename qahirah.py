@@ -1939,7 +1939,7 @@ class Context :
     def scaled_font(self) :
         "the current scaled font."
         return \
-            FontFace(cairo.cairo_get_scaled_font(self._cairobj))
+            ScaledFont(cairo.cairo_get_scaled_font(self._cairobj))
     #end scaled_font
 
     @scaled_font.setter
