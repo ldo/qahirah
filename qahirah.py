@@ -2037,7 +2037,7 @@ class Surface :
         check(cairo.cairo_surface_write_to_png(self._cairobj, filename.encode("utf-8")))
     #end write_to_png
 
-    # TODO: user data
+    # TODO: user data, write_to_png_stream?
 
 #end Surface
 
@@ -2058,7 +2058,7 @@ class ImageSurface(Surface) :
             cairo.cairo_format_stride_for_width(int(format), int(width))
     #end format_stride_for_width
 
-    # TODO: get_data
+    # TODO: get_data, create_from_png, create_from_png_stream?
 
     @property
     def format(self) :
