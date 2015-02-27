@@ -89,6 +89,33 @@ class CAIRO :
 
     STATUS_LAST_STATUS = 39
 
+    # codes for cairo_surface_type_t
+    SURFACE_TYPE_IMAGE = 0
+    SURFACE_TYPE_PDF = 1
+    SURFACE_TYPE_PS = 2
+    SURFACE_TYPE_XLIB = 3
+    SURFACE_TYPE_XCB = 4
+    SURFACE_TYPE_GLITZ = 5
+    SURFACE_TYPE_QUARTZ = 6
+    SURFACE_TYPE_WIN32 = 7
+    SURFACE_TYPE_BEOS = 8
+    SURFACE_TYPE_DIRECTFB = 9
+    SURFACE_TYPE_SVG = 10
+    SURFACE_TYPE_OS2 = 11
+    SURFACE_TYPE_WIN32_PRINTING = 12
+    SURFACE_TYPE_QUARTZ_IMAGE = 13
+    SURFACE_TYPE_SCRIPT = 14
+    SURFACE_TYPE_QT = 15
+    SURFACE_TYPE_RECORDING = 16
+    SURFACE_TYPE_VG = 17
+    SURFACE_TYPE_GL = 18
+    SURFACE_TYPE_DRM = 19
+    SURFACE_TYPE_TEE = 20
+    SURFACE_TYPE_XML = 21
+    SURFACE_TYPE_SKIA = 22
+    SURFACE_TYPE_SUBSURFACE = 23
+    SURFACE_TYPE_COGL = 24
+
     # cairo_format_t codes
     FORMAT_INVALID = -1
     FORMAT_ARGB32 = 0
@@ -525,6 +552,7 @@ cairo.cairo_text_extents.argtypes = (ct.c_void_p, ct.c_char_p, ct.c_void_p)
 cairo.cairo_glyph_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_void_p)
 
 cairo.cairo_surface_status.argtypes = (ct.c_void_p,)
+cairo.cairo_surface_get_type.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_reference.restype = ct.c_void_p
 cairo.cairo_surface_reference.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_destroy.argtypes = (ct.c_void_p,)
@@ -1960,6 +1988,12 @@ class Surface :
         return \
             self._cairobj == other._cairobj
     #end __eq__
+
+    @property
+    def type(self) :
+        return \
+            cairo.cairo_surface_get_type(self._cairobj)
+    #end type
 
     # TODO: create_similar, device, font_options etc
     # <http://cairographics.org/manual/cairo-cairo-surface-t.html>
