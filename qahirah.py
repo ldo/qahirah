@@ -1765,14 +1765,28 @@ class Context :
 
     # Transformations <http://cairographics.org/manual/cairo-Transformations.html>
 
-    def translate(self, t) :
-        "applies a translation by the Vector t to the current coordinate system."
-        cairo.cairo_translate(self._cairobj, t.x, t.y)
+    def translate(self, args) :
+        "translate(Vector) or translate(x, y)\n" \
+        "applies a translation to the current coordinate system."
+        if len(args) == 1 :
+            cairo.cairo_translate(self._cairobj, args[0].x, args[0].y)
+        elif len(args) == 2 :
+            cairo.cairo_translate(self._cairobj, args[0], args[1])
+        else :
+            raise TypeError("either pass 1 Vector or 2 coordinates")
+        #end if
     #end translate
 
     def scale(self, s) :
-        "applies a scaling by the Vector s to the current coordinate system."
-        cairo.cairo_scale(self._cairobj, s.x, s.y)
+        "scale(Vector) or scale(x, y)\n" \
+        "applies a scaling to the current coordinate system."
+        if len(args) == 1 :
+            cairo.cairo_scale(self._cairobj, args[0].x, args[0].y)
+        elif len(args) == 2 :
+            cairo.cairo_scale(self._cairobj, args[0], args[1])
+        else :
+            raise TypeError("either pass 1 Vector or 2 coordinates")
+        #end if
     #end scale
 
     def rotate(self, angle) :
