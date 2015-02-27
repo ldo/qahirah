@@ -1716,7 +1716,7 @@ class Context :
         cairo.cairo_text_path(self._cairobj, text.encode("utf-8"))
     #end text_path
 
-    def rel_curve_to(self, p1, p2, p3) :
+    def rel_curve_to(self, *args) :
         "rel_curve_to(p1, p2, p3) or rel_curve_to(x1, y1, x2, y2, x3, y3)."
         if len(args) == 3 :
             cairo.cairo_rel_curve_to(self._cairobj, args[0].x, args[0].y, args[1].x, args[1].y, args[2].x, args[2].y)
@@ -1727,7 +1727,7 @@ class Context :
         #end if
     #end rel_curve_to
 
-    def rel_line_to(self, p) :
+    def rel_line_to(self, *args) :
         "rel_line_to(p) or rel_line_to(x, y)"
         if len(args) == 1 :
             cairo.cairo_rel_line_to(self._cairobj, args[0].x, args[0].y)
@@ -1738,7 +1738,7 @@ class Context :
         #end if
     #end rel_line_to
 
-    def rel_move_to(self, p) :
+    def rel_move_to(self, *args) :
         "rel_move_to(p) or rel_move_to(x, y)"
         if len(args) == 1 :
             cairo.cairo_rel_move_to(self._cairobj, args[0].x, args[0].y)
