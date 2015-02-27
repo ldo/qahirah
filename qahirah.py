@@ -2700,38 +2700,38 @@ class FontFace :
     # toy font face functions from <http://cairographics.org/manual/cairo-text.html>
 
     @staticmethod
-    def toy_font_face_create(family, slant, weight) :
+    def toy_create(family, slant, weight) :
         "creates a “toy” FontFace."
         return \
             FontFace(cairo.cairo_toy_font_face_create(family.encode("utf-8"), slant, weight))
-    #end toy_font_face_create
+    #end toy_create
 
     @property
-    def toy_font_face_family(self) :
+    def toy_family(self) :
         "the family name (only for “toy” fonts)"
         result = cairo.cairo_toy_font_face_get_family(self._cairobj)
         self._check()
         return \
             result.decode("utf-8")
-    #end toy_font_face_family
+    #end toy_family
 
     @property
-    def toy_font_face_slant(self) :
+    def toy_slant(self) :
         "the slant setting (only for “toy” fonts)"
         result = cairo.cairo_toy_font_face_get_slant(self._cairobj)
         self._check()
         return \
             result
-    #end toy_font_face_slant
+    #end toy_slant
 
     @property
-    def toy_font_face_weight(self) :
+    def toy_weight(self) :
         "the weight setting (only for “toy” fonts)"
         result = cairo.cairo_toy_font_face_get_weight(self._cairobj)
         self._check()
         return \
             result
-    #end toy_font_face_slant
+    #end toy
 
 #end FontFace
 
