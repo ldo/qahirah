@@ -611,6 +611,7 @@ cairo.cairo_font_options_set_hint_style.argtypes = (ct.c_void_p, ct.c_int)
 cairo.cairo_font_options_get_hint_metrics.argtypes = (ct.c_void_p,)
 cairo.cairo_font_options_set_hint_metrics.argtypes = (ct.c_void_p, ct.c_int)
 
+cairo.cairo_font_face_destroy.argtypes = (ct.c_void_p,)
 cairo.cairo_font_face_status.argtypes = (ct.c_void_p,)
 cairo.cairo_font_face_get_type.argtypes = (ct.c_void_p,)
 cairo.cairo_font_face_set_user_data.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
@@ -2579,6 +2580,13 @@ class FontFace :
         self._cairobj = _cairobj
         self._check()
     #end __init__
+
+    def __del__(self) :
+        if self._cairobj != None :
+            cairo.cairo_font_face_destroy(self._cairobj)
+            self._cairobj = None
+        #end if
+    #end __del__
 
     @property
     def type(self) :
