@@ -822,6 +822,13 @@ class Vector :
             Vector(round(self.x), round(self.y))
     #end __round__
 
+    @property
+    def zero(self) :
+        "returns the zero Vector."
+        return \
+            Vector(0, 0)
+    #end zero
+
     @staticmethod
     def unit(angle) :
         "returns the unit vector with the specified direction."
@@ -1054,6 +1061,13 @@ class Rect :
         return \
             Rect(min_x, min_y, max_x - min_x, max_y - min_y)
     #end from_corners
+
+    @staticmethod
+    def from_size(pt) :
+        "a Rect with its top left at (0, 0) and the given width and height."
+        return \
+            Rect(0, 0, pt.x, pt.y)
+    #end from_size
 
     @staticmethod
     def from_cairo(r) :
