@@ -507,6 +507,7 @@ cairo.cairo_in_stroke.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
 
 cairo.cairo_path_destroy.argtypes = (ct.c_void_p,)
 
+cairo.cairo_select_font_face.argtypes = (ct.c_void_p, ct.c_char_p, ct.c_int, ct.c_int)
 cairo.cairo_set_font_size.argtypes = (ct.c_void_p, ct.c_double)
 cairo.cairo_set_font_matrix.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_get_font_matrix.argtypes = (ct.c_void_p,)
@@ -1825,6 +1826,11 @@ class Context :
 
     # Text <http://cairographics.org/manual/cairo-text.html>
     # (except toy_font_face stuff, which goes in FontFace)
+
+    def select_font_face(self, family, slant, weight) :
+        "toy selection of a font face."
+        cairo.cairo_select_font_face(self._cairobj, family.encode("utf-8"), slant, weight)
+    #end select_font_face
 
     def set_font_size(self, size) :
         "sets the font matrix to a scaling by the specified size."
