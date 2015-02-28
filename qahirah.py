@@ -2255,6 +2255,8 @@ class Pattern :
         "creates a linear gradient Pattern that varies between the specified Vector" \
         " points in pattern space. color_stops is an optional tuple of 4/5-tuples" \
         " to define the colour stops."
+        p0 = Vector.from_tuple(p0)
+        p1 = Vector.from_tuple(p1)
         result = Pattern(cairo.cairo_pattern_create_linear(p0.x, p0.y, p1.x, p1.y))
         if color_stops != None :
             result.add_color_stops(color_stops)
@@ -2288,6 +2290,8 @@ class Pattern :
         "creates a radial gradient Pattern varying between the circle centred at Vector c0," \
         " radius r0 and the one centred at Vector c1, radius r1. color_stops is an optional" \
         " tuple of 4/5-tuples to define the colour stops."
+        c0 = Vector.from_tuple(c0)
+        c1 = Vector.from_tuple(c1)
         result = Pattern(cairo.cairo_pattern_create_radial(c0.x, c0.y, r0, c1.x, c1.y, r1))
         if color_stops != None :
             result.add_color_stops(color_stops)
