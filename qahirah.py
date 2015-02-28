@@ -361,8 +361,6 @@ def def_struct_class(name, ctname) :
     # defines a class with attributes that are a straightforward mapping
     # of a ctypes struct.
 
-    decode_cttypes = {ct.c_double : float} # the only field types I need to handle
-
     ctstruct = getattr(CAIRO, ctname)
 
     class result_class :
@@ -382,10 +380,7 @@ def def_struct_class(name, ctname) :
             "decodes the Cairo representation of the structure."
             result = result_class()
             for name, cttype in ctstruct._fields_ :
-                if cttype not in decode_cttypes :
-                    raise NotImplemented("cannot handle field type")
-                #end if
-                setattr(result, name, decode_cttypes[cttype](getattr(r, name)))
+                setattr(result, name, getattr(r, name))
             #end for
             return \
                 result
