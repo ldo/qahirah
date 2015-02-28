@@ -2152,16 +2152,40 @@ class Pattern :
     #end __eq__
 
     def add_color_stop_rgb(self, offset, r, g, b) :
-        "adds an opaque colour stop. This must be a gradient Pattern."
+        "adds an opaque colour stop. This must be a gradient Pattern. Returns." \
+        " the same Pattern, to allow for method chaining."
         cairo.cairo_pattern_add_color_stop_rgb(self._cairobj, offset, r, g, b)
         self._check()
+        return \
+            self
     #end add_color_stop_rgb
 
     def add_color_stop_rgba(self, offset, r, g, b, a) :
-        "adds a colour stop. This must be a gradient Pattern."
+        "adds a colour stop. This must be a gradient Pattern. Returns." \
+        " the same Pattern, to allow for method chaining."
         cairo.cairo_pattern_add_color_stop_rgba(self._cairobj, offset, r, g, b, a)
         self._check()
+        return \
+            self
     #end add_color_stop_rgba
+
+    def add_color_stops(self, stops) :
+        "adds a whole lot of colour stops at once. stops must be a tuple, each" \
+        "element of which must be a tuple of 4 (offset, r, g, b) or 5 (offset, r, g, b, a)" \
+        " elements."
+        for stop in stops :
+            if not isinstance(stop, list) and not isinstance(stop, tuple) :
+                raise TypeError("colour stop must be a list/tuple")
+            #end if
+            if len(stop) == 4 :
+                self.add_color_stop_rgb(*stop)
+            elif len(stop) == 5 :
+                self.add_color_stop_rgba(*stop)
+            else :
+                raise TypeError("colour stop must have 4 (offset, r, g, b) or 5 (offset, r, g, b, a) elements")
+            #end if
+        #end for
+    #end add_color_stops
 
     @property
     def color_stops_rgba(self) :
@@ -2231,11 +2255,16 @@ class Pattern :
     #end surface
 
     @staticmethod
-    def create_linear(p0, p1) :
+    def create_linear(p0, p1, color_stops = None) :
         "creates a linear gradient Pattern that varies between the specified Vector" \
-        " points in pattern space."
+        " points in pattern space. color_stops is an optional tuple of 4/5-tuples" \
+        " to define the colour stops."
+        result = Pattern(cairo.cairo_pattern_create_linear(p0.x, p0.y, p1.x, p1.y))
+        if color_stops != None :
+            result.add_color_stops(color_stops)
+        #end if
         return \
-            Pattern(cairo.cairo_pattern_create_linear(p0.x, p0.y, p1.x, p1.y))
+            result
     #end create_linear
 
     @property
@@ -2259,11 +2288,16 @@ class Pattern :
     #end linear_p1
 
     @staticmethod
-    def create_radial(c0, r0, c1, r1) :
+    def create_radial(c0, r0, c1, r1, color_stops = None) :
         "creates a radial gradient Pattern varying between the circle centred at Vector c0," \
-        " radius r0 and the one centred at Vector c1, radius r1."
+        " radius r0 and the one centred at Vector c1, radius r1. color_stops is an optional" \
+        " tuple of 4/5-tuples to define the colour stops."
+        result = Pattern(cairo.cairo_pattern_create_radial(c0.x, c0.y, r0, c1.x, c1.y, r1))
+        if color_stops != None :
+            result.add_color_stops(color_stops)
+        #end if
         return \
-            Pattern(cairo.cairo_pattern_create_radial(c0.x, c0.y, r0, c1.x, c1.y, r1))
+            result
     #end create_radial
 
     @property
