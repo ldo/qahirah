@@ -793,11 +793,6 @@ class Vector :
         self.y = y
     #end __init__
 
-    def to_tuple(self) :
-        return \
-            (self.x, self.y)
-    #end to_tuple
-
     def __repr__(self) :
         return \
             (
@@ -833,6 +828,7 @@ class Vector :
     #end __neg__
 
     def __sub__(v1, v2) :
+        "difference between two Vectors."
         return \
             (
                 lambda : NotImplemented,
@@ -841,6 +837,7 @@ class Vector :
     #end __sub__
 
     def __mul__(v, f) :
+        "scale a Vector uniformly by a number or non-uniformly by another Vector."
         if isinstance(f, Vector) :
             result = Vector(v.x * f.x, v.y * f.y)
         elif isinstance(f, Number) :
@@ -854,6 +851,7 @@ class Vector :
     __rmul__ = __mul__
 
     def __truediv__(v, f) :
+        "inverse-scale a Vector uniformly by a number or non-uniformly by another Vector."
         if isinstance(f, Vector) :
             result = Vector(v.x / f.x, v.y / f.y)
         elif isinstance(f, Number) :
@@ -870,13 +868,6 @@ class Vector :
         return \
             Vector(round(self.x), round(self.y))
     #end __round__
-
-    @property
-    def zero(self) :
-        "returns the zero Vector."
-        return \
-            Vector(0, 0)
-    #end zero
 
     @staticmethod
     def unit(angle) :
@@ -913,6 +904,7 @@ class Vector :
     #end from_polar
 
 #end Vector
+Vector.zero = Vector(0, 0)
 
 class Matrix :
     "representation of a 3-by-2 affine homogeneous matrix."
@@ -1001,7 +993,7 @@ class Matrix :
     def det(self) :
         "matrix determinant."
         return \
-            (self.xx * self.yy - self.xy * self.yx)
+            self.xx * self.yy - self.xy * self.yx
     #end det
 
     def adj(self) :
@@ -1113,6 +1105,7 @@ class Rect :
 
     @staticmethod
     def from_corners(pt1, pt2) :
+        "constructs a Rect from two opposite corner Vectors."
         min_x = min(pt1.x, pt2.x)
         max_x = max(pt1.x, pt2.x)
         min_y = min(pt1.y, pt2.y)
