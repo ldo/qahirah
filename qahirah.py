@@ -1122,11 +1122,11 @@ class Rect :
     #end from_corners
 
     @staticmethod
-    def from_size(pt) :
+    def from_dimensions(pt) :
         "a Rect with its top left at (0, 0) and the given width and height."
         return \
             Rect(0, 0, pt.x, pt.y)
-    #end from_size
+    #end from_dimensions
 
     @staticmethod
     def from_cairo(r) :
