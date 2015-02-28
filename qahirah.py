@@ -921,7 +921,13 @@ class Vector :
 Vector.zero = Vector(0, 0)
 
 class Matrix :
-    "representation of a 3-by-2 affine homogeneous matrix."
+    "representation of a 3-by-2 affine homogeneous matrix. This does not" \
+    " actually use any Cairo routines to implement its calculations; these" \
+    " are done entirely using Python numerics. The from_cairo and to_cairo" \
+    " methods provide conversion to/from cairo_matrix_t structs. Routines" \
+    " elsewhere expect this Matrix type where the underlying Cairo routine" \
+    " wants a cairo_matrix_t, and return this type where the Cairo routine" \
+    " returns a cairo_matrix_t."
 
     def __init__(self, xx, yx, xy, yy, x0, y0) :
         self.xx = xx
