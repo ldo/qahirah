@@ -1718,17 +1718,15 @@ class Context :
 
     def arc(self, centre, radius, angle1, angle2) :
         "draws a segment of a circular arc in the positive-x-to-positive-y direction." \
-        " centre and radius can each be a Vector or a tuple of 2 coord values."
+        " centre can be a Vector or a tuple of 2 coord values."
         centre = Vector.from_tuple(centre)
-        radius = Vector.from_tuple(radius)
         cairo.cairo_arc(self._cairobj, centre.x, centre.y, radius, angle1, angle2)
     #end arc
 
     def arc_negative(self, centre, radius, angle1, angle2) :
         "draws a segment of a circular arc in the positive-y-to-positive-x direction." \
-        " centre and radius can each be a Vector or a tuple of 2 coord values."
+        " centre can be a Vector or a tuple of 2 coord values."
         centre = Vector.from_tuple(centre)
-        radius = Vector.from_tuple(radius)
         cairo.cairo_arc_negative(self._cairobj, centre.x, centre.y, radius, angle1, angle2)
     #end arc_negative
 
