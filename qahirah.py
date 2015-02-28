@@ -2060,10 +2060,12 @@ class ImageSurface(Surface) :
     " call one of the create methods."
 
     @staticmethod
-    def create(format, width, height) :
-        "creates a new ImageSurface with dynamically-allocated memory for the pixels."
+    def create(format, dimensions) :
+        "creates a new ImageSurface with dynamically-allocated memory for the pixels." \
+        " dimensions can be a Vector or a (width, height) tuple."
+        dimensions = Vector.from_tuple(dimensions)
         return \
-            ImageSurface(cairo.cairo_image_surface_create(int(format), int(width), int(height)))
+            ImageSurface(cairo.cairo_image_surface_create(int(format), int(dimensions.x), int(dimensions.y)))
     #end create
 
     @staticmethod
@@ -2076,6 +2078,7 @@ class ImageSurface(Surface) :
 
     @property
     def format(self) :
+        "the pixel format."
         result = cairo.cairo_image_surface_get_format(self._cairobj)
         self._check()
         return \
@@ -2084,6 +2087,7 @@ class ImageSurface(Surface) :
 
     @property
     def width(self) :
+        "the width in pixels."
         result = cairo.cairo_image_surface_get_width(self._cairobj)
         self._check()
         return \
@@ -2092,6 +2096,7 @@ class ImageSurface(Surface) :
 
     @property
     def height(self) :
+        "the height in pixels."
         result = cairo.cairo_image_surface_get_height(self._cairobj)
         self._check()
         return \
@@ -2099,7 +2104,15 @@ class ImageSurface(Surface) :
     #end height
 
     @property
+    def dimensions(self) :
+        "the dimensions in pixels, as a Vector."
+        return \
+            Vector(self.width, self.height)
+    #end dimensions
+
+    @property
     def stride(self) :
+        "the number of bytes per row of pixels."
         result = cairo.cairo_image_surface_get_stride(self._cairobj)
         self._check()
         return \
