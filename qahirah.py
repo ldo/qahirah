@@ -799,6 +799,14 @@ class Vector :
         self.y = y
     #end __init__
 
+    @staticmethod
+    def from_tuple(v) :
+        "converts a tuple of 2 numbers to a Vector. Can be used to ensure that" \
+        " v is a Vector."
+        return \
+            Vector(*v)
+    #end from_tuple
+
     def __repr__(self) :
         return \
             (
@@ -1709,22 +1717,20 @@ class Context :
     #end close_path
 
     def arc(self, centre, radius, angle1, angle2) :
-        "draws a segment of a circular arc in the clockwise direction."
+        "draws a segment of a circular arc in the positive-x-to-positive-y direction." \
+        " centre and radius can each be a Vector or a tuple of 2 coord values."
+        centre = Vector.from_tuple(centre)
+        radius = Vector.from_tuple(radius)
         cairo.cairo_arc(self._cairobj, centre.x, centre.y, radius, angle1, angle2)
     #end arc
 
-    def arc_xy(self, xc, yc, radius, angle1, angle2) :
-        cairo.cairo_arc(self._cairobj, xc, yc, radius, angle1, angle2)
-    #end arc
-
     def arc_negative(self, centre, radius, angle1, angle2) :
-        "draws a segment of a circular arc in the anticlockwise direction."
+        "draws a segment of a circular arc in the positive-y-to-positive-x direction." \
+        " centre and radius can each be a Vector or a tuple of 2 coord values."
+        centre = Vector.from_tuple(centre)
+        radius = Vector.from_tuple(radius)
         cairo.cairo_arc_negative(self._cairobj, centre.x, centre.y, radius, angle1, angle2)
     #end arc_negative
-
-    def arc_negative_xy(self, xc, yc, radius, angle1, angle2) :
-        cairo.cairo_arc_negative(self._cairobj, xc, yc, radius, angle1, angle2)
-    #end arc_negative_xy
 
     def curve_to(self, *args) :
         "curve_to(p1, p2, p3) or curve_to(x1, y1, x2, y2, x3, y3)."
