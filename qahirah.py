@@ -1109,7 +1109,8 @@ def distribute(nrdivs, p1 = 0.0, p2 = 1.0, endincl = False) :
 class Rect :
     "an axis-aligned rectangle. The constructor takes the left and top coordinates," \
     " and the width and height. Or use from_corners to construct one from two Vectors" \
-    " representing opposite corners."
+    " representing opposite corners, or from_dimensions to construct one from a Vector" \
+    " giving the width and height, with the topleft set to (0, 0)."
 
     def __init__(self, left, top, width, height) :
         self.left = left
@@ -1121,6 +1122,8 @@ class Rect :
     @staticmethod
     def from_corners(pt1, pt2) :
         "constructs a Rect from two opposite corner Vectors."
+        pt1 = Vector.from_tuple(pt1)
+        pt2 = Vector.from_tuple(pt2)
         min_x = min(pt1.x, pt2.x)
         max_x = max(pt1.x, pt2.x)
         min_y = min(pt1.y, pt2.y)
@@ -1132,6 +1135,7 @@ class Rect :
     @staticmethod
     def from_dimensions(pt) :
         "a Rect with its top left at (0, 0) and the given width and height."
+        pt = Vector.from_tuple(pt)
         return \
             Rect(0, 0, pt.x, pt.y)
     #end from_dimensions
@@ -2095,9 +2099,10 @@ class ImageSurface(Surface) :
     #end stride
 
     @staticmethod
-    def create_for_array(arr, format, width, height, stride) :
+    def create_for_array(arr, format, dimensions, stride) :
         "calls cairo_image_surface_create_for_data on arr, which must be" \
         " a Python array.array object."
+        width, height = Vector.from_tuple(dimensions)
         address, length = arr.buffer_info()
         assert height * stride <= length * arr.itemsize
         result = ImageSurface(cairo.cairo_image_surface_create_for_data(ct.c_void_p(address), format, width, height, stride))
