@@ -391,6 +391,12 @@ def def_struct_class(name, ctname) :
                 result
         #end from_cairo
 
+        def __getitem__(self, i) :
+            "allows the object to be coerced to a tuple."
+            return \
+                getattr(self, ctstruct._fields_[i][0])
+        #end __getitem__
+
         def __repr__(self) :
             return \
                 (
