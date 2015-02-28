@@ -1736,37 +1736,24 @@ class Context :
         cairo.cairo_arc_negative(self._cairobj, centre.x, centre.y, radius, angle1, angle2)
     #end arc_negative
 
-    def curve_to(self, *args) :
-        "curve_to(p1, p2, p3) or curve_to(x1, y1, x2, y2, x3, y3)."
-        if len(args) == 3 :
-            cairo.cairo_curve_to(self._cairobj, args[0].x, args[0].y, args[1].x, args[1].y, args[2].x, args[2].y)
-        elif len(args) == 6 :
-            cairo.cairo_curve_to(self._cairobj, args[0], args[1], args[2], args[3], args[4], args[5])
-        else :
-            raise TypeError("either pass 3 Vectors or 6 coordinates")
-        #end if
+    def curve_to(self, p1, p2, p3) :
+        "curve_to(p1, p2, p3) or curve_to((x1, y1), (x2, y2), (x3, y3))."
+        p1 = Vector.from_tuple(p1)
+        p2 = Vector.from_tuple(p2)
+        p3 = Vector.from_tuple(p3)
+        cairo.cairo_curve_to(self._cairobj, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y)
     #end curve_to
 
-    def line_to(self, *args) :
-        "line_to(p) or line_to(x, y)"
-        if len(args) == 1 :
-            cairo.cairo_line_to(self._cairobj, args[0].x, args[0].y)
-        elif len(args) == 2 :
-            cairo.cairo_line_to(self._cairobj, args[0], args[1])
-        else :
-            raise TypeError("either pass 1 Vector or 2 coordinates")
-        #end if
+    def line_to(self, p) :
+        "line_to(p) or line_to((x, y))"
+        p = Vector.from_tuple(p)
+        cairo.cairo_line_to(self._cairobj, p.x, p.y)
     #end line_to
 
-    def move_to(self, *args) :
-        "move_to(p) or move_to(x, y)"
-        if len(args) == 1 :
-            cairo.cairo_move_to(self._cairobj, args[0].x, args[0].y)
-        elif len(args) == 2 :
-            cairo.cairo_move_to(self._cairobj, args[0], args[1])
-        else :
-            raise TypeError("either pass 1 Vector or 2 coordinates")
-        #end if
+    def move_to(self, p) :
+        "move_to(p) or move_to((x, y))"
+        p = Vector.from_tuple(p)
+        cairo.cairo_move_to(self._cairobj, p.x, p.y)
     #end move_to
 
     def rectangle(self, rect) :
@@ -1784,37 +1771,24 @@ class Context :
         cairo.cairo_text_path(self._cairobj, text.encode("utf-8"))
     #end text_path
 
-    def rel_curve_to(self, *args) :
-        "rel_curve_to(p1, p2, p3) or rel_curve_to(x1, y1, x2, y2, x3, y3)."
-        if len(args) == 3 :
-            cairo.cairo_rel_curve_to(self._cairobj, args[0].x, args[0].y, args[1].x, args[1].y, args[2].x, args[2].y)
-        elif len(args) == 6 :
-            cairo.cairo_rel_curve_to(self._cairobj, args[0], args[1], args[2], args[3], args[4], args[5])
-        else :
-            raise TypeError("either pass 3 Vectors or 6 coordinates")
-        #end if
+    def rel_curve_to(self, p1, p2, p3) :
+        "rel_curve_to(p1, p2, p3) or rel_curve_to((x1, y1), (x2, y2), (x3, y3))."
+        p1 = Vector.from_tuple(p1)
+        p2 = Vector.from_tuple(p2)
+        p3 = Vector.from_tuple(p3)
+        cairo.cairo_rel_curve_to(self._cairobj, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y)
     #end rel_curve_to
 
     def rel_line_to(self, *args) :
-        "rel_line_to(p) or rel_line_to(x, y)"
-        if len(args) == 1 :
-            cairo.cairo_rel_line_to(self._cairobj, args[0].x, args[0].y)
-        elif len(args) == 2 :
-            cairo.cairo_rel_line_to(self._cairobj, args[0], args[1])
-        else :
-            raise TypeError("either pass 1 Vector or 2 coordinates")
-        #end if
+        "rel_line_to(p) or rel_line_to((x, y))"
+        p = Vector.from_tuple(p)
+        cairo.cairo_rel_line_to(self._cairobj, p.x, p.y)
     #end rel_line_to
 
     def rel_move_to(self, *args) :
-        "rel_move_to(p) or rel_move_to(x, y)"
-        if len(args) == 1 :
-            cairo.cairo_rel_move_to(self._cairobj, args[0].x, args[0].y)
-        elif len(args) == 2 :
-            cairo.cairo_rel_move_to(self._cairobj, args[0], args[1])
-        else :
-            raise TypeError("either pass 1 Vector or 2 coordinates")
-        #end if
+        "rel_move_to(p) or rel_move_to((x, y))"
+        p = Vector.from_tuple(p)
+        cairo.cairo_rel_move_to(self._cairobj, p.x, p.y)
     #end rel_move_to
 
     @property
