@@ -1330,7 +1330,8 @@ def glyphs_to_cairo(glyphs) :
 #end glyphs_to_cairo
 
 class Context :
-    "a Cairo drawing context. Instantiate with a Surface object."
+    "a Cairo drawing context. Instantiate with a Surface object." \
+    " Many methods return the context to allow method chaining."
     # <http://cairographics.org/manual/cairo-cairo-t.html>
 
     def _check(self) :
@@ -1352,11 +1353,15 @@ class Context :
 
     def save(self) :
         cairo.cairo_save(self._cairobj)
+        return \
+            self
     #end save
 
     def restore(self) :
         cairo.cairo_restore(self._cairobj)
         self._check()
+        return \
+            self
     #end restore
 
     @property
@@ -1370,11 +1375,15 @@ class Context :
 
     def push_group(self) :
         cairo.cairo_push_group(self._cairobj)
+        return \
+            self
     #end push_group
 
     def push_group_with_content(self, content) :
         "content is a CAIRO.CONTENT_xxx value."
         cairo.cairo_push_group_with_content(self._cairobj, content)
+        return \
+            self
     #end push_group_with_content
 
     def pop_group(self) :
@@ -1413,11 +1422,15 @@ class Context :
     def set_source_rgb(self, r, g, b) :
         cairo.cairo_set_source_rgb(self._cairobj, r, g, b)
         self._check()
+        return \
+            self
     #end set_source_rgb
 
     def set_source_rgba(self, r, g, b, a) :
         cairo.cairo_set_source_rgba(self._cairobj, r, g, b, a)
         self._check()
+        return \
+            self
     #end set_source_rgba
 
     @property
@@ -1540,12 +1553,16 @@ class Context :
         "sets the current clip to the intersection of itself and the" \
         " current path, clearing the latter."
         cairo.cairo_clip(self._cairobj)
+        return \
+            self
     #end clip
 
     def clip_preserve(self) :
         "sets the current clip to the intersection of itself and the" \
         " current path, preserving the latter."
         cairo.cairo_clip_preserve(self._cairobj)
+        return \
+            self
     #end clip_preserve
 
     @property
@@ -1584,11 +1601,15 @@ class Context :
     def fill(self) :
         "fills the current path, then clears it."
         cairo.cairo_fill(self._cairobj)
+        return \
+            self
     #end fill
 
     def fill_preserve(self) :
         "fills the current path, preserving it."
         cairo.cairo_fill_preserve(self._cairobj)
+        return \
+            self
     #end fill_preserve
 
     @property
@@ -1614,6 +1635,8 @@ class Context :
             raise TypeError("pattern is not a Pattern")
         #end if
         cairo.cairo_mask(self._cairobj, pattern._cairobj)
+        return \
+            self
     #end mask
 
     def mask_surface(self, surface, origin) :
@@ -1621,24 +1644,34 @@ class Context :
             raise TypeError("surface is not a Surface")
         #end if
         cairo.cairo_mask_surface(self._cairobj, surface._cairobj, origin.x, origin.y)
+        return \
+            self
     #end mask_surface
 
     def paint(self) :
         cairo.cairo_paint(self._cairobj)
+        return \
+            self
     #end paint
 
     def paint_with_alpha(self, alpha) :
         cairo.cairo_paint_with_alpha(self._cairobj, alpha)
+        return \
+            self
     #end paint_with_alpha
 
     def stroke(self) :
         "strokes the current path, and clears it."
         cairo.cairo_stroke(self._cairobj)
+        return \
+            self
     #end stroke
 
     def stroke_preserve(self) :
         "strokes the current path, preserving it."
         cairo.cairo_stroke_preserve(self._cairobj)
+        return \
+            self
     #end stroke_preserve
 
     @property
@@ -1682,6 +1715,8 @@ class Context :
         #end if
         cairo.cairo_append_path(self._cairobj, path._cairobj)
         self._check()
+        return \
+            self
     #end append_path
 
     @property
@@ -1709,16 +1744,22 @@ class Context :
     def new_path(self) :
         "clears the current path."
         cairo.cairo_new_path(self._cairobj)
+        return \
+            self
     #end new_path
 
     def new_sub_path(self) :
         "clears the current_point without actually affecting the current path."
         cairo.cairo_new_sub_path(self._cairobj)
+        return \
+            self
     #end new_sub_path
 
     def close_path(self) :
         "draws a line from the current point back to the start of the current path segment."
         cairo.cairo_close_path(self._cairobj)
+        return \
+            self
     #end close_path
 
     def arc(self, centre, radius, angle1, angle2) :
@@ -1726,6 +1767,8 @@ class Context :
         " centre can be a Vector or a tuple of 2 coord values."
         centre = Vector.from_tuple(centre)
         cairo.cairo_arc(self._cairobj, centre.x, centre.y, radius, angle1, angle2)
+        return \
+            self
     #end arc
 
     def arc_negative(self, centre, radius, angle1, angle2) :
@@ -1733,6 +1776,8 @@ class Context :
         " centre can be a Vector or a tuple of 2 coord values."
         centre = Vector.from_tuple(centre)
         cairo.cairo_arc_negative(self._cairobj, centre.x, centre.y, radius, angle1, angle2)
+        return \
+            self
     #end arc_negative
 
     def curve_to(self, p1, p2, p3) :
@@ -1741,33 +1786,45 @@ class Context :
         p2 = Vector.from_tuple(p2)
         p3 = Vector.from_tuple(p3)
         cairo.cairo_curve_to(self._cairobj, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y)
+        return \
+            self
     #end curve_to
 
     def line_to(self, p) :
         "line_to(p) or line_to((x, y))"
         p = Vector.from_tuple(p)
         cairo.cairo_line_to(self._cairobj, p.x, p.y)
+        return \
+            self
     #end line_to
 
     def move_to(self, p) :
         "move_to(p) or move_to((x, y))"
         p = Vector.from_tuple(p)
         cairo.cairo_move_to(self._cairobj, p.x, p.y)
+        return \
+            self
     #end move_to
 
     def rectangle(self, rect) :
         cairo.cairo_rectangle(self._cairobj, rect.left, rect.top, rect.width, rect.height)
+        return \
+            self
     #end rectangle
 
     def glyph_path(self, glyphs) :
         "glyphs is a sequence of Glyph objects."
         buf, nr_glyphs = glyphs_to_cairo(glyphs)
         cairo.cairo_glyph_path(self._cairobj, ct.byref(buf), nr_glyphs)
+        return \
+            self
     #end glyph_path
 
     def text_path(self, text) :
         "adds text outlines to the current path."
         cairo.cairo_text_path(self._cairobj, text.encode("utf-8"))
+        return \
+            self
     #end text_path
 
     def rel_curve_to(self, p1, p2, p3) :
@@ -1776,18 +1833,24 @@ class Context :
         p2 = Vector.from_tuple(p2)
         p3 = Vector.from_tuple(p3)
         cairo.cairo_rel_curve_to(self._cairobj, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y)
+        return \
+            self
     #end rel_curve_to
 
     def rel_line_to(self, *args) :
         "rel_line_to(p) or rel_line_to((x, y))"
         p = Vector.from_tuple(p)
         cairo.cairo_rel_line_to(self._cairobj, p.x, p.y)
+        return \
+            self
     #end rel_line_to
 
     def rel_move_to(self, *args) :
         "rel_move_to(p) or rel_move_to((x, y))"
         p = Vector.from_tuple(p)
         cairo.cairo_rel_move_to(self._cairobj, p.x, p.y)
+        return \
+            self
     #end rel_move_to
 
     @property
@@ -1816,6 +1879,8 @@ class Context :
         else :
             raise TypeError("either pass 1 Vector or 2 coordinates")
         #end if
+        return \
+            self
     #end translate
 
     def scale(self, s) :
@@ -1828,11 +1893,15 @@ class Context :
         else :
             raise TypeError("either pass 1 Vector or 2 coordinates")
         #end if
+        return \
+            self
     #end scale
 
     def rotate(self, angle) :
         "applies a rotation by the specified angle to the current coordinate system."
         cairo.cairo_rotate(self._cairobj, angle)
+        return \
+            self
     #end rotate
 
     def transform(self, m) :
@@ -1860,6 +1929,8 @@ class Context :
     def identity_matrix(self) :
         "resets the coordinate transformation to the identity Matrix."
         cairo.cairo_identity_matrix(self._cairobj)
+        return \
+            self
     #end identity_matrix
 
     # TODO: user to/from device
@@ -1870,11 +1941,15 @@ class Context :
     def select_font_face(self, family, slant, weight) :
         "toy selection of a font face."
         cairo.cairo_select_font_face(self._cairobj, family.encode("utf-8"), slant, weight)
+        return \
+            self
     #end select_font_face
 
     def set_font_size(self, size) :
         "sets the font matrix to a scaling by the specified size."
         cairo.cairo_set_font_size(self._cairobj, size)
+        return \
+            self
     #end set_font_size
 
     @property
