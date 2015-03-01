@@ -2229,10 +2229,14 @@ class Surface :
 
     def flush(self) :
         cairo.cairo_surface_flush(self._cairobj)
+        return \
+            self
     #end flush
 
     def write_to_png(self, filename) :
         check(cairo.cairo_surface_write_to_png(self._cairobj, filename.encode("utf-8")))
+        return \
+            self
     #end write_to_png
 
     # TODO: user data, write_to_png_stream?
@@ -2386,6 +2390,8 @@ class Pattern :
                 raise TypeError("colour stop must have 4 (offset, r, g, b) or 5 (offset, r, g, b, a) elements")
             #end if
         #end for
+        return \
+            self
     #end add_color_stops
 
     @property
@@ -2554,8 +2560,16 @@ class Pattern :
 
     @extend.setter
     def extend(self, ext) :
-        cairo.cairo_pattern_set_extend(self._cairobj, ext)
+        self.set_extend(ext)
     #end extend
+
+    def set_extend(self, ext) :
+        "sets a new extend mode. Use for method chaining; otherwise, it’s" \
+        " probably more convenient to assign to the extend property."
+        cairo.cairo_pattern_set_extend(self._cairobj, ext)
+        return \
+            self
+    #end set_extend
 
     @property
     def filter(self) :
@@ -2566,8 +2580,16 @@ class Pattern :
 
     @filter.setter
     def filter(self, filt) :
-        cairo.cairo_pattern_set_filter(self._cairobj, filt)
+        self.set_filter(filt)
     #end filter
+
+    def set_filter(self, filt) :
+        "sets a new filter mode. Use for method chaining; otherwise, it’s" \
+        " probably more convenient to assign to the filter property."
+        cairo.cairo_pattern_set_filter(self._cairobj, filt)
+        return \
+            self
+    #end set_filter
 
     @property
     def matrix(self) :
@@ -2580,9 +2602,17 @@ class Pattern :
 
     @matrix.setter
     def matrix(self, m) :
+        self.set_matrix(m)
+    #end matrix
+
+    def set_matrix(self, m) :
+        "sets a new matrix. Use for method chaining; otherwise, it’s" \
+        " probably more convenient to assign to the matrix property."
         m = m.to_cairo()
         cairo.cairo_pattern_set_matrix(self._cairobj, ct.byref(m))
-    #end matrix
+        return \
+            self
+    #end set_matrix
 
     # TODO: user data
 
