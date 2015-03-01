@@ -1937,7 +1937,7 @@ class Context :
             self
     #end rel_curve_to
 
-    def rel_line_to(self, *args) :
+    def rel_line_to(self, p) :
         "rel_line_to(p) or rel_line_to((x, y))"
         p = Vector.from_tuple(p)
         cairo.cairo_rel_line_to(self._cairobj, p.x, p.y)
@@ -1945,7 +1945,7 @@ class Context :
             self
     #end rel_line_to
 
-    def rel_move_to(self, *args) :
+    def rel_move_to(self, p) :
         "rel_move_to(p) or rel_move_to((x, y))"
         p = Vector.from_tuple(p)
         cairo.cairo_rel_move_to(self._cairobj, p.x, p.y)
