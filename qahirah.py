@@ -969,7 +969,8 @@ class Matrix :
     @staticmethod
     def translation(delta) :
         "returns a Matrix that translates by the specified delta Vector."
-        return Matrix(1, 0, 0, 1, delta.x, delta.y)
+        x, y = Vector.from_tuple(delta)
+        return Matrix(1, 0, 0, 1, x, y)
     #end translation
 
     @staticmethod
@@ -979,6 +980,9 @@ class Matrix :
             result = Matrix(factor, 0, 0, factor, 0, 0)
         elif isinstance(factor, Vector) :
             result = Matrix(factor.x, 0, 0, factor.y, 0, 0)
+        elif isinstance(factor, tuple) :
+            x, y = factor
+            result = Matrix(x, 0, 0, y, 0, 0)
         else :
             raise TypeError("factor must be a number or a Vector")
         #end if
@@ -998,11 +1002,9 @@ class Matrix :
     @staticmethod
     def skewing(vec) :
         "returns a Matrix that skews by the specified vec.x and vec.y factors."
-        if not isinstance(vec, Vector) :
-            raise TypeError("vec must be a Vector")
-        #end if
+        x, y = Vector.from_tuple(vec)
         return \
-            Matrix(1, vec.y, 0, vec.x, 1, 0)
+            Matrix(1, y, 0, x, 1, 0)
     #end skewing
 
     def det(self) :
@@ -1042,19 +1044,21 @@ class Matrix :
 
     def map(self, pt) :
         "maps a Vector through the Matrix."
+        x, y = Vector.from_tuple(pt)
         return Vector \
           (
-            x = pt.x * self.xx + pt.y * self.xy + self.x0,
-            y = pt.x * self.yx + pt.y * self.yy + self.y0
+            x = x * self.xx + y * self.xy + self.x0,
+            y = x * self.yx + y * self.yy + self.y0
           )
     #end map
 
     def mapdelta(self, pt) :
         "maps a Vector through the Matrix, ignoring the translation part."
+        x, y = Vector.from_tuple(pt)
         return Vector \
           (
-            x = pt.x * self.xx + pt.y * self.xy,
-            y = pt.x * self.yx + pt.y * self.yy
+            x = x * self.xx + y * self.xy,
+            y = x * self.yx + y * self.yy
           )
     #end mapdelta
 
@@ -1661,8 +1665,9 @@ class Context :
 
     def in_clip(self, pt) :
         "is the given Vector pt within the current clip."
+        x, y = Vector.from_tuple(pt)
         return \
-            cairo.cairo_in_clip(self._cairobj, pt.x, pt.y)
+            cairo.cairo_in_clip(self._cairobj, x, y)
     #end in_clip
 
     @property
@@ -1710,8 +1715,9 @@ class Context :
 
     def in_fill(self, pt) :
         "is the given Vector pt within the current path if filled."
+        x, y = Vector.from_tuple(pt)
         return \
-            cairo.cairo_in_fill(self._cairobj, pt.x, pt.y)
+            cairo.cairo_in_fill(self._cairobj, x, y)
     #end in_fill
 
     def mask(self, pattern) :
@@ -1727,7 +1733,8 @@ class Context :
         if not isinstance(surface, Surface) :
             raise TypeError("surface is not a Surface")
         #end if
-        cairo.cairo_mask_surface(self._cairobj, surface._cairobj, origin.x, origin.y)
+        x, y = Vector.from_tuple(origin)
+        cairo.cairo_mask_surface(self._cairobj, surface._cairobj, x, y)
         return \
             self
     #end mask_surface
@@ -1772,8 +1779,9 @@ class Context :
 
     def in_stroke(self, pt) :
         "is the given Vector pt within the current path if stroked."
+        x, y = Vector.from_tuple(pt)
         return \
-            cairo.cairo_in_stroke(self._cairobj, pt.x, pt.y)
+            cairo.cairo_in_stroke(self._cairobj, x, y)
     #end in_stroke
 
     # TODO: copy/show page, user_data
@@ -1953,30 +1961,20 @@ class Context :
 
     # Transformations <http://cairographics.org/manual/cairo-Transformations.html>
 
-    def translate(self, args) :
-        "translate(Vector) or translate(x, y)\n" \
+    def translate(self, v) :
+        "translate(Vector) or translate((x, y))\n" \
         "applies a translation to the current coordinate system."
-        if len(args) == 1 :
-            cairo.cairo_translate(self._cairobj, args[0].x, args[0].y)
-        elif len(args) == 2 :
-            cairo.cairo_translate(self._cairobj, args[0], args[1])
-        else :
-            raise TypeError("either pass 1 Vector or 2 coordinates")
-        #end if
+        x, y = Vector.from_tuple(v)
+        cairo.cairo_translate(self._cairobj, x, y)
         return \
             self
     #end translate
 
     def scale(self, s) :
-        "scale(Vector) or scale(x, y)\n" \
+        "scale(Vector) or scale((x, y))\n" \
         "applies a scaling to the current coordinate system."
-        if len(args) == 1 :
-            cairo.cairo_scale(self._cairobj, args[0].x, args[0].y)
-        elif len(args) == 2 :
-            cairo.cairo_scale(self._cairobj, args[0], args[1])
-        else :
-            raise TypeError("either pass 1 Vector or 2 coordinates")
-        #end if
+        x, y = Vector.from_tuple(s)
+        cairo.cairo_scale(self._cairobj, x, y)
         return \
             self
     #end scale
