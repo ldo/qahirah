@@ -1393,6 +1393,8 @@ class Context :
 
     def pop_group_to_source(self) :
         cairo.cairo_pop_group_to_source(self._cairobj)
+        return \
+            self
     #end pop_group_to_source
 
     @property
@@ -1412,12 +1414,20 @@ class Context :
 
     @source.setter
     def source(self, source) :
+        self.set_source(source)
+    #end source
+
+    def set_source(self, source) :
+        "sets a new source Pattern. Use for method chaining; otherwise, it’s" \
+        " probably more convenient to assign to the source property."
         if not isinstance(source, Pattern) :
             raise TypeError("source is not a Pattern")
         #end if
         cairo.cairo_set_source(self._cairobj, source._cairobj)
         self._check()
-    #end source
+        return \
+            self
+    #end set_source
 
     def set_source_rgb(self, r, g, b) :
         cairo.cairo_set_source_rgb(self._cairobj, r, g, b)
@@ -1442,8 +1452,16 @@ class Context :
 
     @antialias.setter
     def antialias(self, antialias) :
-        cairo.cairo_set_antialias(self._cairobj, antialias)
+        self.set_antialias(antialias)
     #end antialias
+
+    def set_antialias(self, antialias) :
+        "sets a new antialias mode. Use for method chaining; otherwise, it’s" \
+        " probably more convenient to assign to the antialias property."
+        cairo.cairo_set_antialias(self._cairobj, antialias)
+        return \
+            self
+    #end set_antialias
 
     @property
     def dash(self) :
@@ -1459,6 +1477,12 @@ class Context :
 
     @dash.setter
     def dash(self, dashes) :
+        self.set_dash(dashes)
+    #end dash
+
+    def set_dash(self, dashes) :
+        "sets a new line dash. Use for method chaining; otherwise, it’s" \
+        " probably more convenient to assign to the dash property."
         segs, offset = dashes
         nrsegs = len(segs)
         csegs = (nrsegs * ct.c_double)()
@@ -1466,7 +1490,9 @@ class Context :
             csegs[i] = segs[i]
         #end for
         cairo.cairo_set_dash(self._cairobj, ct.byref(csegs), nrsegs, offset)
-    #end dash
+        return \
+            self
+    #end set_dash
 
     @property
     def fill_rule(self) :
@@ -1476,8 +1502,16 @@ class Context :
 
     @fill_rule.setter
     def fill_rule(self, fill_rule) :
-        cairo.cairo_set_fill_rule(self._cairobj, fill_rule)
+        self.set_fill_rule(fill_rule)
     #end fill_rule
+
+    def set_fill_rule(self, fill_rule) :
+        "sets a new fill rule. Use for method chaining; otherwise, it’s" \
+        " probably more convenient to assign to the fill_rule property."
+        cairo.cairo_set_fill_rule(self._cairobj, fill_rule)
+        return \
+            self
+    #end set_fill_rule
 
     @property
     def line_cap(self) :
@@ -1487,8 +1521,16 @@ class Context :
 
     @line_cap.setter
     def line_cap(self, line_cap) :
-        cairo.cairo_set_line_cap(self._cairobj, line_cap)
+        self.set_line_cap(line_cap)
     #end line_cap
+
+    def set_line_cap(self, line_cap) :
+        "sets a new line cap. Use for method chaining; otherwise, it’s" \
+        " probably more convenient to assign to the line_cap property."
+        cairo.cairo_set_line_cap(self._cairobj, line_cap)
+        return \
+            self
+    #end set_line_cap
 
     @property
     def line_join(self) :
@@ -1498,8 +1540,16 @@ class Context :
 
     @line_join.setter
     def line_join(self, line_join) :
-        cairo.cairo_set_line_join(self._cairobj, line_join)
+        self.set_line_join(line_join)
     #end line_join
+
+    def set_line_join(self, line_join) :
+        "sets a new line join. Use for method chaining; otherwise, it’s" \
+        " probably more convenient to assign to the line_join property."
+        cairo.cairo_set_line_join(self._cairobj, line_join)
+        return \
+            self
+    #end set_line_join
 
     @property
     def line_width(self) :
@@ -1510,8 +1560,16 @@ class Context :
 
     @line_width.setter
     def line_width(self, width) :
-        cairo.cairo_set_line_width(self._cairobj, width)
+        self.set_line_width(width)
     #end line_width
+
+    def set_line_width(self, width) :
+        "sets a new line width. Use for method chaining; otherwise, it’s" \
+        " probably more convenient to assign to the line_width property."
+        cairo.cairo_set_line_width(self._cairobj, width)
+        return \
+            self
+    #end set_line_width
 
     @property
     def miter_limit(self) :
@@ -1520,9 +1578,17 @@ class Context :
     #end miter_limit
 
     @miter_limit.setter
-    def miter_limit(self, width) :
-        cairo.cairo_set_miter_limit(self._cairobj, width)
+    def miter_limit(self, limit) :
+        self.set_miter_limit(limit)
     #end miter_limit
+
+    def set_miter_limit(self, limit) :
+        "sets a new mitre limit. Use for method chaining; otherwise, it’s" \
+        " probably more convenient to assign to the miter_limit property."
+        cairo.cairo_set_miter_limit(self._cairobj, limit)
+        return \
+            self
+    #end set_miter_limit
 
     @property
     def operator(self) :
@@ -1533,9 +1599,17 @@ class Context :
 
     @operator.setter
     def operator(self, op) :
+        self.set_operator(op)
+    #end operator
+
+    def set_operator(self, op) :
+        "sets a new drawing operator. Use for method chaining; otherwise, it’s" \
+        " probably more convenient to assign to the operator property."
         cairo.cairo_set_operator(self._cairobj, int(op))
         self._check()
-    #end operator
+        return \
+            self
+    #end set_operator
 
     @property
     def tolerance(self) :
@@ -1545,9 +1619,17 @@ class Context :
     #end tolerance
 
     @tolerance.setter
-    def tolerance(self, width) :
-        cairo.cairo_set_tolerance(self._cairobj, width)
+    def tolerance(self, tolerance) :
+        self.set_tolerance(self._cairobj, tolerance)
     #end tolerance
+
+    def set_tolerance(self, tolerance) :
+        "sets a new curve-rendering tolerance. Use for method chaining; otherwise, it’s" \
+        " probably more convenient to assign to the tolerance property."
+        cairo.cairo_set_tolerance(self._cairobj, tolerance)
+        return \
+            self
+    #end set_tolerance
 
     def clip(self) :
         "sets the current clip to the intersection of itself and the" \
@@ -1596,6 +1678,8 @@ class Context :
 
     def reset_clip(self) :
         cairo.cairo_reset_clip(self._cairobj)
+        return \
+            self
     #end reset_clip
 
     def fill(self) :
@@ -1908,6 +1992,8 @@ class Context :
         "appends Matrix m onto the current coordinate transformation."
         m = m.to_cairo()
         cairo.cairo_transform(self._cairobj, ct.byref(m))
+        return \
+            self
     #end transform
 
     @property
@@ -1921,10 +2007,18 @@ class Context :
 
     @matrix.setter
     def matrix(self, m) :
+        self.set_matrix(m)
+    #end matrix
+
+    def set_matrix(self, m) :
+        "sets a new transformation matrix. Use for method chaining; otherwise, it’s" \
+        " probably more convenient to assign to the matrix property."
         m = m.to_cairo()
         cairo.cairo_set_matrix(self._cairobj, ct.byref(m))
         self._check()
-    #end matrix
+        return \
+            self
+    #end set_matrix
 
     def identity_matrix(self) :
         "resets the coordinate transformation to the identity Matrix."
@@ -1963,12 +2057,20 @@ class Context :
 
     @font_matrix.setter
     def font_matrix(self, matrix) :
+        self.set_font_matrix(matrix)
+    #end font_matrix
+
+    def set_font_matrix(self, matrix) :
+        "sets a new font matrix. Use for method chaining; otherwise, it’s" \
+        " probably more convenient to assign to the font_matrix property."
         if not isinstance(matrix, Matrix) :
             raise TypeError("matrix must be a Matrix")
         #end if
         matrix = matrix.from_cairo()
         cairo.cairo_set_font_matrix(self._cairobj, ct.byref(matrix))
-    #end font_matrix
+        return \
+            self
+    #end set_font_matrix
 
     @property
     def font_options(self) :
@@ -1981,11 +2083,19 @@ class Context :
 
     @font_options.setter
     def font_options(self, options) :
+        self.set_font_options(options)
+    #end font_options
+
+    def set_font_options(self, options) :
+        "sets new font options. Use for method chaining; otherwise, it’s" \
+        " probably more convenient to assign to the font_options property."
         if not isinstance(options, FontOptions) :
             raise TypeError("options must be a FontOptions")
         #end if
         cairo.cairo_set_font_options(self._cairobj, options._cairobj)
-    #end font_options
+        return \
+            self
+    #end set_font_options
 
     @property
     def font_face(self) :
@@ -1996,11 +2106,19 @@ class Context :
 
     @font_face.setter
     def font_face(self, font_face) :
+        self.set_font_face(font_face)
+    #end font_face
+
+    def set_font_face(self, font_face) :
+        "sets a new font face. Use for method chaining; otherwise, it’s" \
+        " probably more convenient to assign to the font_face property."
         if not isinstance(font_face, FontFace) :
             raise TypeError("font_face must be a FontFace")
         #end if
         cairo.cairo_set_font_face(self._cairobj, font_face._cairobj)
-    #end font_face
+        return \
+            self
+    #end set_font_face
 
     @property
     def scaled_font(self) :
@@ -2011,20 +2129,32 @@ class Context :
 
     @scaled_font.setter
     def scaled_font(self, scaled_font) :
+        self.set_scaled_font(scaled_font)
+    #end scaled_font
+
+    def set_scaled_font(self, scaled_font) :
+        "sets a new scaled font face. Use for method chaining; otherwise, it’s" \
+        " probably more convenient to assign to the scaled_font property."
         if not isinstance(scaled_font, ScaledFont) :
             raise TypeError("scaled_font must be a ScaledFont")
         #end if
         cairo.cairo_set_scaled_font(self._cairobj, scaled_font._cairobj)
-    #end scaled_font
+        return \
+            self
+    #end set_scaled_font
 
     def show_text(self, text) :
         cairo.cairo_show_text(self._cairobj, text.encode("utf-8"))
+        return \
+            self
     #end show_text
 
     def show_glyphs(self, glyphs) :
         "glyphs must be a sequence of Glyph objects."
         buf, nr_glyphs = glyphs_to_cairo(glyphs)
         cairo.cairo_show_glyphs(self._cairobj, ct.byref(buf), nr_glyphs)
+        return \
+            self
     #end show_glyphs
 
     # TODO: show_text_glyphs
