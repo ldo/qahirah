@@ -969,8 +969,8 @@ class Matrix :
     @staticmethod
     def translation(delta) :
         "returns a Matrix that translates by the specified delta Vector."
-        x, y = Vector.from_tuple(delta)
-        return Matrix(1, 0, 0, 1, x, y)
+        tx, ty = Vector.from_tuple(delta)
+        return Matrix(1, 0, 0, 1, tx, ty)
     #end translation
 
     @staticmethod
@@ -981,8 +981,8 @@ class Matrix :
         elif isinstance(factor, Vector) :
             result = Matrix(factor.x, 0, 0, factor.y, 0, 0)
         elif isinstance(factor, tuple) :
-            x, y = factor
-            result = Matrix(x, 0, 0, y, 0, 0)
+            sx, sy = factor
+            result = Matrix(sx, 0, 0, sy, 0, 0)
         else :
             raise TypeError("factor must be a number or a Vector")
         #end if
@@ -1002,9 +1002,9 @@ class Matrix :
     @staticmethod
     def skewing(vec) :
         "returns a Matrix that skews by the specified vec.x and vec.y factors."
-        x, y = Vector.from_tuple(vec)
+        sx, sy = Vector.from_tuple(vec)
         return \
-            Matrix(1, y, 0, x, 1, 0)
+            Matrix(1, sy, 0, sx, 1, 0)
     #end skewing
 
     def det(self) :
@@ -1255,6 +1255,14 @@ class Rect :
                 (self.left, self.top, self.width, self.height)
             )
     #end __repr__
+
+    def inset(self, v) :
+        "returns a Rect inset by the specified x and y amounts from this one" \
+        " (use negative values to outset)."
+        dx, dy = Vector.from_tuple(v)
+        return \
+            Rect(self.left + dx, self.top + dy, self.width - 2 * dx, self.height - 2 * dy)
+    #end inset
 
     def position(self, relpt, halign = None, valign = None) :
         "returns a copy of this Rect repositioned relative to Vector relpt, horizontally" \
@@ -1964,8 +1972,8 @@ class Context :
     def translate(self, v) :
         "translate(Vector) or translate((x, y))\n" \
         "applies a translation to the current coordinate system."
-        x, y = Vector.from_tuple(v)
-        cairo.cairo_translate(self._cairobj, x, y)
+        tx, ty = Vector.from_tuple(v)
+        cairo.cairo_translate(self._cairobj, tx, ty)
         return \
             self
     #end translate
@@ -1973,8 +1981,8 @@ class Context :
     def scale(self, s) :
         "scale(Vector) or scale((x, y))\n" \
         "applies a scaling to the current coordinate system."
-        x, y = Vector.from_tuple(s)
-        cairo.cairo_scale(self._cairobj, x, y)
+        sx, sy = Vector.from_tuple(s)
+        cairo.cairo_scale(self._cairobj, sx, sy)
         return \
             self
     #end scale
