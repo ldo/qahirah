@@ -1,0 +1,157 @@
+**Qahirah** is yet another Python language binding for the [Cairo graphics
+library](http://cairographics.org/), for use with Python 3.2 or later.
+It is modelled to some extent on [Pycairo](http://cairographics.org/pycairo/),
+but differs from it in important ways:
+
+* It is implemented entirely in Python, using the ctypes module.
+  This offers advantages: automatic support for passing arguments
+  by keyword, and argument names appearing in help() output.
+* It tries to operate at a higher level than the actual C-centric Cairo API,
+  taking advantage of Python’s powerful data-manipulation facilities.
+  This is explained in more detail below.
+* Because it is pure Python, the abstractions it implements are “leaky”.
+  As Guido van Rossum has made clear, “We’re all consenting adults here”.
+  If you want to bypass Qahirah’s facilities and make calls directly
+  to the underlying Cairo library, there is nothing to prevent you from
+  doing so. Whether your code will still work with a future version of
+  Qahirah is another matter...
+
+WARNING: This Python binding is still to be considered in a state of
+flux for now, subject to whatever reorganization looks to be necessary
+as experience is gained with using it.
+
+
+Installation
+============
+
+Installation is explained in the setup.py script.
+
+
+Overview
+========
+
+This introduction will assume you have some knowledge of the Cairo
+API itself; possibly you have even used the Pycairo Python binding.
+Qahirah also has “Context”, “Surface” and “Pattern” classes, similar
+to those in Pycairo. To summarize:
+
+* A _Surface_ (underlying Cairo type cairo_surface_t) is a holder
+  for the results of drawing. An _ImageSurface_ is a subclass of
+  Surface that specifically holds a two-dimensional array of pixels
+  (of one of the Cairo-supported formats), but there are other kinds
+  of surfaces (not implemented in Qahirah at the moment) for rendering
+  direct to PDF files, SVG files and other purposes.
+* You do not do drawing directly into a Surface. Instead, you do
+  your drawing into a _Context_ (underlying Cairo type cairo_t).
+  A Context is like a wrapper around a Surface.
+* A _Pattern_ (underlying Cairo type cairo_pattern_t) defines how
+  pixels are individually affected while drawing. A Pattern can
+  consist of a single plain colour (possibly with transparency), or it
+  can be a linear or radial gradient of colours, or it can even take
+  the image from a Surface.
+
+However, Qahirah introduces some important differences from Pycairo
+(and from the underlying Cairo API):
+
+* Vectors
+* Properties
+* Method-chaining
+
+These are further explained in the sections below.
+
+
+Vectors
+=======
+
+Qahirah makes heavy use of the *Vector* type. This
+corresponds to the usual mathematical idea of a 2D vector, with *x*
+and *y* components. Where Cairo wants you to pass separate *x*- and
+*y*-coordinate values, Qahirah wants you to pass the two as a single
+Vector. The reason for this is to reduce repetitiveness of coding:
+very often, you want to do a calculation for the *x*-coordinate, and
+then repeat the exact same form of calculation for the *y*-coordinate.
+The Qahirah Vector type defines addition, subtraction, multiplication
+and division directly on Vectors in terms of the corresponding
+operations on their components, allowing you to write your coordinate
+calculations just once.
+
+However, to avoid continually typing the name of the Vector class
+all the time, all Vector arguments to Qahirah calls can also be
+2-tuples of coordinates, and Vector call results can be directly
+interpreted as 2-tuples of coordinates. Thus, where the cairo_move_to
+call takes separate x and y arguments, the Qahirah call works more
+like this:
+
+    p = Vector(x, y)
+    ctx.move_to(p)
+
+which can of course be written as
+
+    ctx.move_to(Vector(x, y))
+
+but even more compactly, and closer to the underlying Cairo call, as
+
+    ctx.move_to((x, y))
+
+Similarly, where cairo_get_current_point returns separate x and
+y values, Qahirah returns both at once:
+
+    p = ctx.current_point
+    x = p.x
+    y = p.y
+
+which can also be written more directly as
+
+    x, y = ctx.current_point
+
+
+Properties
+==========
+
+Cairo defines lots of pairs of cairo_get_*property* and cairo_set_*property*
+calls. Qahirah collapses these down to a single *property* which can be used
+directly in an expression, or assigned to. For example, instead of
+
+    cairo_set_source(ctx, pat)
+
+you can write
+
+    ctx.source = pat
+
+and instead of
+
+    pat = cairo_get_source(ctx)
+
+you write
+
+    pat = ctx.source
+
+However, the set_*property* versions of the calls are still provided,
+for use with method-chaining.
+
+
+Method-chaining
+===============
+
+*Method-chaining* is a technique for reducing repetitiveness when making
+a series of calls on the same object. For example, instead of this series
+of a drawing calls on a Context:
+
+    ctx.new_path()
+    ctx.move_to(p1)
+    ctx.curve_to(p2, p3, p4)
+    ctx.dash = ((1, 1), 0)
+    ctx.stroke()
+
+you can write
+
+    (ctx
+        .new_path()
+        .move_to(p1)
+        .curve_to(p2, p3, p4)
+        .set_dash((1, 1), 0)
+        .stroke()
+    )
+
+Method-chaining is also available on appropriate methods of Pattern and
+Surface objects.
