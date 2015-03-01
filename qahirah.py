@@ -1677,7 +1677,7 @@ class Context :
 
     def append_path(self, path) :
         "appends another Path onto the current path."
-        if not isinstance(source, Path) :
+        if not isinstance(path, Path) :
             raise TypeError("path is not a Path")
         #end if
         cairo.cairo_append_path(self._cairobj, path._cairobj)
