@@ -1004,7 +1004,7 @@ class Matrix :
         "returns a Matrix that skews by the specified vec.x and vec.y factors."
         sx, sy = Vector.from_tuple(vec)
         return \
-            Matrix(1, sy, 0, sx, 1, 0)
+            Matrix(1, sy, -sx, 1, 0, 0)
     #end skewing
 
     def det(self) :
