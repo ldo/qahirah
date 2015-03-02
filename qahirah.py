@@ -996,7 +996,7 @@ class Matrix :
         " angle in radians."
         cos = math.cos(angle)
         sin = math.sin(angle)
-        return Matrix(cos, -sin, sin, cos, 0, 0)
+        return Matrix(cos, sin, -sin, cos, 0, 0)
     #end rotation
 
     @staticmethod
