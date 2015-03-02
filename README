@@ -16,7 +16,7 @@ but differs from it in important ways:
   doing so. Whether your code will still work with a future version of
   Qahirah is another matter...
 
-WARNING: This Python binding is still to be considered in a state of
+**WARNING:** This Python binding is still to be considered in a state of
 flux for now, subject to whatever reorganization looks to be necessary
 as experience is gained with using it.
 
@@ -75,12 +75,12 @@ and division directly on Vectors in terms of the corresponding
 operations on their components, allowing you to write your coordinate
 calculations just once.
 
-However, to avoid continually typing the name of the Vector class
-all the time, all Vector arguments to Qahirah calls can also be
-2-tuples of coordinates, and Vector call results can be directly
-interpreted as 2-tuples of coordinates. Thus, where the cairo_move_to
-call takes separate x and y arguments, the Qahirah call works more
-like this:
+However, you will still sometimes need to work with separate coordinate
+values. To ease the job of conversion, all Vector arguments to Qahirah
+calls can also be written directly as 2-tuples of coordinates, and
+Vector call results can be directly interpreted as 2-tuples of
+coordinates. Thus, where the cairo_move_to call takes separate x and y
+arguments, the Qahirah call works more like this:
 
     p = Vector(x, y)
     ctx.move_to(p)
@@ -100,7 +100,8 @@ y values, Qahirah returns both at once:
     x = p.x
     y = p.y
 
-which can also be written more directly as
+which, if you need to separate them out, can also be written more
+directly as
 
     x, y = ctx.current_point
 
@@ -134,7 +135,9 @@ Method-chaining
 ===============
 
 *Method-chaining* is a technique for reducing repetitiveness when making
-a series of calls on the same object. For example, instead of this series
+a series of calls on the same object. This is achieved by having the
+method calls return the object itself, allowing the immediate application
+of another method call, and so on. For example, instead of this series
 of a drawing calls on a Context:
 
     ctx.new_path()
@@ -155,3 +158,14 @@ you can write
 
 Method-chaining is also available on appropriate methods of Pattern and
 Surface objects.
+
+
+Examples
+========
+
+Examples of Qahirah in action are available in my
+[qahirah_examples](https://github.com/ldo/qahirah_examples)
+repository.
+
+Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
+2015 March 2
