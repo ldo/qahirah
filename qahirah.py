@@ -1862,20 +1862,20 @@ class Context :
             self
     #end close_path
 
-    def arc(self, centre, radius, angle1, angle2) :
+    def arc(self, center, radius, angle1, angle2) :
         "draws a segment of a circular arc in the positive-x-to-positive-y direction." \
-        " centre can be a Vector or a tuple of 2 coord values."
-        centre = Vector.from_tuple(centre)
-        cairo.cairo_arc(self._cairobj, centre.x, centre.y, radius, angle1, angle2)
+        " center can be a Vector or a tuple of 2 coord values."
+        center = Vector.from_tuple(center)
+        cairo.cairo_arc(self._cairobj, center.x, center.y, radius, angle1, angle2)
         return \
             self
     #end arc
 
-    def arc_negative(self, centre, radius, angle1, angle2) :
+    def arc_negative(self, center, radius, angle1, angle2) :
         "draws a segment of a circular arc in the positive-y-to-positive-x direction." \
-        " centre can be a Vector or a tuple of 2 coord values."
-        centre = Vector.from_tuple(centre)
-        cairo.cairo_arc_negative(self._cairobj, centre.x, centre.y, radius, angle1, angle2)
+        " center can be a Vector or a tuple of 2 coord values."
+        center = Vector.from_tuple(center)
+        cairo.cairo_arc_negative(self._cairobj, center.x, center.y, radius, angle1, angle2)
         return \
             self
     #end arc_negative
