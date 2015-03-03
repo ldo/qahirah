@@ -43,12 +43,18 @@ to those in Pycairo. To summarize:
   in Qahirah at the moment) SVG files and other purposes.
 * You do not do drawing directly into a Surface. Instead, you do
   your drawing into a _Context_ (underlying Cairo type cairo_t).
-  A Context is like a wrapper around a Surface.
+  A Context is like a wrapper around a Surface; it holds additional
+  state that can affect subsequent drawing calls (e.g. current
+  position, source pattern, operator), but are not part of the
+  actual contents of the Surface.
 * A _Pattern_ (underlying Cairo type cairo_pattern_t) defines how
   pixels are individually affected while drawing. A Pattern can
   consist of a single plain colour (possibly with transparency), or it
   can be a linear or radial gradient of colours, or it can even take
   the image from a Surface.
+
+(There are other object types, but understanding these three is,
+I think, core to understanding how Cairo works.)
 
 However, Qahirah introduces some important differences from Pycairo
 (and from the underlying Cairo API):
@@ -56,6 +62,7 @@ However, Qahirah introduces some important differences from Pycairo
 * Vectors
 * Properties
 * Method-chaining
+* Rects
 
 These are further explained in the sections below.
 
@@ -104,6 +111,16 @@ which, if you need to separate them out, can also be written more
 directly as
 
     x, y = ctx.current_point
+
+The coordinate components of a Vector can be integers or reals.
+Some uses (e.g. specifying the dimensions of an ImageSurface)
+require integer coordinates; the builtin Python “round()” function
+can be used on a Vector to round its coordinates to the nearest
+corresponding integers, e.g.:
+
+    >>> v = Vector(3.5, 4.5)
+    >>> round(v)
+    Vector(4, 4)
 
 
 Properties
@@ -160,6 +177,22 @@ Method-chaining is also available on appropriate methods of Pattern and
 Surface objects.
 
 
+Rects
+=====
+
+Qahirah defines a *Rect* type, which wraps either an underlying
+cairo_rectangle_int_t or cairo_rectangle_t, depending on whether
+the coordinates are all integers or not. As with Vectors, the
+builtin Python “round()” function can be used to convert a Rect
+to one with all-integer coordinates.
+
+Qahirah’s Rect type also defines many useful additional operations.
+For example, the “transform_to()” method generates a Matrix that
+maps the area covered by a Rect onto another Rect, which is a
+very common operation for positioning drawing of figures on a
+Surface.
+
+
 Examples
 ========
 
@@ -168,4 +201,4 @@ Examples of Qahirah in action are available in my
 repository.
 
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
-2015 March 2
+2015 March 3
