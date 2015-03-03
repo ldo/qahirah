@@ -360,6 +360,10 @@ class CAIRO :
     read_func_t = ct.CFUNCTYPE(ct.c_int, ct.c_void_p, ct.c_void_p, ct.c_uint)
     write_func_t = ct.CFUNCTYPE(ct.c_int, ct.c_void_p, ct.c_void_p, ct.c_uint)
 
+    # codes for cairo_pdf_version_t
+    PDF_VERSION_1_4 = 0
+    PDF_VERSION_1_5 = 1
+
 #end CAIRO
 
 def def_struct_class(name, ctname) :
@@ -572,6 +576,7 @@ cairo.cairo_surface_write_to_png.argtypes = (ct.c_void_p, ct.c_char_p)
 cairo.cairo_surface_write_to_png_stream.argtypes = (ct.c_void_p, CAIRO.write_func_t, ct.c_void_p)
 cairo.cairo_surface_copy_page.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_show_page.argtypes = (ct.c_void_p,)
+
 cairo.cairo_image_surface_create.restype = ct.c_void_p
 cairo.cairo_image_surface_create_from_png.restype = ct.c_void_p
 cairo.cairo_image_surface_create_from_png_stream.restype = ct.c_void_p
@@ -582,6 +587,16 @@ cairo.cairo_image_surface_get_format.argtypes = (ct.c_void_p,)
 cairo.cairo_image_surface_get_width.argtypes = (ct.c_void_p,)
 cairo.cairo_image_surface_get_height.argtypes = (ct.c_void_p,)
 cairo.cairo_image_surface_get_stride.argtypes = (ct.c_void_p,)
+
+cairo.cairo_pdf_surface_create.restype = ct.c_void_p
+cairo.cairo_pdf_surface_create.argtypes = (ct.c_char_p, ct.c_double, ct.c_double)
+cairo.cairo_pdf_surface_create_for_stream.restype = ct.c_void_p
+cairo.cairo_pdf_surface_create_for_stream.argtypes = (CAIRO.write_func_t, ct.c_void_p, ct.c_double, ct.c_double)
+cairo.cairo_pdf_surface_restrict_to_version.argtypes = (ct.c_void_p, ct.c_int)
+cairo.cairo_pdf_get_versions.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_pdf_version_to_string.restype = ct.c_char_p
+cairo.cairo_pdf_version_to_string.argtypes = (ct.c_int,)
+cairo.cairo_pdf_surface_set_size.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
 
 cairo.cairo_pattern_status.argtypes = (ct.c_void_p,)
 cairo.cairo_pattern_destroy.argtypes = (ct.c_void_p,)
@@ -1811,12 +1826,16 @@ class Context :
         "emits the current page for Surfaces that support multiple pages."
         cairo.cairo_copy_page(self._cairobj)
         self._check()
+        return \
+            self
     #end copy_page
 
     def show_page(self) :
         "emits and clears the current page for Surfaces that support multiple pages."
         cairo.cairo_show_page(self._cairobj)
         self._check()
+        return \
+            self
     #end show_page
 
     # TODO: user_data
@@ -2270,12 +2289,16 @@ class Surface :
         "emits the current page for Surfaces that support multiple pages."
         cairo.cairo_surface_copy_page(self._cairobj)
         self._check()
+        return \
+            self
     #end copy_page
 
     def show_page(self) :
         "emits and clears the current page for Surfaces that support multiple pages."
         cairo.cairo_surface_show_page(self._cairobj)
         self._check()
+        return \
+            self
     #end show_page
 
     def write_to_png(self, filename) :
@@ -2448,8 +2471,74 @@ class ImageSurface(Surface) :
 
 #end ImageSurface
 
-# TODO: PDF Surfaces, PNG Surfaces, PostScript Surfaces,
-# Recording Surfaces, SVG Surfaces, Script Surfaces
+class PDFSurface(Surface) :
+    "A Cairo surface that outputs its renderings to a PDF file. Do not instantiate" \
+    " directly; use one of the create methods."
+
+    @staticmethod
+    def create(filename, dimensions_in_points) :
+        dimensions_in_points = Vector.from_tuple(dimensions_in_points)
+        return \
+            PDFSurface(cairo.cairo_pdf_surface_create(filename.encode("utf-8"), dimensions_in_points.x, dimensions_in_points.y))
+    #end create
+
+    @staticmethod
+    def create_for_stream(write_func, closure, dimensions_in_points) :
+        "direct low-level interface to cairo_pdf_surface_create_for_stream." \
+        " write_func must match signature of CAIRO.write_func_t, while closure is a" \
+        " ctypes.c_void_p."
+        dimensions_in_points = Vector.from_tuple(dimensions_in_points)
+        c_write_func = CAIRO.write_func_t(write_func)
+        return \
+            PDFSurface(cairo.cairo_pdf_surface_create_for_stream(c_write_func, closure, dimensions_in_points.x, dimensions_in_points.y))
+    #end create_for_stream
+
+    def restrict_to_version(self, version) :
+        "restricts the version of PDF file created. If used, must" \
+        " be called before any actual drawing is done."
+        cairo.cairo_pdf_surface_restrict_to_version(self._cairobj, version)
+        self._check()
+        return \
+            self
+    #end restrict_to_version
+
+    @staticmethod
+    def get_versions() :
+        "returns a tuple of supported PDF version number codes CAIRO.PDF_VERSION_xxx."
+        versions = ct.POINTER(ct.c_int)()
+        num_versions = ct.c_int()
+        cairo.cairo_pdf_get_versions(ct.byref(versions), ct.byref(num_versions))
+        return \
+            tuple(versions[i] for i in range(num_versions.value))
+    #end get_versions
+
+    @staticmethod
+    def version_to_string(version) :
+        "returns the canonical version string for the specified PDF" \
+        " version code CAIRO.PDF_VERSION_xxx."
+        result = cairo.cairo_pdf_version_to_string(version)
+        if bool(result) :
+            result = result.decode("utf-8")
+        else :
+            result = None
+        #end if
+        return \
+            result
+    #end version_to_string
+
+    def set_size(self, dimensions_in_points) :
+        "resizes the page. Must be empty at this point (e.g. immediately" \
+        " after show_page or initial creation)."
+        dimensions_in_points = Vector.from_tuple(dimensions_in_points)
+        cairo.cairo_pdf_surface_set_size(self._cairobj, dimensions_in_points.x, dimensions_in_points.y)
+        self._check()
+        return \
+            self
+    #end set_size
+
+#end PDFSurface
+
+# TODO: PostScript Surfaces, Recording Surfaces, SVG Surfaces, Script Surfaces
 
 class Pattern :
     "a Cairo Pattern object. Do not instantiate directly; use one of the create methods."

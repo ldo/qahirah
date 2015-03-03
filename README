@@ -39,8 +39,8 @@ to those in Pycairo. To summarize:
   for the results of drawing. An _ImageSurface_ is a subclass of
   Surface that specifically holds a two-dimensional array of pixels
   (of one of the Cairo-supported formats), but there are other kinds
-  of surfaces (not implemented in Qahirah at the moment) for rendering
-  direct to PDF files, SVG files and other purposes.
+  of surfaces for rendering direct to PDF files, and (not implemented
+  in Qahirah at the moment) SVG files and other purposes.
 * You do not do drawing directly into a Surface. Instead, you do
   your drawing into a _Context_ (underlying Cairo type cairo_t).
   A Context is like a wrapper around a Surface.
