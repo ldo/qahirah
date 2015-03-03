@@ -568,6 +568,12 @@ cairo.cairo_glyph_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_v
 
 cairo.cairo_surface_status.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_get_type.argtypes = (ct.c_void_p,)
+cairo.cairo_surface_create_similar.restype = ct.c_void_p
+cairo.cairo_surface_create_similar.argtypes = (ct.c_void_p, ct.c_int, ct.c_int, ct.c_int)
+cairo.cairo_surface_create_similar_image.restype = ct.c_void_p
+cairo.cairo_surface_create_similar_image.argtypes = (ct.c_void_p, ct.c_int, ct.c_int, ct.c_int)
+cairo.cairo_surface_create_for_rectangle.restype = ct.c_void_p
+cairo.cairo_surface_create_for_rectangle.argtypes = (ct.c_void_p, ct.c_double, ct.c_double, ct.c_double, ct.c_double)
 cairo.cairo_surface_reference.restype = ct.c_void_p
 cairo.cairo_surface_reference.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_destroy.argtypes = (ct.c_void_p,)
@@ -2309,7 +2315,27 @@ class Surface :
             cairo.cairo_surface_get_type(self._cairobj)
     #end type
 
-    # TODO: create_similar, device, font_options etc
+    def create_similar(self, content, dimensions) :
+        dimensions = round(Vector.from_tuple(dimensions))
+        return \
+            Surface(cairo.cairo_surface_create_similar(self._cairobj, content, dimensions.x, dimensions.y))
+            # fixme: need to choose right Surface subclass based on result surface type
+    #end create_similar
+
+    def create_similar_image(self, format, dimensions) :
+        dimensions = round(Vector.from_tuple(dimensions))
+        return \
+            ImageSurface(cairo.cairo_surface_create_similar_image(self._cairobj, format, dimensions.x, dimensions.y))
+    #end create_similar_image
+
+    def create_for_rectangle(self, bounds) :
+        return \
+            type(self)(cairo.cairo_surface_create_for_rectangle(self._cairobj, bounds.left, bounds.top, bounds.width, bounds.height))
+            # assumes it returns same type of surface as self!
+    #end create_for_rectangle
+
+    # TODO: device, font_options, content, mark_dirty, device_offset, fallback_resolution,
+    # has_show_text_glyphs, mime_data, map/unmap image
     # <http://cairographics.org/manual/cairo-cairo-surface-t.html>
 
     def flush(self) :
