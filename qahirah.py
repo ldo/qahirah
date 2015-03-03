@@ -1004,8 +1004,9 @@ class Matrix :
     #end translation
 
     @staticmethod
-    def scaling(factor) :
-        "returns a Matrix that scales by the specified scalar or Vector factors."
+    def scaling(factor, center = None) :
+        "returns a Matrix that scales by the specified scalar or Vector factors" \
+        " about Vector center, or the origin if not specified."
         if isinstance(factor, Number) :
             result = Matrix(factor, 0, 0, factor, 0, 0)
         elif isinstance(factor, Vector) :
@@ -1016,25 +1017,41 @@ class Matrix :
         else :
             raise TypeError("factor must be a number or a Vector")
         #end if
+        if center != None :
+            center = Vector.from_tuple(center)
+            result = Matrix.translation(center) * result * Matrix.translation(- center)
+        #end if
         return \
             result
     #end scaling
 
     @staticmethod
-    def rotation(angle) :
+    def rotation(angle, center = None) :
         "returns a Matrix that rotates about the origin by the specified" \
-        " angle in radians."
+        " angle in radians about Vector center, or the origin if not specified."
         cos = math.cos(angle)
         sin = math.sin(angle)
-        return Matrix(cos, sin, -sin, cos, 0, 0)
+        result = Matrix(cos, sin, -sin, cos, 0, 0)
+        if center != None :
+            center = Vector.from_tuple(center)
+            result = Matrix.translation(center) * result * Matrix.translation(- center)
+        #end if
+        return \
+            result
     #end rotation
 
     @staticmethod
-    def skewing(vec) :
-        "returns a Matrix that skews by the specified vec.x and vec.y factors."
+    def skewing(vec, center = None) :
+        "returns a Matrix that skews by the specified vec.x and vec.y factors" \
+        " about Vector center, or the origin if not specified."
         sx, sy = Vector.from_tuple(vec)
+        result = Matrix(1, sy, sx, 1, 0, 0)
+        if center != None :
+            center = Vector.from_tuple(center)
+            result = Matrix.translation(center) * result * Matrix.translation(- center)
+        #end if
         return \
-            Matrix(1, sy, sx, 1, 0, 0)
+            result
     #end skewing
 
     def det(self) :
