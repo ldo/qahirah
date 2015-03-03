@@ -1361,6 +1361,24 @@ class Rect :
             )
     #end transform_to
 
+    def fit_to(src, dst, outside = False) :
+        "returns a Matrix which maps this Rect onto dst Rect without distortion" \
+        " if the aspect ratios don’t match. Instead, src will be uniformly scaled" \
+        " to the largest possible size that fits within dst if outside is False," \
+        " or to the smallest possible size that dst will fit within if outside is" \
+        " True."
+        scale = dst.dimensions / src.dimensions
+        scale = (min, max)[outside](scale.x, scale.y)
+        return \
+          (
+                Matrix.translation(dst.middle)
+            *
+                Matrix.scaling((scale, scale))
+            *
+                Matrix.translation(- src.middle)
+          )
+    #end fit_to
+
 #end Rect
 
 class Glyph :
