@@ -1427,7 +1427,7 @@ class Context :
     " Many methods return the context to allow method chaining."
     # <http://cairographics.org/manual/cairo-cairo-t.html>
 
-    __slots__ = ("_cairobj",) # to forestall typos
+    __slots__ = ("_cairobj", "_user_data") # to forestall typos
 
     def _check(self) :
         # check for error from last operation on this Context.
@@ -1437,6 +1437,7 @@ class Context :
     def __init__(self, surface) :
         self._cairobj = cairo.cairo_create(surface._cairobj)
         self._check()
+        self._user_data = {}
     #end __init__
 
     def __del__(self) :
@@ -1891,7 +1892,14 @@ class Context :
             self
     #end show_page
 
-    # TODO: user_data
+    @property
+    def user_data(self) :
+        "a dict, initially empty, which may be used by caller for any purpose."
+        return \
+            self._user_data
+    #end user_data
+
+    # Cairo user_data not exposed to caller, probably not useful
 
     # paths <http://cairographics.org/manual/cairo-Paths.html>
 
@@ -2295,7 +2303,7 @@ class Context :
 class Surface :
     "base class for Cairo surfaces. Do not instantiate directly."
 
-    __slots__ = ("_cairobj",) # to forestall typos
+    __slots__ = ("_cairobj", "_user_data") # to forestall typos
 
     def _check(self) :
         # check for error from last operation on this Surface.
@@ -2305,6 +2313,7 @@ class Surface :
     def __init__(self, _cairobj) :
         self._cairobj = _cairobj
         self._check()
+        self._user_data = {}
     #end __init__
 
     def __del__(self) :
@@ -2348,8 +2357,19 @@ class Surface :
             # assumes it returns same type of surface as self!
     #end create_for_rectangle
 
-    # TODO: device, font_options, content, mark_dirty, device_offset, fallback_resolution,
-    # has_show_text_glyphs, mime_data, map/unmap image
+    # TODO: device, font_options, content, mark_dirty, device_offset, fallback_resolution
+    # <http://cairographics.org/manual/cairo-cairo-surface-t.html>
+
+    @property
+    def user_data(self) :
+        "a dict, initially empty, which may be used by caller for any purpose."
+        return \
+            self._user_data
+    #end user_data
+
+    # Cairo user_data not exposed to caller, probably not useful
+
+    # TODO: has_show_text_glyphs, mime_data, map/unmap image
     # <http://cairographics.org/manual/cairo-cairo-surface-t.html>
 
     def flush(self) :
@@ -2411,8 +2431,6 @@ class Surface :
         return \
             result.tobytes()
     #end to_png_bytes
-
-    # TODO: user data?
 
 #end Surface
 
@@ -2621,7 +2639,7 @@ class Pattern :
     "a Cairo Pattern object. Do not instantiate directly; use one of the create methods."
     # <http://cairographics.org/manual/cairo-cairo-pattern-t.html>
 
-    __slots__ = ("_cairobj", "_surface") # to forestall typos
+    __slots__ = ("_cairobj", "_user_data", "_surface") # to forestall typos
 
     def _check(self) :
         # check for error from last operation on this Pattern.
@@ -2631,6 +2649,7 @@ class Pattern :
     def __init__(self, _cairobj) :
         self._cairobj = _cairobj
         self._check()
+        self._user_data = {}
     #end __init__
 
     def __del__(self) :
@@ -2906,7 +2925,14 @@ class Pattern :
             self
     #end set_matrix
 
-    # TODO: user data
+    @property
+    def user_data(self) :
+        "a dict, initially empty, which may be used by caller for any purpose."
+        return \
+            self._user_data
+    #end user_data
+
+    # Cairo user_data not exposed to caller, probably not useful
 
     # TODO: Raster Sources <http://cairographics.org/manual/cairo-Raster-Sources.html>
 
@@ -3180,7 +3206,7 @@ class FontFace :
     "a general Cairo font object. Do not instantiate directly; use the create methods."
     # <http://cairographics.org/manual/cairo-cairo-font-face-t.html>
 
-    __slots__ = ("_cairobj",) # to forestall typos
+    __slots__ = ("_cairobj", "_user_data") # to forestall typos
 
     def _check(self) :
         # check for error from last operation on this FontFace.
@@ -3190,6 +3216,7 @@ class FontFace :
     def __init__(self, _cairobj) :
         self._cairobj = _cairobj
         self._check()
+        self._user_data = {}
     #end __init__
 
     def __del__(self) :
@@ -3277,7 +3304,16 @@ class FontFace :
             FontFace(cairo_face)
     #end create_for_pattern
 
-    # TODO: synthesize, user data
+    # TODO: synthesize
+
+    @property
+    def user_data(self) :
+        "a dict, initially empty, which may be used by caller for any purpose."
+        return \
+            self._user_data
+    #end user_data
+
+    # Cairo user_data not exposed to caller, probably not useful
 
     # toy font face functions from <http://cairographics.org/manual/cairo-text.html>
 
@@ -3322,7 +3358,7 @@ class ScaledFont :
     " size and option settings. Do not instantiate directly; use the create method," \
     " or get one from Context.scaled_font."
 
-    __slots__ = ("_cairobj",) # to forestall typos
+    __slots__ = ("_cairobj", "_user_data") # to forestall typos
 
     def _check(self) :
         # check for error from last operation on this ScaledFont.
@@ -3332,6 +3368,7 @@ class ScaledFont :
     def __init__(self, _cairobj) :
         self._cairobj = _cairobj
         self._check()
+        self._user_data = {}
     #end __init__
 
     def __del__(self) :
@@ -3438,7 +3475,14 @@ class ScaledFont :
             cairo.cairo_scaled_font_get_type(self._cairobj)
     #end type
 
-    # TODO: user data
+    @property
+    def user_data(self) :
+        "a dict, initially empty, which may be used by caller for any purpose."
+        return \
+            self._user_data
+    #end user_data
+
+    # Cairo user_data not exposed to caller, probably not useful
 
 #end ScaledFont
 
