@@ -2028,8 +2028,6 @@ class Context :
             Rect(x1.value, y1.value, x2.value - x1.value, y2.value - y1.value)
     #end path_extents
 
-    # TODO: Regions <http://cairographics.org/manual/cairo-Regions.html>
-
     # Transformations <http://cairographics.org/manual/cairo-Transformations.html>
 
     def translate(self, v) :
@@ -2849,6 +2847,8 @@ class Pattern :
     # TODO: Raster Sources <http://cairographics.org/manual/cairo-Raster-Sources.html>
 
 #end Pattern
+
+# TODO: Regions <http://cairographics.org/manual/cairo-Regions.html>
 
 class Path :
     "a Cairo Path object. Do not instantiate directly."
