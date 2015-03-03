@@ -827,6 +827,8 @@ deg = 180 / math.pi
 class Vector :
     "something missing from Cairo itself, a representation of a 2D point."
 
+    __slots__ = ("x", "y") # to forestall typos
+
     def __init__(self, x, y) :
         self.x = x
         self.y = y
@@ -961,6 +963,8 @@ class Matrix :
     " elsewhere expect this Matrix type where the underlying Cairo routine" \
     " wants a cairo_matrix_t, and return this type where the Cairo routine" \
     " returns a cairo_matrix_t."
+
+    __slots__ = ("xx", "yx", "xy", "yy", "x0", "y0") # to forestall typos
 
     def __init__(self, xx, yx, xy, yy, x0, y0) :
         self.xx = xx
@@ -1170,6 +1174,8 @@ class Rect :
     " and the width and height. Or use from_corners to construct one from two Vectors" \
     " representing opposite corners, or from_dimensions to construct one from a Vector" \
     " giving the width and height, with the topleft set to (0, 0)."
+
+    __slots__ = ("left", "top", "width", "height") # to forestall typos
 
     def __init__(self, left, top, width, height) :
         self.left = left
@@ -1391,6 +1397,8 @@ class Rect :
 
 class Glyph :
     "specifies a glyph index and position relative to the origin."
+
+    __slots__ = ("index", "pos") # to forestall typos
 
     def __init__(self, index, pos) :
         if not isinstance(pos, Vector) :
@@ -2909,6 +2917,8 @@ class Pattern :
 class Path :
     "a Cairo Path object. Do not instantiate directly."
 
+    __slots__ = ("_cairobj",) # to forestall typos
+
     def __init__(self, _cairobj) :
         self._cairobj = _cairobj
         check(ct.cast(self._cairobj, CAIRO.path_ptr_t).contents.status)
@@ -3056,6 +3066,8 @@ class FontOptions :
     "Cairo font options. Instantiate with no arguments to create a new font_options_t object."
     # <http://cairographics.org/manual/cairo-cairo-font-options-t.html>
 
+    __slots__ = ("_cairobj",) # to forestall typos
+
     def _check(self) :
         # check for error from last operation on this FontOptions.
         check(cairo.cairo_font_options_status(self._cairobj))
@@ -3167,6 +3179,8 @@ class FontOptions :
 class FontFace :
     "a general Cairo font object. Do not instantiate directly; use the create methods."
     # <http://cairographics.org/manual/cairo-cairo-font-face-t.html>
+
+    __slots__ = ("_cairobj",) # to forestall typos
 
     def _check(self) :
         # check for error from last operation on this FontFace.
@@ -3307,6 +3321,8 @@ class ScaledFont :
     "a representation of a Cairo scaled_font_t, which is a font with particular" \
     " size and option settings. Do not instantiate directly; use the create method," \
     " or get one from Context.scaled_font."
+
+    __slots__ = ("_cairobj",) # to forestall typos
 
     def _check(self) :
         # check for error from last operation on this ScaledFont.
