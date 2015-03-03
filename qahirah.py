@@ -17,9 +17,11 @@ that may be read and written.
 import math
 from numbers import \
     Number
+import array
 import ctypes as ct
 
 cairo = ct.cdll.LoadLibrary("libcairo.so.2")
+libc = ct.cdll.LoadLibrary("libc.so.6")
 ft = ct.cdll.LoadLibrary("libfreetype.so.6")
 try :
     fc = ct.cdll.LoadLibrary("libfontconfig.so.1")
@@ -355,6 +357,9 @@ class CAIRO :
     FONT_WEIGHT_NORMAL = 0
     FONT_WEIGHT_BOLD = 1
 
+    read_func_t = ct.CFUNCTYPE(ct.c_int, ct.c_void_p, ct.c_void_p, ct.c_uint)
+    write_func_t = ct.CFUNCTYPE(ct.c_int, ct.c_void_p, ct.c_void_p, ct.c_uint)
+
 #end CAIRO
 
 def def_struct_class(name, ctname) :
@@ -562,7 +567,11 @@ cairo.cairo_surface_reference.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_destroy.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_flush.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_write_to_png.argtypes = (ct.c_void_p, ct.c_char_p)
+cairo.cairo_surface_write_to_png_stream.argtypes = (ct.c_void_p, CAIRO.write_func_t, ct.c_void_p)
 cairo.cairo_image_surface_create.restype = ct.c_void_p
+cairo.cairo_image_surface_create_from_png.restype = ct.c_void_p
+cairo.cairo_image_surface_create_from_png_stream.restype = ct.c_void_p
+cairo.cairo_image_surface_create_from_png_stream.argtypes = (CAIRO.read_func_t, ct.c_void_p)
 cairo.cairo_image_surface_create_for_data.restype = ct.c_void_p
 cairo.cairo_image_surface_create_for_data.argtypes = (ct.c_void_p, ct.c_int, ct.c_int, ct.c_int, ct.c_int)
 cairo.cairo_image_surface_get_format.argtypes = (ct.c_void_p,)
@@ -644,6 +653,8 @@ cairo.cairo_scaled_font_get_font_matrix.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_scaled_font_get_ctm.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_scaled_font_get_scale_matrix.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_scaled_font_get_type.argtypes = (ct.c_void_p,)
+
+libc.memcpy.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_size_t)
 
 if fc != None :
     fc.FcInit.restype = ct.c_bool
@@ -2245,7 +2256,39 @@ class Surface :
             self
     #end write_to_png
 
-    # TODO: user data, write_to_png_stream?
+    def write_to_png_stream(self, write_func, closure) :
+        "direct low-level interface to cairo_image_surface_write_to_png_stream." \
+        " write_func must match signature of CAIRO.write_func_t, while closure is a" \
+        " ctypes.c_void_p."
+        c_write_func = CAIRO.write_func_t(write_func)
+        check(cairo.cairo_surface_write_to_png_stream(self._cairobj, c_write_func, closure))
+        return \
+            self
+    #end write_to_png_stream
+
+    def to_png_bytes(self) :
+        "converts the contents of the Surface to a sequence of PNG bytes which" \
+        " is returned."
+
+        offset = 0
+
+        def write_data(_, data, length) :
+            nonlocal offset
+            result.extend(length * (0,))
+            libc.memcpy(result.buffer_info()[0] + offset, data, length)
+            offset += length
+            return \
+                CAIRO.STATUS_SUCCESS
+        #end write_data
+
+    #begin to_png_bytes
+        result = array.array("B")
+        self.write_to_png_stream(write_data, None)
+        return \
+            result.tobytes()
+    #end to_png_bytes
+
+    # TODO: user data?
 
 #end Surface
 
@@ -2263,12 +2306,59 @@ class ImageSurface(Surface) :
     #end create
 
     @staticmethod
+    def create_from_png(filename) :
+        "loads an image from a PNG file and creates an ImageSurface for it."
+        return \
+            ImageSurface(cairo.cairo_image_surface_create_from_png(filename.encode("utf-8")))
+    #end create_from_png
+
+    @staticmethod
+    def create_from_png_stream(read_func, closure) :
+        "direct low-level interface to cairo_image_surface_create_from_png_stream." \
+        " read_func must match signature CAIRO.read_func_t, while closure is a ctypes.c_void_p."
+        c_read_func = CAIRO.read_func_t(read_func)
+        return \
+            ImageSurface(cairo.cairo_image_surface_create_from_png_stream(c_read_func, closure))
+    #end create_from_png_stream
+
+    @staticmethod
+    def create_from_png_bytes(data) :
+        "creates an ImageSurface from a PNG format data sequence. This can be" \
+        " of the bytes or bytearray types, or an array.array with \"B\" type code."
+
+        offset = 0
+
+        def read_data(_, data, length) :
+            nonlocal offset
+            if offset + length <= len(data) :
+                libc.memcpy(data, baseadr + offset, length)
+                offset += length
+                status = CAIRO.STATUS_SUCCESS
+            else :
+                status = CAIRO.STATUS_READ_ERROR
+            #end if
+            return \
+                status
+        #end read_data
+
+    #begin create_from_png_bytes
+        if isinstance(data, bytes) or isinstance(data, bytearray) :
+            data = array.array("B", data)
+        elif not isinstance(data, array.array) or data.typecode != "B" :
+            raise TypeError("data is not bytes, bytearray or array of bytes")
+        #end if
+        baseadr = data.buffer_info()[0]
+        return \
+            ImageSurface.create_from_png_stream(read_data, None)
+    #end create_from_png_bytes
+
+    @staticmethod
     def format_stride_for_width(format, width) :
         return \
             cairo.cairo_format_stride_for_width(int(format), int(width))
     #end format_stride_for_width
 
-    # TODO: get_data, create_from_png, create_from_png_stream?
+    # TODO: get_data?
 
     @property
     def format(self) :
