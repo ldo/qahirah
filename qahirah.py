@@ -538,6 +538,8 @@ cairo.cairo_stroke_preserve.argtypes = (ct.c_void_p,)
 cairo.cairo_stroke_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 cairo.cairo_in_stroke.restype = ct.c_bool
 cairo.cairo_in_stroke.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
+cairo.cairo_copy_page.argtypes = (ct.c_void_p,)
+cairo.cairo_show_page.argtypes = (ct.c_void_p,)
 
 cairo.cairo_path_destroy.argtypes = (ct.c_void_p,)
 
@@ -568,6 +570,8 @@ cairo.cairo_surface_destroy.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_flush.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_write_to_png.argtypes = (ct.c_void_p, ct.c_char_p)
 cairo.cairo_surface_write_to_png_stream.argtypes = (ct.c_void_p, CAIRO.write_func_t, ct.c_void_p)
+cairo.cairo_surface_copy_page.argtypes = (ct.c_void_p,)
+cairo.cairo_surface_show_page.argtypes = (ct.c_void_p,)
 cairo.cairo_image_surface_create.restype = ct.c_void_p
 cairo.cairo_image_surface_create_from_png.restype = ct.c_void_p
 cairo.cairo_image_surface_create_from_png_stream.restype = ct.c_void_p
@@ -1803,7 +1807,19 @@ class Context :
             cairo.cairo_in_stroke(self._cairobj, x, y)
     #end in_stroke
 
-    # TODO: copy/show page, user_data
+    def copy_page(self) :
+        "emits the current page for Surfaces that support multiple pages."
+        cairo.cairo_copy_page(self._cairobj)
+        self._check()
+    #end copy_page
+
+    def show_page(self) :
+        "emits and clears the current page for Surfaces that support multiple pages."
+        cairo.cairo_show_page(self._cairobj)
+        self._check()
+    #end show_page
+
+    # TODO: user_data
 
     # paths <http://cairographics.org/manual/cairo-Paths.html>
 
@@ -2249,6 +2265,18 @@ class Surface :
         return \
             self
     #end flush
+
+    def copy_page(self) :
+        "emits the current page for Surfaces that support multiple pages."
+        cairo.cairo_surface_copy_page(self._cairobj)
+        self._check()
+    #end copy_page
+
+    def show_page(self) :
+        "emits and clears the current page for Surfaces that support multiple pages."
+        cairo.cairo_surface_show_page(self._cairobj)
+        self._check()
+    #end show_page
 
     def write_to_png(self, filename) :
         check(cairo.cairo_surface_write_to_png(self._cairobj, filename.encode("utf-8")))
