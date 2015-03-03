@@ -374,6 +374,8 @@ def def_struct_class(name, ctname) :
 
     class result_class :
 
+        __slots__ = tuple(field[0] for field in ctstruct._fields_) # to forestall typos
+
         def to_cairo(self) :
             "returns a Cairo representation of the structure."
             result = ctstruct()
@@ -1417,6 +1419,8 @@ class Context :
     " Many methods return the context to allow method chaining."
     # <http://cairographics.org/manual/cairo-cairo-t.html>
 
+    __slots__ = ("_cairobj",) # to forestall typos
+
     def _check(self) :
         # check for error from last operation on this Context.
         check(cairo.cairo_status(self._cairobj))
@@ -2283,6 +2287,8 @@ class Context :
 class Surface :
     "base class for Cairo surfaces. Do not instantiate directly."
 
+    __slots__ = ("_cairobj",) # to forestall typos
+
     def _check(self) :
         # check for error from last operation on this Surface.
         check(cairo.cairo_surface_status(self._cairobj))
@@ -2405,6 +2411,8 @@ class Surface :
 class ImageSurface(Surface) :
     "A Cairo image surface. Do not instantiate directly; instead," \
     " call one of the create methods."
+
+    __slots__ = ("_cairobj", "_arr") # to forestall typos
 
     @staticmethod
     def create(format, dimensions) :
@@ -2534,6 +2542,8 @@ class PDFSurface(Surface) :
     "A Cairo surface that outputs its renderings to a PDF file. Do not instantiate" \
     " directly; use one of the create methods."
 
+    __slots__ = ("_cairobj",) # to forestall typos
+
     @staticmethod
     def create(filename, dimensions_in_points) :
         dimensions_in_points = Vector.from_tuple(dimensions_in_points)
@@ -2602,6 +2612,8 @@ class PDFSurface(Surface) :
 class Pattern :
     "a Cairo Pattern object. Do not instantiate directly; use one of the create methods."
     # <http://cairographics.org/manual/cairo-cairo-pattern-t.html>
+
+    __slots__ = ("_cairobj", "_surface") # to forestall typos
 
     def _check(self) :
         # check for error from last operation on this Pattern.
