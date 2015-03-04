@@ -379,6 +379,10 @@ class CAIRO :
     DEVICE_TYPE_WIN32 = 7
     DEVICE_TYPE_INVALID = -1
 
+    # codes for cairo_script_mode_t
+    SCRIPT_MODE_ASCII = 0
+    SCRIPT_MODE_BINARY = 1
+
 #end CAIRO
 
 def def_struct_class(name, ctname) :
@@ -641,6 +645,20 @@ cairo.cairo_recording_surface_get_extents.argtypes = (ct.c_void_p, ct.c_void_p)
 
 cairo.cairo_device_status.argtypes = (ct.c_void_p,)
 cairo.cairo_device_get_type.argtypes = (ct.c_void_p,)
+
+cairo.cairo_script_create.restype = ct.c_void_p
+cairo.cairo_script_create.argtypes = (ct.c_char_p,)
+cairo.cairo_script_create_for_stream.restype = ct.c_void_p
+cairo.cairo_script_create_for_stream.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_script_from_recording_surface.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_script_get_mode.restype = ct.c_int
+cairo.cairo_script_get_mode.argtypes = (ct.c_void_p,)
+cairo.cairo_script_set_mode.argtypes = (ct.c_void_p, ct.c_int)
+cairo.cairo_script_surface_create.restype = ct.c_int
+cairo.cairo_script_surface_create.argtypes = (ct.c_void_p, ct.c_int, ct.c_double, ct.c_double)
+cairo.cairo_script_surface_create_for_target.restype = ct.c_int
+cairo.cairo_script_surface_create_for_target.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_script_write_comment.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int)
 
 cairo.cairo_pattern_status.argtypes = (ct.c_void_p,)
 cairo.cairo_pattern_destroy.argtypes = (ct.c_void_p,)
@@ -2843,10 +2861,9 @@ class SVGSurface(Surface) :
 
 #end SVGSurface
 
-# TODO: Script Surfaces
-
 class Device :
-    "a Cairo device_t object. Do not instantiate directly; get from Surface.device."
+    "a Cairo device_t object. Do not instantiate directly; get from Surface.device" \
+    " or ScriptDevice.create."
     # <http://cairographics.org/manual/cairo-cairo-device-t.html>
 
     __slots__ = ("_cairobj", "_user_data") # to forestall typos
@@ -2869,6 +2886,8 @@ class Device :
             cairo.cairo_device_get_type(self._cairobj)
     #end type
 
+    # TODO: acquire, release, observer stuff
+
     @property
     def user_data(self) :
         "a dict, initially empty, which may be used by caller for any purpose."
@@ -2878,9 +2897,84 @@ class Device :
 
     # Cairo user_data not exposed to caller, probably not useful
 
-    # TODO: acquire, release, observer stuff
-
 #end Device
+
+class ScriptDevice(Device) :
+    "for rendering to replayable Cairo scripts."
+    # <http://cairographics.org/manual/cairo-Script-Surfaces.html>
+
+    __slots__ = ("_cairobj", "_user_data") # to forestall typos
+
+    @staticmethod
+    def create(filename) :
+        return \
+            ScriptDevice(cairo.cairo_script_create(filename.encode("utf-8")))
+    #end create
+
+    @staticmethod
+    def create_for_stream(write_func, closure) :
+        "direct low-level interface to cairo_script_create_for_stream." \
+        " write_func must match signature of CAIRO.write_func_t, while closure is a" \
+        " ctypes.c_void_p."
+        c_write_func = CAIRO.write_func_t(write_func)
+        return \
+            ScriptDevice(cairo.cairo_script_create_for_stream(c_write_func, closure))
+    #end create_for_stream
+
+    def from_recording_surface(self, recording_surface) :
+        "converts the recorded operations in recording_surface (a RecordingSurface)" \
+        " into a script."
+        if not isinstance(recording_surface, RecordingSurface) :
+            raise TypeError("recording_surface must be a RecordingSurface")
+        #end if
+        check(cairo.cairo_script_from_recording_surface(self._cairobj, recording_surface._cairobj))
+    #end create_from_recording_surface
+
+    @property
+    def mode(self) :
+        "the current mode CAIRO.SCRIPT_MODE_xxx value."
+        return \
+            cairo.cairo_script_get_mode(self._cairobj)
+    #end mode
+
+    @mode.setter
+    def mode(self, mode) :
+        cairo.cairo_script_set_mode(self._cairobj, mode)
+        self._check()
+    #end mode
+
+    def surface_create(self, content, dimensions) :
+        "creates a new Surface that will emit its rendering through this ScriptDevice."
+        dimensions = Vector.from_tuple(dimensions)
+        return \
+            Surface(cairo.cairo_script_surface_create(self._cairobj, content, dimensions.x, dimensions.y))
+    #end surface_create
+
+    def surface_create_for_target(self, target) :
+        "creates a proxy Surface that will render to Surface target and record its" \
+        " operations through this ScriptDevice."
+        if not isinstance(target, Surface) :
+            raise TypeError("target must be a Surface")
+        #end if
+        return \
+            Surface(cairo.cairo_script_surface_create_for_target(self._cairobj, target._cairobj))
+    #end surface_create_for_target
+
+    def write_comment(self, comment) :
+        "writes a comment to the script. comment can be a string or bytes."
+        if isinstance(comment, str) :
+            comment = comment.encode("utf-8")
+        elif not isinstance(comment, bytes) :
+            raise TypeError("comment must be str or bytes")
+        #end if
+        c_comment = (ct.c_ubyte * len(comment))()
+        for i in range(len(comment)) :
+            c_comment[i] = comment[i]
+        #end for
+        cairo.cairo_script_write_comment(self._cairobj, ct.byref(c_comment), len(comment))
+    #end write_comment
+
+#end ScriptDevice
 
 class Pattern :
     "a Cairo Pattern object. Do not instantiate directly; use one of the create methods."
