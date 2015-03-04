@@ -1101,9 +1101,9 @@ class Matrix :
     #end translation
 
     @staticmethod
-    def scaling(factor, center = None) :
+    def scaling(factor, centre = None) :
         "returns a Matrix that scales by the specified scalar or Vector factors" \
-        " about Vector center, or the origin if not specified."
+        " about Vector centre, or the origin if not specified."
         if isinstance(factor, Number) :
             result = Matrix(factor, 0, 0, factor, 0, 0)
         elif isinstance(factor, Vector) :
@@ -1114,38 +1114,38 @@ class Matrix :
         else :
             raise TypeError("factor must be a number or a Vector")
         #end if
-        if center != None :
-            center = Vector.from_tuple(center)
-            result = Matrix.translation(center) * result * Matrix.translation(- center)
+        if centre != None :
+            centre = Vector.from_tuple(centre)
+            result = Matrix.translation(centre) * result * Matrix.translation(- centre)
         #end if
         return \
             result
     #end scaling
 
     @staticmethod
-    def rotation(angle, center = None) :
+    def rotation(angle, centre = None) :
         "returns a Matrix that rotates about the origin by the specified" \
-        " angle in radians about Vector center, or the origin if not specified."
+        " angle in radians about Vector centre, or the origin if not specified."
         cos = math.cos(angle)
         sin = math.sin(angle)
         result = Matrix(cos, sin, -sin, cos, 0, 0)
-        if center != None :
-            center = Vector.from_tuple(center)
-            result = Matrix.translation(center) * result * Matrix.translation(- center)
+        if centre != None :
+            centre = Vector.from_tuple(centre)
+            result = Matrix.translation(centre) * result * Matrix.translation(- centre)
         #end if
         return \
             result
     #end rotation
 
     @staticmethod
-    def skewing(vec, center = None) :
+    def skewing(vec, centre = None) :
         "returns a Matrix that skews by the specified vec.x and vec.y factors" \
-        " about Vector center, or the origin if not specified."
+        " about Vector centre, or the origin if not specified."
         sx, sy = Vector.from_tuple(vec)
         result = Matrix(1, sy, sx, 1, 0, 0)
-        if center != None :
-            center = Vector.from_tuple(center)
-            result = Matrix.translation(center) * result * Matrix.translation(- center)
+        if centre != None :
+            centre = Vector.from_tuple(centre)
+            result = Matrix.translation(centre) * result * Matrix.translation(- centre)
         #end if
         return \
             result
@@ -2070,20 +2070,20 @@ class Context :
             self
     #end close_path
 
-    def arc(self, center, radius, angle1, angle2) :
+    def arc(self, centre, radius, angle1, angle2) :
         "draws a segment of a circular arc in the positive-x-to-positive-y direction." \
-        " center can be a Vector or a tuple of 2 coord values."
-        center = Vector.from_tuple(center)
-        cairo.cairo_arc(self._cairobj, center.x, center.y, radius, angle1, angle2)
+        " centre can be a Vector or a tuple of 2 coord values."
+        centre = Vector.from_tuple(centre)
+        cairo.cairo_arc(self._cairobj, centre.x, centre.y, radius, angle1, angle2)
         return \
             self
     #end arc
 
-    def arc_negative(self, center, radius, angle1, angle2) :
+    def arc_negative(self, centre, radius, angle1, angle2) :
         "draws a segment of a circular arc in the positive-y-to-positive-x direction." \
-        " center can be a Vector or a tuple of 2 coord values."
-        center = Vector.from_tuple(center)
-        cairo.cairo_arc_negative(self._cairobj, center.x, center.y, radius, angle1, angle2)
+        " centre can be a Vector or a tuple of 2 coord values."
+        centre = Vector.from_tuple(centre)
+        cairo.cairo_arc_negative(self._cairobj, centre.x, centre.y, radius, angle1, angle2)
         return \
             self
     #end arc_negative
