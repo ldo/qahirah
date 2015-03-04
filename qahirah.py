@@ -3853,7 +3853,8 @@ class ScaledFont :
     def create(font_face, font_matrix, ctm, options) :
         "creates a ScaledFont from the specified FontFace, Matrix font_matrix" \
         " and ctm, and FontOptions options."
-        # TODO: are any of these optional?
+        # Q: Are any of these optional?
+        # A: Looking at Cairo source file src/cairo-scaled-font.c, No.
         if not isinstance(font_face, FontFace) :
             raise TypeError("font_face must be a FontFace")
         #end if
