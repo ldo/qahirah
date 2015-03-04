@@ -1210,7 +1210,7 @@ class Matrix :
         "maps an iterable of Vectors through the Matrix."
         pts = iter(pts)
         while True : # until pts raises StopIteration
-            yield self.map(pts.next())
+            yield self.map(next(pts))
         #end while
     #end mapiter
 
@@ -1219,7 +1219,7 @@ class Matrix :
         " translation part."
         pts = iter(pts)
         while True : # until pts raises StopIteration
-            yield self.mapdelta(pts.next())
+            yield self.mapdelta(next(pts))
         #end while
     #end mapdeltaiter
 
