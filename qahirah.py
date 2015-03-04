@@ -605,6 +605,11 @@ cairo.cairo_pdf_get_versions.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_pdf_version_to_string.restype = ct.c_char_p
 cairo.cairo_pdf_version_to_string.argtypes = (ct.c_int,)
 cairo.cairo_pdf_surface_set_size.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
+cairo.cairo_recording_surface_create.restype = ct.c_void_p
+cairo.cairo_recording_surface_create.argtypes = (ct.c_int, ct.c_void_p)
+cairo.cairo_recording_surface_ink_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+cairo.cairo_recording_surface_get_extents.restype = ct.c_bool
+cairo.cairo_recording_surface_get_extents.argtypes = (ct.c_void_p, ct.c_void_p)
 
 cairo.cairo_pattern_status.argtypes = (ct.c_void_p,)
 cairo.cairo_pattern_destroy.argtypes = (ct.c_void_p,)
@@ -1223,6 +1228,12 @@ class Rect :
         return \
             Rect(r.x, r.y, r.width, r.height)
     #end from_cairo
+
+    def to_cairo(self) :
+        "converts the Rect to a CAIRO.rectangle_t."
+        return \
+            CAIRO.rectangle_t(self.left, self.top, self.width, self.height)
+    #end to_cairo
 
     @property
     def bottom(self) :
@@ -2646,7 +2657,54 @@ class PDFSurface(Surface) :
 
 #end PDFSurface
 
-# TODO: PostScript Surfaces, Recording Surfaces, SVG Surfaces, Script Surfaces
+# TODO: PostScript Surfaces
+
+class RecordingSurface(Surface) :
+    "a Surface that records the sequence of drawing calls made into it" \
+    " and plays them back when used as a source Pattern. Do not instantiate" \
+    " directly; use the create method."
+
+    __slots__ = ("_cairobj",) # to forestall typos
+
+    @staticmethod
+    def create(content, extents = None) :
+        "content is a CAIRO.CONTENT_xxx value, and extents is an optional" \
+        " Rect defining the drawing extents. If omitted, the extents are unbounded."
+        if extents != None :
+            extents = extents.to_cairo()
+        #end if
+        return \
+            RecordingSurface(cairo.cairo_recording_surface_create(content, ct.byref(extents)))
+    #end create
+
+    @property
+    def ink_extents(self) :
+        "the extents of the operations recorded, as a Rect."
+        x0 = ct.c_double()
+        y0 = ct.c_double()
+        width = ct.c_double()
+        height = ct.c_double()
+        cairo.cairo_recording_surface_ink_extents(self._cairobj, ct.byref(x0), ct.byref(y0), ct.byref(width), ct.byref(height))
+        return \
+            Rect(x0.value, y0.value, width.value, height.value)
+    #end ink_extents
+
+    @property
+    def extents(self) :
+        "the original extents the surface was created with as a Rect, or None if unbounded."
+        result = CAIRO.rectangle_t()
+        if cairo.cairo_recording_surface_get_extents(self._cairobj, ct.byref(result)) :
+            result = Rect.from_cairo(result)
+        else :
+            result = None
+        #end if
+        return \
+            result
+    #end extents
+
+#end RecordingSurface
+
+# TODO: SVG Surfaces, Script Surfaces
 
 class Pattern :
     "a Cairo Pattern object. Do not instantiate directly; use one of the create methods."
