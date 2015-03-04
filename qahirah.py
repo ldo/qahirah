@@ -3867,7 +3867,7 @@ class ScaledFont :
         font_matrix = font_matrix.to_cairo()
         ctm = ctm.to_cairo()
         return \
-            ScaledFont(cairo.cairo_scaled_font_create(self._cairobj, ct.byref(font_matrix), ct.byref(ctm), options._cairobj))
+            ScaledFont(cairo.cairo_scaled_font_create(font_face._cairobj, ct.byref(font_matrix), ct.byref(ctm), options._cairobj))
     #end create
 
     @property
