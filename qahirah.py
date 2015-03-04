@@ -2344,6 +2344,26 @@ class Context :
 
 #end Context
 
+def file_write_func(fileobj) :
+    "fileobj must have a .write method that accepts a single bytes argument." \
+    " This function returns a write_func that can be passed to the various" \
+    " write_to_xxx_stream methods which will write the data to the file object." \
+    " The write_func ignores its closure argument, so feel free to pass None for" \
+    " that."
+
+    def write_data(_, data, length) :
+        buf = array.array("B", (0,) * length)
+        libc.memcpy(buf.buffer_info()[0], data, length)
+        fileobj.write(buf.tobytes())
+        return \
+            CAIRO.STATUS_SUCCESS
+    #end write_data
+
+#begin file_write_func
+    return \
+        write_data
+#end file_write_func
+
 class Surface :
     "base class for Cairo surfaces. Do not instantiate directly; use create methods" \
     " provided by subclasses."
