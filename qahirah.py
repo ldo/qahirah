@@ -364,6 +364,10 @@ class CAIRO :
     PDF_VERSION_1_4 = 0
     PDF_VERSION_1_5 = 1
 
+    # cairo_ps_level_t
+    PS_LEVEL_2 = 0
+    PS_LEVEL_3 = 3
+
     # codes for cairo_svg_version_t
     SVG_VERSION_1_1 = 0
     SVG_VERSION_1_2 = 1
@@ -629,6 +633,21 @@ cairo.cairo_pdf_get_versions.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_pdf_version_to_string.restype = ct.c_char_p
 cairo.cairo_pdf_version_to_string.argtypes = (ct.c_int,)
 cairo.cairo_pdf_surface_set_size.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
+cairo.cairo_ps_surface_create.restype = ct.c_void_p
+cairo.cairo_ps_surface_create.argtypes = (ct.c_char_p, ct.c_double, ct.c_double)
+cairo.cairo_ps_surface_create_for_stream.restype = ct.c_void_p
+cairo.cairo_ps_surface_create_for_stream.argtypes = (CAIRO.write_func_t, ct.c_void_p, ct.c_double, ct.c_double)
+cairo.cairo_ps_surface_restrict_to_level.argtypes = (ct.c_void_p, ct.c_int)
+cairo.cairo_ps_get_levels.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_ps_level_to_string.restype = ct.c_char_p
+cairo.cairo_ps_level_to_string.argtypes = (ct.c_int,)
+cairo.cairo_ps_surface_set_eps.argtypes = (ct.c_void_p, ct.c_bool)
+cairo.cairo_ps_surface_get_eps.restype = ct.c_bool
+cairo.cairo_ps_surface_get_eps.argtypes = (ct.c_void_p,)
+cairo.cairo_ps_surface_set_size.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
+cairo.cairo_ps_surface_dsc_begin_setup.argtypes = (ct.c_void_p,)
+cairo.cairo_ps_surface_dsc_begin_page_setup.argtypes = (ct.c_void_p,)
+cairo.cairo_ps_surface_dsc_comment.argtypes = (ct.c_void_p, ct.c_char_p)
 cairo.cairo_svg_surface_create.restype = ct.c_void_p
 cairo.cairo_svg_surface_create.argtypes = (ct.c_char_p, ct.c_double, ct.c_double)
 cairo.cairo_svg_surface_create_for_stream.restype = ct.c_void_p
@@ -2711,7 +2730,7 @@ class PDFSurface(Surface) :
     #end create_for_stream
 
     def restrict_to_version(self, version) :
-        "restricts the version of PDF file created. If used, must" \
+        "restricts the version of PDF file created. If used, should" \
         " be called before any actual drawing is done."
         cairo.cairo_pdf_surface_restrict_to_version(self._cairobj, version)
         self._check()
@@ -2755,7 +2774,120 @@ class PDFSurface(Surface) :
 
 #end PDFSurface
 
-# TODO: PostScript Surfaces
+class PSSurface(Surface) :
+    "a Cairo surface which translates drawing actions into PostScript program sequences." \
+    " Do not instantiate directly; use one of the create methods."
+
+    __slots__ = ("_cairobj", "_user_data") # to forestall typos
+
+    @staticmethod
+    def create(filename, dimensions_in_points) :
+        dimensions_in_points = Vector.from_tuple(dimensions_in_points)
+        return \
+            PSSurface(cairo.cairo_ps_surface_create(filename.encode("utf-8"), dimensions_in_points.x, dimensions_in_points.y))
+    #end create
+
+    @staticmethod
+    def create_for_stream(write_func, closure, dimensions_in_points) :
+        "direct low-level interface to cairo_ps_surface_create_for_stream." \
+        " write_func must match signature of CAIRO.write_func_t, while closure is a" \
+        " ctypes.c_void_p."
+        dimensions_in_points = Vector.from_tuple(dimensions_in_points)
+        c_write_func = CAIRO.write_func_t(write_func)
+        return \
+            PSSurface(cairo.cairo_ps_surface_create_for_stream(c_write_func, closure, dimensions_in_points.x, dimensions_in_points.y))
+    #end create_for_stream
+
+    def restrict_to_level(self, level) :
+        "restricts the language level of PostScript created, one of the CAIRO.PS_LEVEL_xxx" \
+        " codes. If used, should be called before any actual drawing is done."
+        cairo.cairo_ps_surface_restrict_to_level(self._cairobj, level)
+        self._check()
+        return \
+            self
+    #end restrict_to_level
+
+    @staticmethod
+    def get_levels() :
+        "returns a tuple of supported PostScript language level codes CAIRO.PS_LEVEL_xxx."
+        levels = ct.POINTER(ct.c_int)()
+        num_levels = ct.c_int()
+        cairo.cairo_ps_get_levels(ct.byref(levels), ct.byref(num_levels))
+        return \
+            tuple(levels[i] for i in range(num_levels.value))
+    #end get_levels
+
+    @staticmethod
+    def level_to_string(level) :
+        "returns the canonical string for the specified PostScript" \
+        " language level code CAIRO.PS_LEVEL_xxx."
+        result = cairo.cairo_ps_level_to_string(level)
+        if bool(result) :
+            result = result.decode("utf-8")
+        else :
+            result = None
+        #end if
+        return \
+            result
+    #end level_to_string
+
+    @property
+    def eps(self) :
+        "whether the Surface outputs Encapsulated PostScript."
+        result = cairo.cairo_ps_surface_get_eps(self._cairobj)
+        self._check()
+        return \
+            result
+    #end eps
+
+    @eps.setter
+    def eps(self, eps) :
+        self.set_eps(eps)
+    #end eps
+
+    def set_eps(self, eps) :
+        "specifies whether the Surface outputs Encapsulated PostScript."
+        cairo.cairo_ps_surface_set_eps(self._cairobj, eps)
+        self._check()
+        return \
+            self
+    #end set_eps
+
+    def set_size(self, dimensions_in_points) :
+        "resizes the page. Must be empty at this point (e.g. immediately" \
+        " after show_page or initial creation)."
+        dimensions_in_points = Vector.from_tuple(dimensions_in_points)
+        cairo.cairo_ps_surface_set_size(self._cairobj, dimensions_in_points.x, dimensions_in_points.y)
+        self._check()
+        return \
+            self
+    #end set_size
+
+    def dsc_begin_setup(self) :
+        "indicates that subsequent calls to dsc_comment should go to the Setup section."
+        cairo.cairo_ps_surface_dsc_begin_setup(self._cairobj)
+        self._check()
+        return \
+            self
+    #end dsc_begin_setup
+
+    def dsc_begin_page_setup(self) :
+        "indicates that subsequent calls to dsc_comment should go to the PageSetup section."
+        cairo.cairo_ps_surface_dsc_begin_page_setup(self._cairobj)
+        self._check()
+        return \
+            self
+    #end dsc_begin_page_setup
+
+    def dsc_comment(self, comment) :
+        "emits a DSC comment."
+        cairo.cairo_ps_surface_dsc_comment(self._cairobj, comment.encode("utf-8"))
+        self._check()
+        return \
+            self
+    #end dsc_comment
+
+#end PSSurface
 
 class RecordingSurface(Surface) :
     "a Surface that records the sequence of drawing calls made into it" \
