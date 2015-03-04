@@ -2015,14 +2015,15 @@ class Context :
             result
     #end copy_path_flat
 
-    def append_path(self, path) :
-        "appends another Path onto the current path."
+    def append_path(self, path, matrix = None) :
+        "appends another Path onto the current path, optionally transformed" \
+        " by a Matrix."
         # Note I do not use cairo_append_path because my Path structure
         # is implemented entirely in Python.
         if not isinstance(path, Path) :
             raise TypeError("path is not a Path")
         #end if
-        path.draw(self)
+        path.draw(self, matrix)
         return \
             self
     #end append_path
