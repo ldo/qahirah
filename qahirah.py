@@ -859,6 +859,18 @@ class Vector :
             (self.x, self.y)[i]
     #end __getitem__
 
+    def __eq__(v1, v2) :
+        "equality of two Vectors."
+        return \
+            (
+                isinstance(v2, Vector)
+            and
+                v1.x == v2.x
+            and
+                v1.y == v2.y
+            )
+    #end __eq__
+
     def __add__(v1, v2) :
         return \
             (
@@ -1285,6 +1297,8 @@ class Rect :
         "equality of two rectangles."
         return \
             (
+                isinstance(r2, Rect)
+            and
                 r1.left == r2.left
             and
                 r1.top == r2.top
@@ -2327,9 +2341,8 @@ class Surface :
         "do the two Surface objects refer to the same surface. Needed because" \
         " methods like Context.target and Pattern.surface cannot return the same" \
         " Surface object each time."
-        # don't bother checking isinstance(other, Surface) -- won't be equal if wrong type
         return \
-            self._cairobj == other._cairobj
+            isinstance(other, Surface) and self._cairobj == other._cairobj
     #end __eq__
 
     @property
@@ -2662,9 +2675,8 @@ class Pattern :
     def __eq__(self, other) :
         "do the two Pattern objects refer to the same Pattern. Needed because" \
         " Context.source cannot return the same Pattern object each time."
-        # don't bother checking isinstance(other, Pattern) -- won't be equal if wrong type
         return \
-            self._cairobj == other._cairobj
+            isinstance(other, Pattern) and self._cairobj == other._cairobj
     #end __eq__
 
     def add_color_stop_rgb(self, offset, r, g, b) :
@@ -3229,9 +3241,8 @@ class FontFace :
     def __eq__(self, other) :
         "do the two FontFace objects refer to the same FontFace. Needed because" \
         " ScaledFont.font_face cannot return the same FontFace object each time."
-        # don't bother checking isinstance(other, ScaledFont) -- won't be equal if wrong type
         return \
-            self._cairobj == other._cairobj
+            isinstance(other, FontFace) and self._cairobj == other._cairobj
     #end __eq__
 
     @property
