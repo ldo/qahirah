@@ -63,6 +63,7 @@ However, Qahirah introduces some important differences from Pycairo
 * Properties
 * Method-chaining
 * Rects
+* Paths
 
 These are further explained in the sections below.
 
@@ -193,6 +194,24 @@ very common operation for positioning drawing of figures on a
 Surface.
 
 
+Paths
+=====
+
+Cairo defines cairo_path_t and cairo_path_data_t types for holding
+path data. The only way to create these is to perform path-creation
+operations into a context, and then use cairo_copy_path or cairo_copy_path_flat
+to retrieve a copy of the path data.
+
+Qahirah instead offers the Path class. While one of these can
+be created with Context.copy_path or Context.copy_path_flat, you can
+also construct them yourself from a sequence of Path.Element objects.
+Furthermore, Qahirah allows you to transform a Path through a Matrix,
+either at drawing time or to produce a new Path. Context.append_path
+no longer calls cairo_append_path; instead, the Path object
+directly generates move_to, line_to, curve_to and close_path calls
+from its elements.
+
+
 Examples
 ========
 
@@ -201,4 +220,4 @@ Examples of Qahirah in action are available in my
 repository.
 
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
-2015 March 3
+2015 March 5
