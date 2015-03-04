@@ -1997,24 +1997,32 @@ class Context :
     # paths <http://cairographics.org/manual/cairo-Paths.html>
 
     def copy_path(self) :
-        "returns a copy of the current path."
+        "returns a copy of the current path as a Path object."
+        temp = cairo.cairo_copy_path(self._cairobj)
+        result = Path.from_cairo(temp)
+        cairo.cairo_path_destroy(temp)
         return \
-            Path(cairo.cairo_copy_path(self._cairobj))
+            result
     #end copy_path
 
     def copy_path_flat(self) :
-        "returns a copy of the current path, with curves flattened to line segments."
+        "returns a copy of the current path as a Path object, with curves" \
+        " flattened to line segments."
+        temp = cairo.cairo_copy_path_flat(self._cairobj)
+        result = Path.from_cairo(temp)
+        cairo.cairo_path_destroy(temp)
         return \
-            Path(cairo.cairo_copy_path_flat(self._cairobj))
+            result
     #end copy_path_flat
 
     def append_path(self, path) :
         "appends another Path onto the current path."
+        # Note I do not use cairo_append_path because my Path structure
+        # is implemented entirely in Python.
         if not isinstance(path, Path) :
             raise TypeError("path is not a Path")
         #end if
-        cairo.cairo_append_path(self._cairobj, path._cairobj)
-        self._check()
+        path.draw(self)
         return \
             self
     #end append_path
@@ -3413,32 +3421,51 @@ class Pattern :
 # TODO: Regions <http://cairographics.org/manual/cairo-Regions.html>
 
 class Path :
-    "a Cairo Path object. Do not instantiate directly."
+    "a high-level representation of a Cairo path_t. Instantiate with a sequence" \
+    " of Path.Element subclass instances."
 
-    __slots__ = ("_cairobj",) # to forestall typos
+    # Unfortunately I cannot provide a to_cairo method, because there is no
+    # public Cairo call for allocating a cairo_path_data_t structure. So
+    # the conversion from Cairo is one-way, and I have to implement all
+    # the drawing from then on.
 
-    def __init__(self, _cairobj) :
-        self._cairobj = _cairobj
-        check(ct.cast(self._cairobj, CAIRO.path_ptr_t).contents.status)
-    #end __init__
-
-    def __del__(self) :
-        if self._cairobj != None :
-            cairo.cairo_path_destroy(self._cairobj)
-            self._cairobj = None
-        #end if
-    #end __del__
+    __slots__ = ("elements",) # to forestall typos
 
     class Element :
-        "base class for Path elements. Do not instantiate directly."
+        "base class for Path elements. Do not instantiate directly;" \
+        " instantiate subclasses intead."
 
-        def __init__(self, typ) :
-            self.typ = typ
+        __slots__ = ("type", "points", "meth")
+
+        def __init__(self, type, points, meth) :
+            # type is CAIRO.PATH_xxxx code, points is tuple of points,
+            # meth is Context instance method to draw the Element
+            self.type = type
+            self.points = tuple(Vector.from_tuple(p) for p in points)
+            self.meth = meth
         #end __init__
 
-        def draw(self, g) :
-            raise NotImplementedError("subclass forgot to override")
+        def transform(self, matrix) :
+            "returns a copy of the Element with control points transformed" \
+            " by the specified Matrix."
+            return \
+                type(self)(*matrix.mapiter(self.points))
+        #end transform
+
+        def draw(self, g, matrix = None) :
+            "draws the element into the Context g, optionally transformed by the matrix."
+            if matrix != None :
+                p = tuple(matrix.mapiter(self.points))
+            else :
+                p = self.points
+            #end if
+            self.meth(*((g,) + p))
         #end draw
+
+        def __repr__(self) :
+            return \
+                "%s(%s)" % (self.__class__.__name__, ", ".join(repr(tuple(p)) for p in self.points))
+        #end __repr__
 
     #end Element
 
@@ -3446,19 +3473,8 @@ class Path :
         "represents a move_to the specified Vector position."
 
         def __init__(self, p) :
-            super().__init__(CAIRO.PATH_MOVE_TO)
-            self.p = p
+            super().__init__(CAIRO.PATH_MOVE_TO, (p,), Context.move_to)
         #end __init__
-
-        def draw(self, g) :
-            "draws the element into the Context g."
-            g.move_to(self.p)
-        #end draw
-
-        def __repr__(self) :
-            return \
-                "MoveTo(%s)" % self.p
-        #end __repr__
 
     #end MoveTo
 
@@ -3466,19 +3482,8 @@ class Path :
         "represents a line_to the specified Vector position."
 
         def __init__(self, p) :
-            super().__init__(CAIRO.PATH_LINE_TO)
-            self.p = p
+            super().__init__(CAIRO.PATH_LINE_TO, (p,), Context.line_to)
         #end __init__
-
-        def draw(self, g) :
-            "draws the element into the Context g."
-            g.line_to(self.p)
-        #end draw
-
-        def __repr__(self) :
-            return \
-                "LineTo(%s)" % self.p
-        #end __repr__
 
     #end LineTo
 
@@ -3486,21 +3491,8 @@ class Path :
         "represents a curve_to via the specified three Vector positions."
 
         def __init__(self, p1, p2, p3) :
-            super().__init__(CAIRO.PATH_CURVE_TO)
-            self.p1 = p1
-            self.p2 = p2
-            self.p3 = p3
+            super().__init__(CAIRO.PATH_CURVE_TO, (p1, p2, p3), Context.curve_to)
         #end __init__
-
-        def draw(self, g) :
-            "draws the element into the Context g."
-            g.curve_to(self.p1, self.p2, self.p3)
-        #end draw
-
-        def __repr__(self) :
-            return \
-                "CurveTo(%s, %s, %s)" % (self.p1, self.p2, self.p3)
-        #end __repr__
 
     #end CurveTo
 
@@ -3508,18 +3500,8 @@ class Path :
         "represents a closing of the current path."
 
         def __init__(self) :
-            super().__init__(CAIRO.PATH_CLOSE_PATH)
+            super().__init__(CAIRO.PATH_CLOSE_PATH, (), Context.close_path)
         #end __init__
-
-        def draw(self, g) :
-            "draws the element into the Context g."
-            g.close_path()
-        #end draw
-
-        def __repr__(self) :
-            return \
-                "Close()"
-        #end __repr__
 
     #end Close
 
@@ -3531,32 +3513,62 @@ class Path :
             CAIRO.PATH_CLOSE_PATH : {"nr" : 0, "type" : Close},
         }
 
-    @property
-    def elements(self) :
-        "yields the elements of the path in turn, as a sequence of" \
-        " Path.MoveTo, Path.LineTo, Path.CurveTo and Path.Close objects" \
-        " as appropriate."
-        data = ct.cast(self._cairobj, CAIRO.path_ptr_t).contents.data
-        nrelts = ct.cast(self._cairobj, CAIRO.path_ptr_t).contents.num_data
+    def __init__(self, elements) :
+        self.elements = []
+        for element in elements :
+            if not isinstance(element, Path.Element) :
+                raise TypeError("path element is not a Path.Element")
+            #end if
+            self.elements.append(element)
+        #end for
+    #end __init__
+
+    @classmethod
+    def from_cairo(celf, path) :
+        "translates a CAIRO.path_data_t to a Path."
+        elements = []
+        data = ct.cast(path, CAIRO.path_ptr_t).contents.data
+        nrelts = ct.cast(path, CAIRO.path_ptr_t).contents.num_data
         i = 0
         while True :
             if i == nrelts :
                 break
             i += 1
             header = ct.cast(data, CAIRO.path_data_t.header_ptr_t).contents
-            assert header.length == self.element_types[header.type]["nr"] + 1, "expecting %d control points for path elt type %d, got %d" % (self.element_types[header.type]["nr"] + 1, header.type, header.length)
+            assert header.length == celf.element_types[header.type]["nr"] + 1, "expecting %d control points for path elt type %d, got %d" % (celf.element_types[header.type]["nr"] + 1, header.type, header.length)
             data += ct.sizeof(CAIRO.path_data_t)
             points = []
             for j in range(header.length - 1) :
                 assert i < nrelts, "buffer overrun"
                 i += 1
                 point = ct.cast(data, CAIRO.path_data_t.point_ptr_t).contents
-                points.append(Vector(point.x, point.y))
+                points.append((point.x, point.y))
                 data += ct.sizeof(CAIRO.path_data_t)
             #end for
-            yield self.element_types[header.type]["type"](*points)
+            elements.append(celf.element_types[header.type]["type"](*points))
         #end for
-    #end elements
+        return \
+            Path(elements)
+    #end from_cairo
+
+    def draw(self, ctx, matrix = None) :
+        "draws the Path into a Context."
+        if not isinstance(ctx, Context) :
+            raise TypeError("ctx must be a Context")
+        #end if
+        for element in self.elements :
+            element.draw(ctx, matrix)
+        #end for
+    #end draw
+
+    def transform(self, matrix) :
+        "returns a copy of this Path with elements transformed by the given Matrix."
+        return \
+            Path \
+              (
+                element.transform(matrix) for element in self.elements
+              )
+    #end transform
 
 #end Path
 
