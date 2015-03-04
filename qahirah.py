@@ -364,6 +364,17 @@ class CAIRO :
     PDF_VERSION_1_4 = 0
     PDF_VERSION_1_5 = 1
 
+    # codes for cairo_device_type_t
+    DEVICE_TYPE_DRM = 0
+    DEVICE_TYPE_GL = 1
+    DEVICE_TYPE_SCRIPT = 2
+    DEVICE_TYPE_XCB = 3
+    DEVICE_TYPE_XLIB = 4
+    DEVICE_TYPE_XML = 5
+    DEVICE_TYPE_COGL = 6
+    DEVICE_TYPE_WIN32 = 7
+    DEVICE_TYPE_INVALID = -1
+
 #end CAIRO
 
 def def_struct_class(name, ctname) :
@@ -580,6 +591,11 @@ cairo.cairo_surface_reference.restype = ct.c_void_p
 cairo.cairo_surface_reference.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_destroy.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_flush.argtypes = (ct.c_void_p,)
+cairo.cairo_surface_get_device.restype = ct.c_void_p
+cairo.cairo_surface_get_device.argtypes = (ct.c_void_p,)
+cairo.cairo_surface_get_font_options.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_surface_get_content.restype = ct.c_int
+cairo.cairo_surface_get_content.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_write_to_png.argtypes = (ct.c_void_p, ct.c_char_p)
 cairo.cairo_surface_write_to_png_stream.argtypes = (ct.c_void_p, CAIRO.write_func_t, ct.c_void_p)
 cairo.cairo_surface_copy_page.argtypes = (ct.c_void_p,)
@@ -610,6 +626,9 @@ cairo.cairo_recording_surface_create.argtypes = (ct.c_int, ct.c_void_p)
 cairo.cairo_recording_surface_ink_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 cairo.cairo_recording_surface_get_extents.restype = ct.c_bool
 cairo.cairo_recording_surface_get_extents.argtypes = (ct.c_void_p, ct.c_void_p)
+
+cairo.cairo_device_status.argtypes = (ct.c_void_p,)
+cairo.cairo_device_get_type.argtypes = (ct.c_void_p,)
 
 cairo.cairo_pattern_status.argtypes = (ct.c_void_p,)
 cairo.cairo_pattern_destroy.argtypes = (ct.c_void_p,)
@@ -2326,7 +2345,9 @@ class Context :
 #end Context
 
 class Surface :
-    "base class for Cairo surfaces. Do not instantiate directly."
+    "base class for Cairo surfaces. Do not instantiate directly; use create methods" \
+    " provided by subclasses."
+    # <http://cairographics.org/manual/cairo-cairo-surface-t.html>
 
     __slots__ = ("_cairobj", "_user_data") # to forestall typos
 
@@ -2358,6 +2379,7 @@ class Surface :
 
     @property
     def type(self) :
+        "returns the surface type code CAIRO.SURFACE_TYPE_xxx."
         return \
             cairo.cairo_surface_get_type(self._cairobj)
     #end type
@@ -2381,8 +2403,40 @@ class Surface :
             # assumes it returns same type of surface as self!
     #end create_for_rectangle
 
-    # TODO: device, font_options, content, mark_dirty, device_offset, fallback_resolution
-    # <http://cairographics.org/manual/cairo-cairo-surface-t.html>
+    def flush(self) :
+        cairo.cairo_surface_flush(self._cairobj)
+        return \
+            self
+    #end flush
+
+    @property
+    def device(self) :
+        "returns the Device for this Surface."
+        result = cairo.cairo_surface_get_device(self._cairobj)
+        if result != None :
+            result = Device(result)
+        #end if
+        return \
+            result
+    #end device
+
+    @property
+    def font_options(self) :
+        "returns a copy of the font_options for this Surface."
+        result = FontOptions()
+        cairo.cairo_surface_get_font_options(self._cairobj, result._cairobj)
+        return \
+            result
+    #end font_options
+
+    @property
+    def content(self) :
+        "returns the content code CAIRO.CONTENT_xxx for this Surface."
+        return \
+            cairo.cairo_surface_get_content(self._cairobj)
+    #end content
+
+    # TODO: mark_dirty, device_offset, fallback_resolution
 
     @property
     def user_data(self) :
@@ -2395,12 +2449,6 @@ class Surface :
 
     # TODO: has_show_text_glyphs, mime_data, map/unmap image
     # <http://cairographics.org/manual/cairo-cairo-surface-t.html>
-
-    def flush(self) :
-        cairo.cairo_surface_flush(self._cairobj)
-        return \
-            self
-    #end flush
 
     def copy_page(self) :
         "emits the current page for Surfaces that support multiple pages."
@@ -2705,6 +2753,43 @@ class RecordingSurface(Surface) :
 #end RecordingSurface
 
 # TODO: SVG Surfaces, Script Surfaces
+
+class Device :
+    "a Cairo device_t object. Do not instantiate directly; get from Surface.device."
+    # <http://cairographics.org/manual/cairo-cairo-device-t.html>
+
+    __slots__ = ("_cairobj", "_user_data") # to forestall typos
+
+    def _check(self) :
+        # check for error from last operation on this Surface.
+        check(cairo.cairo_device_status(self._cairobj))
+    #end _check
+
+    def __init__(self, _cairobj) :
+        self._cairobj = _cairobj
+        self._check()
+        self._user_data = {}
+    #end __init__
+
+    @property
+    def type(self) :
+        "returns the type of the Device, a CAIRO.DEVICE_TYPE_xxx code."
+        return \
+            cairo.cairo_device_get_type(self._cairobj)
+    #end type
+
+    @property
+    def user_data(self) :
+        "a dict, initially empty, which may be used by caller for any purpose."
+        return \
+            self._user_data
+    #end user_data
+
+    # Cairo user_data not exposed to caller, probably not useful
+
+    # TODO: acquire, release, observer stuff
+
+#end Device
 
 class Pattern :
     "a Cairo Pattern object. Do not instantiate directly; use one of the create methods."
