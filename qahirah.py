@@ -2530,7 +2530,7 @@ class ImageSurface(Surface) :
     "A Cairo image surface. Do not instantiate directly; instead," \
     " call one of the create methods."
 
-    __slots__ = ("_cairobj", "_arr") # to forestall typos
+    __slots__ = ("_cairobj", "_user_data") # to forestall typos
 
     @staticmethod
     def create(format, dimensions) :
@@ -2660,7 +2660,7 @@ class PDFSurface(Surface) :
     "A Cairo surface that outputs its renderings to a PDF file. Do not instantiate" \
     " directly; use one of the create methods."
 
-    __slots__ = ("_cairobj",) # to forestall typos
+    __slots__ = ("_cairobj", "_user_data") # to forestall typos
 
     @staticmethod
     def create(filename, dimensions_in_points) :
@@ -2732,7 +2732,7 @@ class RecordingSurface(Surface) :
     " and plays them back when used as a source Pattern. Do not instantiate" \
     " directly; use the create method."
 
-    __slots__ = ("_cairobj",) # to forestall typos
+    __slots__ = ("_cairobj", "_user_data") # to forestall typos
 
     @staticmethod
     def create(content, extents = None) :
