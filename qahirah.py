@@ -2587,7 +2587,7 @@ class ImageSurface(Surface) :
     "A Cairo image surface. Do not instantiate directly; instead," \
     " call one of the create methods."
 
-    __slots__ = ("_cairobj", "_user_data") # to forestall typos
+    __slots__ = ("_cairobj", "_user_data", "_arr") # to forestall typos
 
     @staticmethod
     def create(format, dimensions) :
