@@ -364,6 +364,10 @@ class CAIRO :
     PDF_VERSION_1_4 = 0
     PDF_VERSION_1_5 = 1
 
+    # codes for cairo_svg_version_t
+    SVG_VERSION_1_1 = 0
+    SVG_VERSION_1_2 = 1
+
     # codes for cairo_device_type_t
     DEVICE_TYPE_DRM = 0
     DEVICE_TYPE_GL = 1
@@ -621,6 +625,14 @@ cairo.cairo_pdf_get_versions.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_pdf_version_to_string.restype = ct.c_char_p
 cairo.cairo_pdf_version_to_string.argtypes = (ct.c_int,)
 cairo.cairo_pdf_surface_set_size.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
+cairo.cairo_svg_surface_create.restype = ct.c_void_p
+cairo.cairo_svg_surface_create.argtypes = (ct.c_char_p, ct.c_double, ct.c_double)
+cairo.cairo_svg_surface_create_for_stream.restype = ct.c_void_p
+cairo.cairo_svg_surface_create_for_stream.argtypes = (CAIRO.write_func_t, ct.c_void_p, ct.c_double, ct.c_double)
+cairo.cairo_svg_surface_restrict_to_version.argtypes = (ct.c_void_p, ct.c_int)
+cairo.cairo_svg_get_versions.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_svg_version_to_string.restype = ct.c_char_p
+cairo.cairo_svg_version_to_string.argtypes = (ct.c_int,)
 cairo.cairo_recording_surface_create.restype = ct.c_void_p
 cairo.cairo_recording_surface_create.argtypes = (ct.c_int, ct.c_void_p)
 cairo.cairo_recording_surface_ink_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
@@ -2347,9 +2359,9 @@ class Context :
 def file_write_func(fileobj) :
     "fileobj must have a .write method that accepts a single bytes argument." \
     " This function returns a write_func that can be passed to the various" \
-    " write_to_xxx_stream methods which will write the data to the file object." \
-    " The write_func ignores its closure argument, so feel free to pass None for" \
-    " that."
+    " create_for_xxx_stream and write_to_xxx_stream methods which will write" \
+    " the data to the file object. The write_func ignores its closure argument," \
+    " so feel free to pass None for that."
 
     def write_data(_, data, length) :
         buf = array.array("B", (0,) * length)
@@ -2772,7 +2784,66 @@ class RecordingSurface(Surface) :
 
 #end RecordingSurface
 
-# TODO: SVG Surfaces, Script Surfaces
+class SVGSurface(Surface) :
+    "Surface that writes its contents to an SVG file. Do not instantiate directly;" \
+    " use one of the create methods."
+
+    __slots__ = ("_cairobj", "_user_data") # to forestall typos
+
+    @staticmethod
+    def create(filename, dimensions_in_points) :
+        dimensions_in_points = Vector.from_tuple(dimensions_in_points)
+        return \
+            SVGSurface(cairo.cairo_svg_surface_create(filename.encode("utf-8"), dimensions_in_points.x, dimensions_in_points.y))
+    #end create
+
+    @staticmethod
+    def create_for_stream(write_func, closure, dimensions_in_points) :
+        "direct low-level interface to cairo_svg_surface_create_for_stream." \
+        " write_func must match signature of CAIRO.write_func_t, while closure is a" \
+        " ctypes.c_void_p."
+        dimensions_in_points = Vector.from_tuple(dimensions_in_points)
+        c_write_func = CAIRO.write_func_t(write_func)
+        return \
+            SVGSurface(cairo.cairo_svg_surface_create_for_stream(c_write_func, closure, dimensions_in_points.x, dimensions_in_points.y))
+    #end create_for_stream
+
+    def restrict_to_version(self, version) :
+        "restricts the version of SVG file created. If used, must" \
+        " be called before any actual drawing is done."
+        cairo.cairo_svg_surface_restrict_to_version(self._cairobj, version)
+        self._check()
+        return \
+            self
+    #end restrict_to_version
+
+    @staticmethod
+    def get_versions() :
+        "returns a tuple of supported SVG version number codes CAIRO.SVG_VERSION_xxx."
+        versions = ct.POINTER(ct.c_int)()
+        num_versions = ct.c_int()
+        cairo.cairo_svg_get_versions(ct.byref(versions), ct.byref(num_versions))
+        return \
+            tuple(versions[i] for i in range(num_versions.value))
+    #end get_versions
+
+    @staticmethod
+    def version_to_string(version) :
+        "returns the canonical version string for the specified SVG" \
+        " version code CAIRO.SVG_VERSION_xxx."
+        result = cairo.cairo_svg_version_to_string(version)
+        if bool(result) :
+            result = result.decode("utf-8")
+        else :
+            result = None
+        #end if
+        return \
+            result
+    #end version_to_string
+
+#end SVGSurface
+
+# TODO: Script Surfaces
 
 class Device :
     "a Cairo device_t object. Do not instantiate directly; get from Surface.device."
