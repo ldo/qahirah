@@ -743,6 +743,20 @@ cairo.cairo_pattern_set_filter.argtypes = (ct.c_void_p, ct.c_int)
 cairo.cairo_pattern_get_surface.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_pattern_get_matrix.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_pattern_set_matrix.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_pattern_create_mesh.restype = ct.c_void_p
+cairo.cairo_mesh_pattern_begin_patch.argtypes = (ct.c_void_p,)
+cairo.cairo_mesh_pattern_end_patch.argtypes = (ct.c_void_p,)
+cairo.cairo_mesh_pattern_move_to.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
+cairo.cairo_mesh_pattern_line_to.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
+cairo.cairo_mesh_pattern_curve_to.argtypes = (ct.c_void_p, ct.c_double, ct.c_double, ct.c_double, ct.c_double, ct.c_double, ct.c_double)
+cairo.cairo_mesh_pattern_set_control_point.argtypes = (ct.c_void_p, ct.c_uint, ct.c_double, ct.c_double)
+cairo.cairo_mesh_pattern_set_corner_color_rgb.argtypes = (ct.c_void_p, ct.c_uint, ct.c_double, ct.c_double, ct.c_double) # not used
+cairo.cairo_mesh_pattern_set_corner_color_rgba.argtypes = (ct.c_void_p, ct.c_uint, ct.c_double, ct.c_double, ct.c_double, ct.c_double)
+cairo.cairo_mesh_pattern_get_patch_count.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_mesh_pattern_get_path.restype = ct.c_void_p
+cairo.cairo_mesh_pattern_get_path.argtypes = (ct.c_void_p, ct.c_uint)
+cairo.cairo_mesh_pattern_get_control_point.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint, ct.c_void_p, ct.c_void_p)
+cairo.cairo_mesh_pattern_get_corner_color_rgba.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 
 cairo.cairo_font_options_status.argtypes = (ct.c_void_p,)
 cairo.cairo_font_options_create.restype = ct.c_void_p
@@ -3550,8 +3564,6 @@ class Pattern :
             r.value
     #end radial_r1
 
-    # TODO: mesh patterns
-
     @property
     def extend(self) :
         "how to extend the Pattern to cover a larger area, as a CAIRO.EXTEND_xxx code."
@@ -3627,6 +3639,131 @@ class Pattern :
     # TODO: Raster Sources <http://cairographics.org/manual/cairo-Raster-Sources.html>
 
 #end Pattern
+
+class MeshPattern(Pattern) :
+    "a Cairo tensor-product mesh pattern. Do not instantiate directly; use the create" \
+    " method."
+    # could let user instantiate directly, but having a create method
+    # seems more consistent with behaviour of most other wrapper objects
+    # (including superclass).
+
+    __slots__ = ("_cairobj", "_user_data") # to forestall typos
+
+    @staticmethod
+    def create() :
+        "creates a new, empty MeshPattern."
+        return \
+            MeshPattern(cairo.cairo_pattern_create_mesh())
+    #end create
+
+    def begin_patch(self) :
+        "starts defining a new patch for the MeshPattern. The sides of the patch" \
+        " must be defined by one move_to followed by up to 4 line_to/curve_to calls."
+        cairo.cairo_mesh_pattern_begin_patch(self._cairobj)
+        self._check()
+        return \
+            self
+    #end begin_patch
+
+    def end_patch(self) :
+        "finishes defining a patch for the MeshPattern."
+        cairo.cairo_mesh_pattern_end_patch(self._cairobj)
+        self._check()
+        return \
+            self
+    #end end_patch
+
+    def move_to(self, p) :
+        "move_to(p) or move_to((x, y)) -- defines the start point for the sides of the patch."
+        p = Vector.from_tuple(p)
+        cairo.cairo_mesh_pattern_move_to(self._cairobj, p.x, p.y)
+        self._check()
+        return \
+            self
+    #end move_to
+
+    def line_to(self, p) :
+        "line_to(p) or line_to((x, y)) -- defines a straight-line side for the current patch."
+        p = Vector.from_tuple(p)
+        cairo.cairo_mesh_pattern_line_to(self._cairobj, p.x, p.y)
+        self._check()
+        return \
+            self
+    #end line_to
+
+    def curve_to(self, p1, p2, p3) :
+        "curve_to(p1, p2, p3) or curve_to((x1, y1), (x2, y2), (x3, y3))" \
+        " -- defines a curved side for the current patch."
+        p1 = Vector.from_tuple(p1)
+        p2 = Vector.from_tuple(p2)
+        p3 = Vector.from_tuple(p3)
+        cairo.cairo_mesh_pattern_curve_to(self._cairobj, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y)
+        self._check()
+        return \
+            self
+    #end curve_to
+
+    def set_control_point(self, point_num, p) :
+        "defines an interior control point, where point_num must be an integer in [0 .. 3]." \
+        " Changing these from the default turns a Coons patch into a general tensor-product patch."
+        p = Vector.from_tuple(p)
+        cairo.cairo_mesh_pattern_set_control_point(self._cairobj, point_num, p.x, p.y)
+        self._check()
+        return \
+            self
+    #end set_control_point
+
+    def set_corner_colour(self, corner_num, c) :
+        "defines the Colour at one of the corners, where corner_num must be an integer" \
+        " in [0 .. 3]. Any colours not set default to Colour.grey(0, 0)."
+        c = Colour.from_rgba(c)
+        cairo.cairo_mesh_pattern_set_corner_color_rgba(self._cairobj, corner_num, c.r, c.g, c.b, c.a)
+        self._check()
+        return \
+            self
+    #end set_corner_colour
+
+    @property
+    def patch_count(self) :
+        "the count of patches defined for the MeshPattern."
+        result = ct.c_uint()
+        check(cairo.cairo_mesh_pattern_get_patch_count(self._cairobj, ct.byref(result)))
+        return \
+            result.value
+    #end patch_count
+
+    def get_path(self, patch_num) :
+        "returns a Path defining the sides of the specified patch_num in [0 .. patch_count - 1]."
+        temp = cairo.cairo_mesh_pattern_get_path(self._cairobj, patch_num)
+        result = Path.from_cairo(temp)
+        cairo.cairo_path_destroy(temp)
+        return \
+            result
+    #end get_path
+
+    def get_control_point(self, patch_num, point_num) :
+        "returns a Vector for one of the interior control points of the specified" \
+        " patch_num in [0 .. patch_count - 1], point_num in [0 .. 3]."
+        x = ct.c_double()
+        y = ct.c_double()
+        check(cairo.cairo_mesh_pattern_get_control_point(self._cairobj, patch_num, point_num, ct.byref(x), ct.byref(y)))
+        return \
+            Vector(x.value, y.value)
+    #end get_control_point
+
+    def get_corner_colour(self, patch_num, corner_num) :
+        "returns a Colour for one of the corners of the specified" \
+        " patch_num in [0 .. patch_count - 1], corner_num in [0 .. 3]."
+        r = ct.c_double()
+        g = ct.c_double()
+        b = ct.c_double()
+        a = ct.c_double()
+        check(cairo.cairo_mesh_pattern_get_corner_color_rgba(self._cairobj, patch_num, corner_num, ct.byref(r), ct.byref(g), ct.byref(b), ct.byref(a)))
+        return \
+            Colour(r.value, g.value, b.value, a.value)
+    #end get_corner_colour
+
+#end MeshPattern
 
 # TODO: Regions <http://cairographics.org/manual/cairo-Regions.html>
 
