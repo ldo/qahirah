@@ -1048,6 +1048,18 @@ class Vector :
             result
     #end __truediv__
 
+    def __mod__(v, f) :
+        if isinstance(f, Vector) :
+            result = Vector(v.x % f.x, v.y % f.y)
+        elif isinstance(f, Number) :
+            result = Vector(v.x % f, v.y % f)
+        else :
+            result = NotImplemented
+        #end if
+        return \
+            result
+    #end __mod__
+
     def __round__(self) :
         "returns the Vector with all coordinates rounded to integers."
         return \
@@ -1143,6 +1155,27 @@ class Matrix :
             y0 = m1.yx * m2.x0 + m1.yy * m2.y0 + m1.y0,
           )
     #end __mul__
+
+    def __pow__(m, p) :
+        "raising of a Matrix to an integer power p is equivalent to applying" \
+        " the transformation p times in succession."
+        if isinstance(p, int) :
+            if p < 0 :
+                m = m.inv()
+                p = -p
+            #end if
+            result = Matrix.identity()
+            # O(N) exponentiation algorithm should be good enough for small
+            # powers, not expecting large ones
+            for i in range(p) :
+                result *= m
+            #end for
+        else :
+            result = NotImplemented
+        #end if
+        return \
+            result
+    #end __pow__
 
     @staticmethod
     def translate(delta) :
