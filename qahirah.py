@@ -1624,6 +1624,19 @@ class Context :
             self
     #end set_source
 
+    @property
+    def source_colour(self) :
+        "returns the current source pattern Colour. The current source Pattern must" \
+        " be a plain-colour pattern."
+        return \
+            self.source.colour
+    #end source_colour
+
+    @source_colour.setter
+    def source_colour(self, c) :
+        self.set_source_colour(c)
+    #end source_colour
+
     def set_source_colour(self, c) :
         "sets a new plain-colour pattern as the source. c must be a Colour" \
         " object or a tuple."
