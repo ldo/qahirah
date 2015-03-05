@@ -395,6 +395,37 @@ class CAIRO :
 
 #end CAIRO
 
+class HAS :
+    "functionality queries. These are implemented by checking for the presence" \
+    " of particular Cairo functions."
+    pass # filled in below
+#end HAS
+for \
+    symname, funcname \
+in \
+    (
+        ("FC_FONT", "ft_font_face_create_for_ft_face"),
+        ("FT_FONT", "ft_font_face_create_for_pattern"),
+        ("IMAGE_SURFACE", "image_surface_create"),
+        # TODO: MIME_SURFACE, OBSERVER_SURFACE?
+        ("PDF_SURFACE", "pdf_surface_create"),
+        ("PNG_FUNCTIONS", "surface_write_to_png"),
+        ("PS_SURFACE", "ps_surface_create"),
+        ("RECORDING_SURFACE", "recording_surface_create"),
+        ("SCRIPT_SURFACE", "script_create"),
+        ("SVG_SURFACE", "svg_surface_create"),
+        # TODO: USER_FONT
+    ) \
+:
+    setattr \
+      (
+        HAS,
+        symname,
+        hasattr(cairo, "cairo_" + funcname)
+      )
+#end for
+del symname, funcname
+
 def def_struct_class(name, ctname) :
     # defines a class with attributes that are a straightforward mapping
     # of a ctypes struct.
