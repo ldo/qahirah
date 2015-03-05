@@ -3012,9 +3012,12 @@ class RecordingSurface(Surface) :
         " Rect defining the drawing extents. If omitted, the extents are unbounded."
         if extents != None :
             extents = extents.to_cairo()
+            extentsarg = ct.byref(extents)
+        else :
+            extentsarg = None
         #end if
         return \
-            RecordingSurface(cairo.cairo_recording_surface_create(content, ct.byref(extents)))
+            RecordingSurface(cairo.cairo_recording_surface_create(content, extentsarg))
     #end create
 
     @property
