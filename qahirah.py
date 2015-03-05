@@ -17,6 +17,7 @@ that may be read and written.
 import math
 from numbers import \
     Number
+import colorsys
 import array
 import ctypes as ct
 
@@ -128,9 +129,11 @@ class CAIRO :
     FORMAT_RGB30 = 5
 
     # cairo_content_t codes
-    CONTENT_COLOR =  0x1000
+    CONTENT_COLOR = 0x1000
+    CONTENT_COLOUR = 0x1000
     CONTENT_ALPHA = 0x2000
     CONTENT_COLOR_ALPHA = 0x3000
+    CONTENT_COLOUR_ALPHA = 0x3000
 
     # cairo_extend_t codes
     EXTEND_NONE = 0
@@ -171,7 +174,9 @@ class CAIRO :
     OPERATOR_DARKEN = 17
     OPERATOR_LIGHTEN = 18
     OPERATOR_COLOR_DODGE = 19
+    OPERATOR_COLOUR_DODGE = 19
     OPERATOR_COLOR_BURN = 20
+    OPERATOR_COLOUR_BURN = 20
     OPERATOR_HARD_LIGHT = 21
     OPERATOR_SOFT_LIGHT = 22
     OPERATOR_DIFFERENCE = 23
@@ -179,6 +184,7 @@ class CAIRO :
     OPERATOR_HSL_HUE = 25
     OPERATOR_HSL_SATURATION = 26
     OPERATOR_HSL_COLOR = 27
+    OPERATOR_HSL_COLOUR = 27
     OPERATOR_HSL_LUMINOSITY = 28
 
     class matrix_t(ct.Structure) :
@@ -488,7 +494,7 @@ cairo.cairo_copy_path.argtypes = (ct.c_void_p,)
 cairo.cairo_copy_path.restype = ct.c_void_p
 cairo.cairo_copy_path_flat.argtypes = (ct.c_void_p,)
 cairo.cairo_copy_path_flat.restype = ct.c_void_p
-cairo.cairo_append_path.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_append_path.argtypes = (ct.c_void_p, ct.c_void_p) # not used
 cairo.cairo_has_current_point.argtypes = (ct.c_void_p,)
 cairo.cairo_get_current_point.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p)
 cairo.cairo_new_path.argtypes = (ct.c_void_p,)
@@ -521,7 +527,7 @@ cairo.cairo_device_to_user_distance.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_v
 
 cairo.cairo_get_source.argtypes = (ct.c_void_p,)
 cairo.cairo_get_source.restype = ct.c_void_p
-cairo.cairo_set_source_rgb.argtypes = (ct.c_void_p, ct.c_double, ct.c_double, ct.c_double)
+cairo.cairo_set_source_rgb.argtypes = (ct.c_void_p, ct.c_double, ct.c_double, ct.c_double) # not used
 cairo.cairo_set_source_rgba.argtypes = (ct.c_void_p, ct.c_double, ct.c_double, ct.c_double, ct.c_double)
 cairo.cairo_set_source.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_get_antialias.argtypes = (ct.c_void_p,)
@@ -683,12 +689,12 @@ cairo.cairo_pattern_status.argtypes = (ct.c_void_p,)
 cairo.cairo_pattern_destroy.argtypes = (ct.c_void_p,)
 cairo.cairo_pattern_reference.argtypes = (ct.c_void_p,)
 cairo.cairo_pattern_reference.restype = ct.c_void_p
-cairo.cairo_pattern_add_color_stop_rgb.argtypes = (ct.c_void_p, ct.c_double, ct.c_double, ct.c_double, ct.c_double)
+cairo.cairo_pattern_add_color_stop_rgb.argtypes = (ct.c_void_p, ct.c_double, ct.c_double, ct.c_double, ct.c_double) # not used
 cairo.cairo_pattern_add_color_stop_rgba.argtypes = (ct.c_void_p, ct.c_double, ct.c_double, ct.c_double, ct.c_double, ct.c_double)
 cairo.cairo_pattern_get_color_stop_count.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_pattern_get_color_stop_rgba.argtypes = (ct.c_void_p, ct.c_int, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
-cairo.cairo_pattern_create_rgb.argtypes = (ct.c_double, ct.c_double, ct.c_double)
-cairo.cairo_pattern_create_rgb.restype = ct.c_void_p
+cairo.cairo_pattern_create_rgb.argtypes = (ct.c_double, ct.c_double, ct.c_double) # not used
+cairo.cairo_pattern_create_rgb.restype = ct.c_void_p # not used
 cairo.cairo_pattern_create_rgba.argtypes = (ct.c_double, ct.c_double, ct.c_double, ct.c_double)
 cairo.cairo_pattern_create_rgba.restype = ct.c_void_p
 cairo.cairo_pattern_get_rgba.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
@@ -1618,19 +1624,14 @@ class Context :
             self
     #end set_source
 
-    def set_source_rgb(self, r, g, b) :
-        cairo.cairo_set_source_rgb(self._cairobj, r, g, b)
+    def set_source_colour(self, c) :
+        "sets a new plain-colour pattern as the source. c must be a Colour" \
+        " object or a tuple."
+        cairo.cairo_set_source_rgba(*((self._cairobj,) + tuple(Colour.from_rgba(c))))
         self._check()
         return \
             self
-    #end set_source_rgb
-
-    def set_source_rgba(self, r, g, b, a) :
-        cairo.cairo_set_source_rgba(self._cairobj, r, g, b, a)
-        self._check()
-        return \
-            self
-    #end set_source_rgba
+    #end set_source_colour
 
     @property
     def antialias(self) :
@@ -3117,6 +3118,153 @@ class ScriptDevice(Device) :
 
 #end ScriptDevice
 
+class Colour :
+    "a representation of a colour plus alpha, convertible to/from the various colour" \
+    " spaces available in the Python colorsys module. Internal representation is" \
+    " always (r, g, b, a)."
+
+    __slots__ = ("r", "g", "b", "a") # to forestall typos
+
+    def __init__(self, r, g, b, a) :
+        self.r = r
+        self.g = g
+        self.b = b
+        self.a = a
+    #end __init__
+
+    def __getitem__(self, i) :
+        "being able to access elements by index allows a Colour to be cast to a tuple or list."
+        return \
+            (self.r, self.g, self.b, self.a)[i]
+    #end __getitem__
+
+    def __repr__(self) :
+        return \
+            "Colour%s" % repr(tuple(self))
+    #end __repr__
+
+    @classmethod
+    def _alpha_tuple(celf, c) :
+        # ensures that c is a tuple of 4 elements, appending a default alpha if omitted
+        c = tuple(c)
+        if len(c) == 3 :
+            c = c + (1,) # default to full-opaque alpha
+        elif len(c) != 4 :
+            raise TypeError("colour tuple must have 3 or 4 elements")
+        #end if
+        return \
+            c
+    #end _alpha_tuple
+
+    @classmethod
+    def _convert_space(celf, c, conv) :
+        # puts the non-alpha components of c through the conversion function conv
+        # and returns the result with the alpha restored.
+        c = celf._alpha_tuple(c)
+        return \
+            conv(*c[:3]) + (c[3],)
+    #end _convert_space
+
+    @staticmethod
+    def from_rgba(c) :
+        "constructs a Colour from an (r, g, b) or (r, g, b, a) tuple."
+        return \
+            Colour(*Colour._alpha_tuple(c))
+    #end from_rgba
+
+    @staticmethod
+    def from_hsva(c) :
+        "constructs a Colour from an (h, s, v) or (h, s, v, a) tuple."
+        return \
+            Colour(*Colour._convert_space(c, colorsys.hsv_to_rgb))
+    #end from_hsva
+
+    @staticmethod
+    def from_hlsa(c) :
+        "constructs a Colour from an (h, l, s) or (h, l, s, a) tuple."
+        return \
+            Colour(*Colour._convert_space(c, colorsys.hls_to_rgb))
+    #end from_hlsa
+
+    @staticmethod
+    def from_yiqa(c) :
+        "constructs a Colour from a (y, i, q) or (y, i, q, a) tuple."
+        return \
+            Colour(*Colour._convert_space(c, colorsys.yiq_to_rgb))
+    #end from_yiqa
+
+    @staticmethod
+    def from_grey(i, a = 1) :
+        "constructs a monochrome Colour with r, g and b components set to i" \
+        " and alpha set to a."
+        return \
+            Colour(i, i, i, a)
+    #end from_grey
+
+    def to_rgba(self) :
+        "returns an (r, g, b, a) tuple. Present just for completeness," \
+        " since the Colour object itself can be directly converted to" \
+        " such a tuple."
+        return \
+            tuple(self)
+    #end to_rgba
+
+    def to_hsva(self) :
+        "returns an (h, s, v, a) tuple."
+        return \
+            Colour._convert_space(self, colorsys.rgb_to_hsv)
+    #end to_hsva
+
+    def to_hlsa(self) :
+        "returns an (h, l, s, a) tuple."
+        return \
+            Colour._convert_space(self, colorsys.rgb_to_hls)
+    #end to_hlsa
+
+    def to_yiqa(self) :
+        "returns a (y, i, q, a) tuple."
+        return \
+            Colour._convert_space(self, colorsys.rgb_to_yiq)
+    #end to_yiqa
+
+    def replace_alpha(self, new_alpha) :
+        "returns a new Colour with the same r, g and b components but the specified alpha."
+        return \
+            Colour(self.r, self.g, self.b, new_alpha)
+    #end replace_alpha
+
+    def combine(self, other, rgb_func, alpha_func) :
+        "produces a combination of this Colour with other by applying the specified" \
+        " functions on the respective components. rgb_func must take four arguments" \
+        " (ac, aa, bc, ba), where ac and bc are the corresponding colour components" \
+        " (r, g or b) and aa and ba are the alphas, and returns a new value for that" \
+        " colour component. alpha_func takes two arguments (aa, ba), being the alpha" \
+        " values, and returns the new alpha."
+        return \
+            Colour \
+              (
+                r = rgb_func(self.r, self.a, other.r, other.a),
+                g = rgb_func(self.g, self.a, other.g, other.a),
+                b = rgb_func(self.b, self.a, other.b, other.a),
+                a = alpha_func(self.a, other.a)
+              )
+    #end combine
+
+    def mix(self, other, amt) :
+        "returns a mixture of this Colour with other in the proportion given by amt;" \
+        " if amt is 0, then the result is purely this colour, while if amt is 1, then" \
+        " it is purely other."
+        return \
+            self.combine \
+              (
+                other = other,
+                rgb_func = lambda ac, aa, bc, ba : interp(amt, ac, bc),
+                alpha_func = lambda aa, ba : interp(amt, aa, ba)
+              )
+    #end mix
+
+#end Colour
+
 class Pattern :
     "a Cairo Pattern object. Do not instantiate directly; use one of the create methods."
     # <http://cairographics.org/manual/cairo-cairo-pattern-t.html>
@@ -3148,47 +3296,29 @@ class Pattern :
             isinstance(other, Pattern) and self._cairobj == other._cairobj
     #end __eq__
 
-    def add_color_stop_rgb(self, offset, r, g, b) :
-        "adds an opaque colour stop. This must be a gradient Pattern. Returns." \
-        " the same Pattern, to allow for method chaining."
-        cairo.cairo_pattern_add_color_stop_rgb(self._cairobj, offset, r, g, b)
+    def add_colour_stop(self, offset, c) :
+        "adds a colour stop. This must be a gradient Pattern, offset is a number in [0, 1]" \
+        " and c must be a Colour or tuple. Returns the same Pattern, to allow for" \
+        " method chaining."
+        cairo.cairo_pattern_add_color_stop_rgba(*((self._cairobj, offset) + tuple(Colour.from_rgba(c))))
         self._check()
         return \
             self
-    #end add_color_stop_rgb
+    #end add_colour_stop
 
-    def add_color_stop_rgba(self, offset, r, g, b, a) :
-        "adds a colour stop. This must be a gradient Pattern. Returns." \
-        " the same Pattern, to allow for method chaining."
-        cairo.cairo_pattern_add_color_stop_rgba(self._cairobj, offset, r, g, b, a)
-        self._check()
-        return \
-            self
-    #end add_color_stop_rgba
-
-    def add_color_stops(self, stops) :
+    def add_colour_stops(self, stops) :
         "adds a whole lot of colour stops at once. stops must be a tuple, each" \
-        "element of which must be a tuple of 4 (offset, r, g, b) or 5 (offset, r, g, b, a)" \
-        " elements."
-        for stop in stops :
-            if not isinstance(stop, list) and not isinstance(stop, tuple) :
-                raise TypeError("colour stop must be a list/tuple")
-            #end if
-            if len(stop) == 4 :
-                self.add_color_stop_rgb(*stop)
-            elif len(stop) == 5 :
-                self.add_color_stop_rgba(*stop)
-            else :
-                raise TypeError("colour stop must have 4 (offset, r, g, b) or 5 (offset, r, g, b, a) elements")
-            #end if
+        "element of which must be an (offset, Colour) tuple."
+        for offset, colour in stops :
+            self.add_colour_stop(offset, colour)
         #end for
         return \
             self
-    #end add_color_stops
+    #end add_colour_stops
 
     @property
-    def color_stops_rgba(self) :
-        "a tuple of the currently-defined (offset, r, g, b, a) colour stops. This must" \
+    def colour_stops(self) :
+        "a tuple of the currently-defined (offset, Colour) colour stops. This must" \
         " be a gradient Pattern."
         count = ct.c_int()
         check(cairo.cairo_pattern_get_color_stop_count(self._cairobj, ct.byref(count)))
@@ -3201,37 +3331,30 @@ class Pattern :
         a = ct.c_double()
         for i in range(count) :
             check(cairo.cairo_pattern_get_color_stop_rgba(self._cairobj, i, ct.byref(offset), ct.byref(r), ct.byref(g), ct.byref(b), ct.byref(a)))
-            result.append((offset.value, r.value, g.value, b.value, a.value))
+            result.append((offset.value, Colour(r.value, g.value, b.value, a.value)))
         #end for
         return \
             tuple(result)
-    #end color_stops_rgba
+    #end colour_stops
 
     @staticmethod
-    def create_rgb(r, g, b) :
-        "creates a Pattern that paints the destination with the specified opaque (r, g, b) colour."
+    def create_colour(c) :
+        "creates a Pattern that paints the destination with the specified Colour."
         return \
-            Pattern(cairo.cairo_pattern_create_rgb(r, g, b))
-    #end create_rgb
-
-    @staticmethod
-    def create_rgba(r, g, b, a) :
-        "creates a Pattern that paints the destination with the specified (r, g, b, a) colour."
-        return \
-            Pattern(cairo.cairo_pattern_create_rgba(r, g, b, a))
+            Pattern(cairo.cairo_pattern_create_rgba(*Colour.from_rgba(c).to_rgba()))
     #end create_rgb
 
     @property
-    def rgba(self) :
-        "assumes the Pattern is a solid-colour pattern, returns its (r, g, b, a) colour."
+    def colour(self) :
+        "assumes the Pattern is a solid-colour pattern, returns its Colour."
         r = ct.c_double()
         g = ct.c_double()
         b = ct.c_double()
         a = ct.c_double()
         check(cairo.cairo_pattern_get_rgba(self._cairobj, ct.byref(r), ct.byref(g), ct.byref(g), ct.byref(a)))
         return \
-            (r.value, g.value, b.value, a.value)
-    #end rgba
+            Colour(r.value, g.value, b.value, a.value)
+    #end colour
 
     @staticmethod
     def create_for_surface(surface) :
@@ -3254,15 +3377,15 @@ class Pattern :
     #end surface
 
     @staticmethod
-    def create_linear(p0, p1, color_stops = None) :
+    def create_linear(p0, p1, colour_stops = None) :
         "creates a linear gradient Pattern that varies between the specified Vector" \
-        " points in pattern space. color_stops is an optional tuple of 4/5-tuples" \
+        " points in pattern space. colour_stops is an optional tuple of (offset, Colour)" \
         " to define the colour stops."
         p0 = Vector.from_tuple(p0)
         p1 = Vector.from_tuple(p1)
         result = Pattern(cairo.cairo_pattern_create_linear(p0.x, p0.y, p1.x, p1.y))
-        if color_stops != None :
-            result.add_color_stops(color_stops)
+        if colour_stops != None :
+            result.add_colour_stops(colour_stops)
         #end if
         return \
             result
@@ -3289,15 +3412,15 @@ class Pattern :
     #end linear_p1
 
     @staticmethod
-    def create_radial(c0, r0, c1, r1, color_stops = None) :
+    def create_radial(c0, r0, c1, r1, colour_stops = None) :
         "creates a radial gradient Pattern varying between the circle centred at Vector c0," \
-        " radius r0 and the one centred at Vector c1, radius r1. color_stops is an optional" \
-        " tuple of 4/5-tuples to define the colour stops."
+        " radius r0 and the one centred at Vector c1, radius r1. colour_stops is an optional" \
+        " tuple of (offset, Colour) to define the colour stops."
         c0 = Vector.from_tuple(c0)
         c1 = Vector.from_tuple(c1)
         result = Pattern(cairo.cairo_pattern_create_radial(c0.x, c0.y, r0, c1.x, c1.y, r1))
-        if color_stops != None :
-            result.add_color_stops(color_stops)
+        if colour_stops != None :
+            result.add_colour_stops(colour_stops)
         #end if
         return \
             result

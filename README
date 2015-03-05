@@ -62,6 +62,7 @@ However, Qahirah introduces some important differences from Pycairo
 * Vectors
 * Properties
 * Method-chaining
+* Colours
 * Rects
 * Paths
 
@@ -176,6 +177,26 @@ you can write
 
 Method-chaining is also available on appropriate methods of Pattern and
 Surface objects.
+
+
+Colours
+=======
+
+Qahirah defines a *Colour* type, which takes advantage of the standard
+Python colorsys module to provide conversions between RGB colour space
+(the only one supported by Cairo) and HSV, HLS and YIQ colour spaces.
+You can construct a Colour by specifying components in any of these
+spaces, and you can retrieve the components in any of these spaces
+from a Colour. Internally, a Colour always stores R, G, B and alpha
+components.
+
+Where Cairo provides calls to set separate RGB or RGBA colour
+components, Qahirah does a set of a single Colour value. For
+convenience, you can directly pass an (R, G, B) or (R, G, B, A) tuple,
+and it will be automatically converted to a Colour. Correspondingly,
+where a call returns a Colour, you can convert it directly to an
+(R, G, B, A) tuple. If you don’t want the alpha value, just append
+“[:-1]” or “[:3]” to the tuple.
 
 
 Rects
