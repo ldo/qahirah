@@ -3207,12 +3207,12 @@ class Colour :
     #end from_yiqa
 
     @staticmethod
-    def from_grey(i, a = 1) :
+    def grey(i, a = 1) :
         "constructs a monochrome Colour with r, g and b components set to i" \
         " and alpha set to a."
         return \
             Colour(i, i, i, a)
-    #end from_grey
+    #end grey
 
     def to_rgba(self) :
         "returns an (r, g, b, a) tuple. Present just for completeness," \
