@@ -1145,14 +1145,14 @@ class Matrix :
     #end __mul__
 
     @staticmethod
-    def translation(delta) :
+    def translate(delta) :
         "returns a Matrix that translates by the specified delta Vector."
         tx, ty = Vector.from_tuple(delta)
         return Matrix(1, 0, 0, 1, tx, ty)
-    #end translation
+    #end translate
 
     @staticmethod
-    def scaling(factor, centre = None) :
+    def scale(factor, centre = None) :
         "returns a Matrix that scales by the specified scalar or Vector factors" \
         " about Vector centre, or the origin if not specified."
         if isinstance(factor, Number) :
@@ -1167,14 +1167,14 @@ class Matrix :
         #end if
         if centre != None :
             centre = Vector.from_tuple(centre)
-            result = Matrix.translation(centre) * result * Matrix.translation(- centre)
+            result = Matrix.translate(centre) * result * Matrix.translate(- centre)
         #end if
         return \
             result
-    #end scaling
+    #end scale
 
     @staticmethod
-    def rotation(angle, centre = None) :
+    def rotate(angle, centre = None) :
         "returns a Matrix that rotates about the origin by the specified" \
         " angle in radians about Vector centre, or the origin if not specified."
         cos = math.cos(angle)
@@ -1182,25 +1182,25 @@ class Matrix :
         result = Matrix(cos, sin, -sin, cos, 0, 0)
         if centre != None :
             centre = Vector.from_tuple(centre)
-            result = Matrix.translation(centre) * result * Matrix.translation(- centre)
+            result = Matrix.translate(centre) * result * Matrix.translate(- centre)
         #end if
         return \
             result
-    #end rotation
+    #end rotate
 
     @staticmethod
-    def skewing(vec, centre = None) :
+    def skew(vec, centre = None) :
         "returns a Matrix that skews by the specified vec.x and vec.y factors" \
         " about Vector centre, or the origin if not specified."
         sx, sy = Vector.from_tuple(vec)
         result = Matrix(1, sy, sx, 1, 0, 0)
         if centre != None :
             centre = Vector.from_tuple(centre)
-            result = Matrix.translation(centre) * result * Matrix.translation(- centre)
+            result = Matrix.translate(centre) * result * Matrix.translate(- centre)
         #end if
         return \
             result
-    #end skewing
+    #end skew
 
     def det(self) :
         "matrix determinant."
@@ -1511,11 +1511,11 @@ class Rect :
         "returns a Matrix which maps this Rect into dst Rect."
         return \
             (
-                Matrix.translation(dst.topleft)
+                Matrix.translate(dst.topleft)
             *
-                Matrix.scaling(dst.dimensions / src.dimensions)
+                Matrix.scale(dst.dimensions / src.dimensions)
             *
-                Matrix.translation(- src.topleft)
+                Matrix.translate(- src.topleft)
             )
     #end transform_to
 
@@ -1529,11 +1529,11 @@ class Rect :
         scale = (min, max)[outside](scale.x, scale.y)
         return \
           (
-                Matrix.translation(dst.middle)
+                Matrix.translate(dst.middle)
             *
-                Matrix.scaling((scale, scale))
+                Matrix.scale((scale, scale))
             *
-                Matrix.translation(- src.middle)
+                Matrix.translate(- src.middle)
           )
     #end fit_to
 
