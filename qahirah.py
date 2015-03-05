@@ -2254,7 +2254,49 @@ class Context :
             self
     #end identity_matrix
 
-    # TODO: user to/from device
+    def user_to_device(self, p) :
+        "returns the transformed Vector in device coordinates corresponding to Vector" \
+        " p in user coordinates."
+        x = ct.c_double()
+        y = ct.c_double()
+        x.value, y.value = Vector.from_tuple(p)
+        cairo.cairo_user_to_device(self._cairobj, ct.byref(x), ct.byref(y))
+        return \
+            Vector(x.value, y.value)
+    #end user_to_device
+
+    def user_to_device_distance(self, p) :
+        "returns the transformed Vector in device coordinates corresponding to Vector" \
+        " p in user coordinates, ignoring any translation."
+        x = ct.c_double()
+        y = ct.c_double()
+        x.value, y.value = Vector.from_tuple(p)
+        cairo.cairo_user_to_device_distance(self._cairobj, ct.byref(x), ct.byref(y))
+        return \
+            Vector(x.value, y.value)
+    #end user_to_device_distance
+
+    def device_to_user(self, p) :
+        "returns the transformed Vector in user coordinates corresponding to Vector" \
+        " p in device coordinates."
+        x = ct.c_double()
+        y = ct.c_double()
+        x.value, y.value = Vector.from_tuple(p)
+        cairo.cairo_device_to_user(self._cairobj, ct.byref(x), ct.byref(y))
+        return \
+            Vector(x.value, y.value)
+    #end device_to_user
+
+    def device_to_user_distance(self, p) :
+        "returns the transformed Vector in user coordinates corresponding to Vector" \
+        " p in device coordinates, ignoring any translation."
+        x = ct.c_double()
+        y = ct.c_double()
+        x.value, y.value = Vector.from_tuple(p)
+        cairo.cairo_device_to_user_distance(self._cairobj, ct.byref(x), ct.byref(y))
+        return \
+            Vector(x.value, y.value)
+    #end device_to_user_distance
 
     # Text <http://cairographics.org/manual/cairo-text.html>
     # (except toy_font_face stuff, which goes in FontFace)
