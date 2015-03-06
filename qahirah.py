@@ -2646,6 +2646,8 @@ class Surface :
     #end type
 
     def create_similar(self, content, dimensions) :
+        "creates a new Surface with the specified Vector dimensions, which is as" \
+        " compatible as possible with this one. content is a CAIRO.CONTENT_xxx value."
         dimensions = round(Vector.from_tuple(dimensions))
         return \
             Surface(cairo.cairo_surface_create_similar(self._cairobj, content, dimensions.x, dimensions.y))
@@ -2653,18 +2655,24 @@ class Surface :
     #end create_similar
 
     def create_similar_image(self, format, dimensions) :
+        "creates an ImageSurface with the specified CAIRO.FORMAT_xxx format and Vector" \
+        " dimensions that is as compatible as possible with this one."
         dimensions = round(Vector.from_tuple(dimensions))
         return \
             ImageSurface(cairo.cairo_surface_create_similar_image(self._cairobj, format, dimensions.x, dimensions.y))
     #end create_similar_image
 
     def create_for_rectangle(self, bounds) :
+        "creates a new Surface where drawing is strictly limited to the bounds Rect" \
+        " within this one."
         return \
             type(self)(cairo.cairo_surface_create_for_rectangle(self._cairobj, bounds.left, bounds.top, bounds.width, bounds.height))
             # assumes it returns same type of surface as self!
     #end create_for_rectangle
 
     def flush(self) :
+        "ensures that Cairo has finished all drawing to this Surface, restoring" \
+        " any temporary modifications made to its state."
         cairo.cairo_surface_flush(self._cairobj)
         return \
             self
@@ -2831,6 +2839,8 @@ class ImageSurface(Surface) :
 
     @staticmethod
     def format_stride_for_width(format, width) :
+        "returns a suitable stride value (number of bytes per row of pixels) for" \
+        " an ImageSurface with the specified format CAIRO.FORMAT_xxx and pixel width."
         return \
             cairo.cairo_format_stride_for_width(int(format), int(width))
     #end format_stride_for_width
@@ -2839,7 +2849,7 @@ class ImageSurface(Surface) :
 
     @property
     def format(self) :
-        "the pixel format."
+        "the pixel format CAIRO.FORMAT_xxx."
         result = cairo.cairo_image_surface_get_format(self._cairobj)
         self._check()
         return \
@@ -2905,6 +2915,8 @@ class PDFSurface(Surface) :
 
     @staticmethod
     def create(filename, dimensions_in_points) :
+        "creates a PDF surface that outputs to the specified file, with the dimensions" \
+        " of each page given by the Vector dimensions_in_points."
         dimensions_in_points = Vector.from_tuple(dimensions_in_points)
         return \
             PDFSurface(cairo.cairo_pdf_surface_create(filename.encode("utf-8"), dimensions_in_points.x, dimensions_in_points.y))
@@ -2974,6 +2986,8 @@ class PSSurface(Surface) :
 
     @staticmethod
     def create(filename, dimensions_in_points) :
+        "creates a PostScript surface that outputs to the specified file, with the dimensions" \
+        " of each page given by the Vector dimensions_in_points."
         dimensions_in_points = Vector.from_tuple(dimensions_in_points)
         return \
             PSSurface(cairo.cairo_ps_surface_create(filename.encode("utf-8"), dimensions_in_points.x, dimensions_in_points.y))
@@ -3137,6 +3151,8 @@ class SVGSurface(Surface) :
 
     @staticmethod
     def create(filename, dimensions_in_points) :
+        "creates an SVG surface that outputs to the specified file, with the dimensions" \
+        " of each page given by the Vector dimensions_in_points."
         dimensions_in_points = Vector.from_tuple(dimensions_in_points)
         return \
             SVGSurface(cairo.cairo_svg_surface_create(filename.encode("utf-8"), dimensions_in_points.x, dimensions_in_points.y))
@@ -3208,7 +3224,7 @@ class Device :
 
     @property
     def type(self) :
-        "returns the type of the Device, a CAIRO.DEVICE_TYPE_xxx code."
+        "the type of the Device, a CAIRO.DEVICE_TYPE_xxx code."
         return \
             cairo.cairo_device_get_type(self._cairobj)
     #end type
@@ -3234,6 +3250,7 @@ class ScriptDevice(Device) :
 
     @staticmethod
     def create(filename) :
+        "creates a ScriptDevice that outputs to the specified file."
         return \
             ScriptDevice(cairo.cairo_script_create(filename.encode("utf-8")))
     #end create
