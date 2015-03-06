@@ -1673,7 +1673,7 @@ class Context :
     @property
     def group_target(self) :
         return \
-            Surface(cairo.cairo_get_group_target(self._cairobj))
+            Surface(cairo.cairo_surface_reference(cairo.cairo_get_group_target(self._cairobj)))
     #end group_target
 
     @property
