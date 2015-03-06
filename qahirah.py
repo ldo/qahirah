@@ -240,6 +240,7 @@ class CAIRO :
 
     # cairo_line_join_t codes
     LINE_JOIN_MITER = 0
+    LINE_JOIN_MITRE = 0
     LINE_JOIN_ROUND = 1
     LINE_JOIN_BEVEL = 2
 
@@ -1873,24 +1874,24 @@ class Context :
     #end set_line_width
 
     @property
-    def miter_limit(self) :
+    def mitre_limit(self) :
         "the current mitre limit."
         return \
             cairo.cairo_get_miter_limit(self._cairobj)
-    #end miter_limit
+    #end mitre_limit
 
-    @miter_limit.setter
-    def miter_limit(self, limit) :
-        self.set_miter_limit(limit)
-    #end miter_limit
+    @mitre_limit.setter
+    def mitre_limit(self, limit) :
+        self.set_mitre_limit(limit)
+    #end mitre_limit
 
-    def set_miter_limit(self, limit) :
+    def set_mitre_limit(self, limit) :
         "sets a new mitre limit. Use for method chaining; otherwise, it’s" \
-        " probably more convenient to assign to the miter_limit property."
+        " probably more convenient to assign to the mitre_limit property."
         cairo.cairo_set_miter_limit(self._cairobj, limit)
         return \
             self
-    #end set_miter_limit
+    #end set_mitre_limit
 
     @property
     def operator(self) :
