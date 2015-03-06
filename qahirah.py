@@ -1743,7 +1743,7 @@ class Context :
 
     @property
     def antialias(self) :
-        "the current antialias mode."
+        "the current antialias mode, CAIRO.ANTIALIAS_xxx."
         return \
             cairo.cairo_get_antialias(self._cairobj)
     #end antialias
@@ -3560,6 +3560,7 @@ class Pattern :
 
     @staticmethod
     def create_for_surface(surface) :
+        "creates a Pattern that takes its image from the specified Surface."
         if not isinstance(surface, Surface) :
             raise TypeError("surface is not a Surface")
         #end if
@@ -3668,7 +3669,8 @@ class Pattern :
 
     @property
     def extend(self) :
-        "how to extend the Pattern to cover a larger area, as a CAIRO.EXTEND_xxx code."
+        "how to extend the Pattern to cover a larger area, as a CAIRO.EXTEND_xxx code." \
+        " Note this is ignored for mesh patterns."
         return \
             cairo.cairo_pattern_get_extend(self._cairobj)
     #end extend
@@ -4004,7 +4006,7 @@ class Path :
     #end from_cairo
 
     def draw(self, ctx, matrix = None) :
-        "draws the Path into a Context."
+        "draws the Path into a Context, optionally transformed by the given Matrix."
         if not isinstance(ctx, Context) :
             raise TypeError("ctx must be a Context")
         #end if
@@ -4077,7 +4079,7 @@ class FontOptions :
 
     @property
     def antialias(self) :
-        "antialias mode for this FontOptions."
+        "antialias mode for this FontOptions, CAIRO.ANTIALIAS_xxx."
         return \
             cairo.cairo_font_options_get_antialias(self._cairobj)
     #end antialias
@@ -4089,7 +4091,7 @@ class FontOptions :
 
     @property
     def subpixel_order(self) :
-        "subpixel order for this FontOptions."
+        "subpixel order for this FontOptions, CAIRO.SUBPIXEL_ORDER_xxx."
         return \
             cairo.cairo_font_options_get_subpixel_order(self._cairobj)
     #end subpixel_order
@@ -4101,7 +4103,7 @@ class FontOptions :
 
     @property
     def hint_style(self) :
-        "hint style for this FontOptions."
+        "hint style for this FontOptions, CAIRO.HINT_STYLE_xxx."
         return \
             cairo.cairo_font_options_get_hint_style(self._cairobj)
     #end hint_style
@@ -4113,7 +4115,7 @@ class FontOptions :
 
     @property
     def hint_metrics(self) :
-        "hint metrics for this FontOptions."
+        "hint metrics for this FontOptions, CAIRO.HINT_METRICS_xxx."
         return \
             cairo.cairo_font_options_get_hint_metrics(self._cairobj)
     #end hint_metrics
@@ -4171,7 +4173,7 @@ class FontFace :
 
     @property
     def type(self) :
-        "the type of font underlying this FontFace."
+        "the type of font underlying this FontFace, CAIRO.FONT_TYPE_xxx."
         return \
             cairo.cairo_font_face_get_type(self._cairobj)
     #end type
@@ -4364,6 +4366,7 @@ class ScaledFont :
 
     @property
     def font_face(self) :
+        "the FontFace from which this ScaledFont was created."
         return \
             FontFace(cairo.cairo_scaled_font_get_font_face(self._cairobj))
     #end font_face
@@ -4406,7 +4409,8 @@ class ScaledFont :
 
     @property
     def type(self) :
-        "the type of font underlying this FontFace."
+        "the type of font underlying this ScaledFont, CAIRO.FONT_TYPE_xxx other" \
+        " than FONT_TYPE_TOY."
         return \
             cairo.cairo_scaled_font_get_type(self._cairobj)
     #end type
