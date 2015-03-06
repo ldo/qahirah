@@ -925,6 +925,7 @@ def debug_reset_static_data() :
 #end debug_reset_static_data
 
 def check(status) :
+    "checks status for success, raising a CairoError if not."
     if status != 0 :
         raise CairoError(status)
     #end if
@@ -996,6 +997,7 @@ class Vector :
     #end __eq__
 
     def __add__(v1, v2) :
+        "offset one Vector by another."
         return \
             (
                 lambda : NotImplemented,
@@ -1049,6 +1051,7 @@ class Vector :
     #end __truediv__
 
     def __mod__(v, f) :
+        "remainder on division of one Vector by another."
         if isinstance(f, Vector) :
             result = Vector(v.x % f.x, v.y % f.y)
         elif isinstance(f, Number) :
@@ -1255,8 +1258,8 @@ class Matrix :
     #end adj
 
     def inv(self) :
-        "matrix inverse computed using minors" \
-        " <http://mathworld.wolfram.com/MatrixInverse.html>."
+        "matrix inverse."
+        # computed using minors <http://mathworld.wolfram.com/MatrixInverse.html>
         adj = self.adj()
         det = self.det()
         return Matrix \
@@ -1389,12 +1392,14 @@ class Rect :
 
     @property
     def bottom(self) :
+        "the bottom y-coordinate of the Rect."
         return \
             self.top + self.height
     #end bottom
 
     @property
     def right(self) :
+        "the right x-coordinate of the Rect."
         return \
             self.left + self.width
     #end right
@@ -1625,12 +1630,14 @@ class Context :
     #end __del__
 
     def save(self) :
+        "saves the Cairo graphics state."
         cairo.cairo_save(self._cairobj)
         return \
             self
     #end save
 
     def restore(self) :
+        "restores the last saved-but-not-restored graphics state."
         cairo.cairo_restore(self._cairobj)
         self._check()
         return \
@@ -1647,31 +1654,40 @@ class Context :
     #end target
 
     def push_group(self) :
+        "temporarily redirects drawing to a temporary surface with content" \
+        " CAIRO.CONTENT_COLOUR_ALPHA."
         cairo.cairo_push_group(self._cairobj)
         return \
             self
     #end push_group
 
     def push_group_with_content(self, content) :
-        "content is a CAIRO.CONTENT_xxx value."
+        "temporarily redirects drawing to a temporary surface. content is a CAIRO.CONTENT_xxx value."
         cairo.cairo_push_group_with_content(self._cairobj, content)
         return \
             self
     #end push_group_with_content
 
     def pop_group(self) :
+        "pops the last pushed-but-not-popped group redirection, and returns a Pattern" \
+        " containing the result of the redirected drawing."
         return \
             Pattern(cairo.cairo_pop_group(self._cairobj))
     #end pop_group
 
     def pop_group_to_source(self) :
+        "pops the last pushed-but-not-popped group redirection, and sets the Pattern" \
+        " containing the result of the redirected drawing as the Context.source."
         cairo.cairo_pop_group_to_source(self._cairobj)
+        self._check()
         return \
             self
     #end pop_group_to_source
 
     @property
     def group_target(self) :
+        "returns the current group redirection target, or the original Surface if no" \
+        " redirection is in effect."
         return \
             Surface(cairo.cairo_surface_reference(cairo.cairo_get_group_target(self._cairobj)))
     #end group_target
@@ -1687,6 +1703,7 @@ class Context :
 
     @source.setter
     def source(self, source) :
+        "the current source Pattern."
         self.set_source(source)
     #end source
 
@@ -1777,6 +1794,7 @@ class Context :
 
     @property
     def fill_rule(self) :
+        "the current fill rule CAIRO.FILL_RULE_xxx."
         return \
             cairo.cairo_get_fill_rule(self._cairobj)
     #end fill_rule
@@ -1796,6 +1814,7 @@ class Context :
 
     @property
     def line_cap(self) :
+        "the current CAIRO.LINE_CAP_xxx setting."
         return \
             cairo.cairo_get_line_cap(self._cairobj)
     #end line_cap
@@ -1815,6 +1834,7 @@ class Context :
 
     @property
     def line_join(self) :
+        "the current CAIRO.LINE_JOIN_xxx setting."
         return \
             cairo.cairo_get_line_join(self._cairobj)
     #end line_join
@@ -1854,6 +1874,7 @@ class Context :
 
     @property
     def miter_limit(self) :
+        "the current mitre limit."
         return \
             cairo.cairo_get_miter_limit(self._cairobj)
     #end miter_limit
@@ -1949,7 +1970,8 @@ class Context :
 
     @property
     def clip_rectangle_list(self) :
-        "returns a copy of the current clip region as a list of Rects."
+        "returns a copy of the current clip region as a list of Rects. Whether this works" \
+        " depends on the backend."
         rects = cairo.cairo_copy_clip_rectangle_list(self._cairobj)
         try :
             check(rects.contents.status)
@@ -1962,6 +1984,7 @@ class Context :
     #end clip_rectangle_list
 
     def reset_clip(self) :
+        "resets the clip to infinite extent."
         cairo.cairo_reset_clip(self._cairobj)
         return \
             self
@@ -2001,6 +2024,8 @@ class Context :
     #end in_fill
 
     def mask(self, pattern) :
+        "fills the current clip area with the current source using the alpha channel" \
+        " of the given Pattern as a mask."
         if not isinstance(pattern, Pattern) :
             raise TypeError("pattern is not a Pattern")
         #end if
@@ -2010,6 +2035,8 @@ class Context :
     #end mask
 
     def mask_surface(self, surface, origin) :
+        "fills the current clip area with the current source using the alpha channel" \
+        " of the given Surface, offset to origin, as a mask."
         if not isinstance(surface, Surface) :
             raise TypeError("surface is not a Surface")
         #end if
@@ -2020,12 +2047,14 @@ class Context :
     #end mask_surface
 
     def paint(self) :
+        "fills the current clip area with the source."
         cairo.cairo_paint(self._cairobj)
         return \
             self
     #end paint
 
     def paint_with_alpha(self, alpha) :
+        "fills the current clip area with the source faded with the given alpha value."
         cairo.cairo_paint_with_alpha(self._cairobj, alpha)
         return \
             self
@@ -2191,7 +2220,9 @@ class Context :
     #end arc_negative
 
     def curve_to(self, p1, p2, p3) :
-        "curve_to(p1, p2, p3) or curve_to((x1, y1), (x2, y2), (x3, y3))."
+        "curve_to(p1, p2, p3) or curve_to((x1, y1), (x2, y2), (x3, y3)) -- draws a cubic" \
+        " Bézier curve from the current point through the specified control points." \
+        " Does a move_to(p1) first if there is no current point."
         p1 = Vector.from_tuple(p1)
         p2 = Vector.from_tuple(p2)
         p3 = Vector.from_tuple(p3)
@@ -2201,7 +2232,8 @@ class Context :
     #end curve_to
 
     def line_to(self, p) :
-        "line_to(p) or line_to((x, y))"
+        "line_to(p) or line_to((x, y)) -- draws a line from the current point to the" \
+        " new point. Acts like move_to(p) if there is no current point."
         p = Vector.from_tuple(p)
         cairo.cairo_line_to(self._cairobj, p.x, p.y)
         return \
@@ -2209,7 +2241,7 @@ class Context :
     #end line_to
 
     def move_to(self, p) :
-        "move_to(p) or move_to((x, y))"
+        "move_to(p) or move_to((x, y)) -- sets the current point to the new point."
         p = Vector.from_tuple(p)
         cairo.cairo_move_to(self._cairobj, p.x, p.y)
         return \
@@ -2217,13 +2249,15 @@ class Context :
     #end move_to
 
     def rectangle(self, rect) :
+        "appends a rectangular outline to the current path."
         cairo.cairo_rectangle(self._cairobj, rect.left, rect.top, rect.width, rect.height)
         return \
             self
     #end rectangle
 
     def glyph_path(self, glyphs) :
-        "glyphs is a sequence of Glyph objects."
+        "glyphs is a sequence of Glyph objects; appends the glyph outlines to" \
+        " the current path."
         buf, nr_glyphs = glyphs_to_cairo(glyphs)
         cairo.cairo_glyph_path(self._cairobj, ct.byref(buf), nr_glyphs)
         return \
@@ -2238,7 +2272,9 @@ class Context :
     #end text_path
 
     def rel_curve_to(self, p1, p2, p3) :
-        "rel_curve_to(p1, p2, p3) or rel_curve_to((x1, y1), (x2, y2), (x3, y3))."
+        "rel_curve_to(p1, p2, p3) or rel_curve_to((x1, y1), (x2, y2), (x3, y3)) -- does" \
+        " a curve_to through the specified control points interpreted as offsets from" \
+        " the current point. There must be a current point."
         p1 = Vector.from_tuple(p1)
         p2 = Vector.from_tuple(p2)
         p3 = Vector.from_tuple(p3)
@@ -2248,7 +2284,8 @@ class Context :
     #end rel_curve_to
 
     def rel_line_to(self, p) :
-        "rel_line_to(p) or rel_line_to((x, y))"
+        "rel_line_to(p) or rel_line_to((x, y)) -- does a line_to to the specified point" \
+        " interpreted as an offset from the current point. There must be a current point."
         p = Vector.from_tuple(p)
         cairo.cairo_rel_line_to(self._cairobj, p.x, p.y)
         return \
@@ -2256,7 +2293,8 @@ class Context :
     #end rel_line_to
 
     def rel_move_to(self, p) :
-        "rel_move_to(p) or rel_move_to((x, y))"
+        "rel_move_to(p) or rel_move_to((x, y)) -- offsets the current point by the" \
+        " specified Vector amount. There must be a current point."
         p = Vector.from_tuple(p)
         cairo.cairo_rel_move_to(self._cairobj, p.x, p.y)
         return \
@@ -2500,13 +2538,15 @@ class Context :
     #end set_scaled_font
 
     def show_text(self, text) :
+        "renders the specified text starting at the current point."
         cairo.cairo_show_text(self._cairobj, text.encode("utf-8"))
         return \
             self
     #end show_text
 
     def show_glyphs(self, glyphs) :
-        "glyphs must be a sequence of Glyph objects."
+        "glyphs must be a sequence of Glyph objects, to be rendered starting" \
+        " at the current point."
         buf, nr_glyphs = glyphs_to_cairo(glyphs)
         cairo.cairo_show_glyphs(self._cairobj, ct.byref(buf), nr_glyphs)
         return \
@@ -2535,7 +2575,7 @@ class Context :
 
     def glyph_extents(self, glyphs) :
         "returns a TextExtents object giving information about drawing the" \
-        " specified glyphs at the current font settings."
+        " specified sequence of Glyphs at the current font settings."
         buf, nr_glyphs = glyphs_to_cairo(glyphs)
         result = CAIRO.text_extents_t()
         cairo.cairo_glyph_extents(self._cairobj, buf, nr_glyphs, ct.byref(result))
