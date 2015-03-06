@@ -1951,9 +1951,12 @@ class Context :
     def clip_rectangle_list(self) :
         "returns a copy of the current clip region as a list of Rects."
         rects = cairo.cairo_copy_clip_rectangle_list(self._cairobj)
-        check(rects.contents.status)
-        result = list(Rect.from_cairo(rects.contents.rectangles[i]) for i in range(rects.contents.num_rectangles))
-        cairo.cairo_rectangle_list_destroy(rects)
+        try :
+            check(rects.contents.status)
+            result = list(Rect.from_cairo(rects.contents.rectangles[i]) for i in range(rects.contents.num_rectangles))
+        finally :
+            cairo.cairo_rectangle_list_destroy(rects)
+        #end try
         return \
             result
     #end clip_rectangle_list
@@ -2091,8 +2094,11 @@ class Context :
     def copy_path(self) :
         "returns a copy of the current path as a Path object."
         temp = cairo.cairo_copy_path(self._cairobj)
-        result = Path.from_cairo(temp)
-        cairo.cairo_path_destroy(temp)
+        try :
+            result = Path.from_cairo(temp)
+        finally :
+            cairo.cairo_path_destroy(temp)
+        #end try
         return \
             result
     #end copy_path
@@ -2101,8 +2107,11 @@ class Context :
         "returns a copy of the current path as a Path object, with curves" \
         " flattened to line segments."
         temp = cairo.cairo_copy_path_flat(self._cairobj)
-        result = Path.from_cairo(temp)
-        cairo.cairo_path_destroy(temp)
+        try :
+            result = Path.from_cairo(temp)
+        finally :
+            cairo.cairo_path_destroy(temp)
+        #end try
         return \
             result
     #end copy_path_flat
@@ -3771,8 +3780,11 @@ class MeshPattern(Pattern) :
     def get_path(self, patch_num) :
         "returns a Path defining the sides of the specified patch_num in [0 .. patch_count - 1]."
         temp = cairo.cairo_mesh_pattern_get_path(self._cairobj, patch_num)
-        result = Path.from_cairo(temp)
-        cairo.cairo_path_destroy(temp)
+        try :
+            result = Path.from_cairo(temp)
+        finally :
+            cairo.cairo_path_destroy(temp)
+        #end try
         return \
             result
     #end get_path
