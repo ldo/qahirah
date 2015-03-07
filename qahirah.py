@@ -949,6 +949,9 @@ deg = 180 / math.pi
   #
   #     math.sin(45 / deg)
   #     math.atan(1) * deg
+circle = 2 * math.pi
+  # Alternatively, you can work in units of full circles. E.g.
+  # 0.25 * circle is equivalent to 90°
 
 class Vector :
     "something missing from Cairo itself, a representation of a 2D point."
