@@ -664,7 +664,9 @@ cairo.cairo_surface_write_to_png_stream.argtypes = (ct.c_void_p, CAIRO.write_fun
 cairo.cairo_surface_copy_page.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_show_page.argtypes = (ct.c_void_p,)
 
+cairo.cairo_format_stride_for_width.argtypes = (ct.c_int, ct.c_int)
 cairo.cairo_image_surface_create.restype = ct.c_void_p
+cairo.cairo_image_surface_create.argtypes = (ct.c_int, ct.c_int, ct.c_int)
 cairo.cairo_image_surface_create_from_png.restype = ct.c_void_p
 cairo.cairo_image_surface_create_from_png_stream.restype = ct.c_void_p
 cairo.cairo_image_surface_create_from_png_stream.argtypes = (CAIRO.read_func_t, ct.c_void_p)
@@ -1939,7 +1941,7 @@ class Context :
     def set_operator(self, op) :
         "sets a new drawing operator. Use for method chaining; otherwise, it’s" \
         " probably more convenient to assign to the operator property."
-        cairo.cairo_set_operator(self._cairobj, int(op))
+        cairo.cairo_set_operator(self._cairobj, op)
         self._check()
         return \
             self
@@ -2819,7 +2821,7 @@ class ImageSurface(Surface) :
         " dimensions can be a Vector or a (width, height) tuple."
         dimensions = Vector.from_tuple(dimensions)
         return \
-            ImageSurface(cairo.cairo_image_surface_create(int(format), int(dimensions.x), int(dimensions.y)))
+            ImageSurface(cairo.cairo_image_surface_create(format, dimensions.x, dimensions.y))
     #end create
 
     @staticmethod
@@ -2874,7 +2876,7 @@ class ImageSurface(Surface) :
         "returns a suitable stride value (number of bytes per row of pixels) for" \
         " an ImageSurface with the specified format CAIRO.FORMAT_xxx and pixel width."
         return \
-            cairo.cairo_format_stride_for_width(int(format), int(width))
+            cairo.cairo_format_stride_for_width(format, width)
     #end format_stride_for_width
 
     # TODO: get_data?
