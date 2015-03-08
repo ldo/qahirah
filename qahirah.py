@@ -322,6 +322,19 @@ class CAIRO :
                 ("y", ct.c_double),
             ]
     #end glyph_t
+    glyph_ptr_t = ct.POINTER(glyph_t)
+
+    class cluster_t(ct.Structure) :
+        _fields_ = \
+            [
+                ("num_bytes", ct.c_int),
+                ("num_glyphs", ct.c_int),
+            ]
+    #end cluster_t
+    cluster_ptr_t = ct.POINTER(cluster_t)
+
+    # cairo_text_cluster_flags_t codes
+    TEXT_CLUSTER_FLAG_BACKWARD = 0x00000001
 
     # cairo_font_type_t codes
     FONT_TYPE_TOY = 0
@@ -794,6 +807,11 @@ cairo.cairo_ft_font_face_create_for_pattern.argtypes = (ct.c_void_p,)
 cairo.cairo_ft_font_face_create_for_pattern.restype = ct.c_void_p
 cairo.cairo_ft_font_options_substitute.argtypes = (ct.c_void_p, ct.c_void_p)
 
+cairo.cairo_glyph_allocate.restype = ct.c_void_p
+cairo.cairo_glyph_free.argtypes = (ct.c_void_p,)
+cairo.cairo_text_cluster_allocate.restype = ct.c_void_p
+cairo.cairo_text_cluster_free.argtypes = (ct.c_void_p,)
+
 cairo.cairo_scaled_font_reference.restype = ct.c_void_p
 cairo.cairo_scaled_font_reference.argtypes = (ct.c_void_p,)
 cairo.cairo_scaled_font_destroy.argtypes = (ct.c_void_p,)
@@ -802,6 +820,7 @@ cairo.cairo_scaled_font_create.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p
 cairo.cairo_scaled_font_extents.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_scaled_font_text_extents.argtypes = (ct.c_void_p, ct.c_char_p, ct.c_void_p)
 cairo.cairo_scaled_font_glyph_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_void_p)
+cairo.cairo_scaled_font_text_to_glyphs.argtypes = (ct.c_void_p, ct.c_double, ct.c_double, ct.c_void_p, ct.c_int, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 cairo.cairo_scaled_font_get_font_face.restype = ct.c_void_p
 cairo.cairo_scaled_font_get_font_face.argtypes = (ct.c_void_p,)
 cairo.cairo_scaled_font_get_font_options.argtypes = (ct.c_void_p, ct.c_void_p)
@@ -1597,6 +1616,11 @@ class Glyph :
         self.index = index
         self.pos = pos
     #end __init__
+
+    def __repr__(self) :
+        return \
+            "Glyph(%d, %s)" % (self.index, repr(self.pos))
+    #end __repr__
 
 #end Glyph
 
@@ -4378,6 +4402,77 @@ class ScaledFont :
         return \
             FontFace(cairo.cairo_font_face_reference(cairo.cairo_scaled_font_get_font_face(self._cairobj)))
     #end font_face
+
+    def text_to_glyphs(self, pos, text, cluster_mapping) :
+        "converts text (which can be a Unicode string or utf-8-encoded bytes) to an" \
+        " array of glyphs, optionally including cluster mapping information." \
+        " If not cluster_mapping, then the result will be a tuple of" \
+        " a single element, being a tuple of Glyph objects. If cluster_mapping, then" \
+        " the result tuple will have three elements, the first being the tuple of Glyphs" \
+        " as before, the second being a tuple of (nr_chars/nr_bytes, nr_glyphs) tuples," \
+        " and the third being the cluster_flags, of which only CAIRO.TEXT_CLUSTER_FLAG_BACKWARD" \
+        " is currently defined; this indicates that the numbers of glyphs in the clusters" \
+        " count from the end of the Glyphs array, not from the start."
+        pos = Vector.from_tuple(pos)
+        encode = not isinstance(text, bytes)
+        if encode :
+            c_text = text.encode("utf-8")
+        else :
+            c_text = text
+        #end if
+        c_glyphs = CAIRO.glyph_ptr_t()
+        num_glyphs = ct.c_int(0)
+        if cluster_mapping :
+            clusters_ptr = ct.pointer(CAIRO.cluster_ptr_t())
+            num_clusters = ct.pointer(ct.c_int(0))
+            cluster_flags = ct.pointer(ct.c_uint())
+        else :
+            clusters_ptr = None
+            num_clusters = None
+            cluster_flags = None
+        #end if
+        check(cairo.cairo_scaled_font_text_to_glyphs(self._cairobj, pos.x, pos.y, c_text, len(c_text), ct.byref(c_glyphs), ct.byref(num_glyphs), clusters_ptr, num_clusters, cluster_flags))
+        result = \
+            (
+                tuple
+                  (
+                    Glyph(g.index, Vector(g.x, g.y))
+                    for i in range(num_glyphs.value)
+                    for g in (c_glyphs[i],)
+                  ),
+            )
+        if cluster_mapping :
+            c_clusters = clusters_ptr.contents
+            num_clusters = num_clusters.contents.value
+            cluster_flags = cluster_flags.contents.value
+            if encode :
+                clusters = []
+                pos = 0
+                for i in range(num_clusters) :
+                    # convert cluster num_bytes to cluster num_chars
+                    next_pos = pos + c_clusters[i].num_bytes
+                    clusters.append \
+                      (
+                        (len(c_text[pos:next_pos].decode("utf-8")), c_clusters[i].num_glyphs)
+                      )
+                    pos = next_pos
+                #end for
+                clusters = tuple(clusters)
+            else :
+                clusters = tuple \
+                  (
+                    (c.num_bytes, c.num_glyphs)
+                    for i in range(num_clusters)
+                    for c in (c_clusters[i],)
+                  )
+            #end if
+            result += (clusters, cluster_flags)
+            cairo.cairo_text_cluster_free(clusters_ptr.contents)
+        #end if
+        cairo.cairo_glyph_free(c_glyphs)
+        return \
+            result
+    #end text_to_glyphs
 
     @property
     def font_options(self) :
