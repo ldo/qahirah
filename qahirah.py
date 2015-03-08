@@ -776,6 +776,8 @@ cairo.cairo_font_options_set_hint_style.argtypes = (ct.c_void_p, ct.c_int)
 cairo.cairo_font_options_get_hint_metrics.argtypes = (ct.c_void_p,)
 cairo.cairo_font_options_set_hint_metrics.argtypes = (ct.c_void_p, ct.c_int)
 
+cairo.cairo_font_face_reference.restype = ct.c_void_p
+cairo.cairo_font_face_reference.argtypes = (ct.c_void_p,)
 cairo.cairo_font_face_destroy.argtypes = (ct.c_void_p,)
 cairo.cairo_font_face_status.argtypes = (ct.c_void_p,)
 cairo.cairo_font_face_get_type.argtypes = (ct.c_void_p,)
@@ -2499,7 +2501,7 @@ class Context :
     def font_face(self) :
         "the current font face."
         return \
-            FontFace(cairo.cairo_get_font_face(self._cairobj))
+            FontFace(cairo.cairo_font_face_reference(cairo.cairo_get_font_face(self._cairobj)))
     #end font_face
 
     @font_face.setter
@@ -4372,7 +4374,7 @@ class ScaledFont :
     def font_face(self) :
         "the FontFace from which this ScaledFont was created."
         return \
-            FontFace(cairo.cairo_scaled_font_get_font_face(self._cairobj))
+            FontFace(cairo.cairo_font_face_reference(cairo.cairo_scaled_font_get_font_face(self._cairobj)))
     #end font_face
 
     @property
