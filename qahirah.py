@@ -642,6 +642,10 @@ cairo.cairo_font_extents.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_text_extents.argtypes = (ct.c_void_p, ct.c_char_p, ct.c_void_p)
 cairo.cairo_glyph_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_void_p)
 
+cairo.cairo_device_reference.restype = ct.c_void_p
+cairo.cairo_device_reference.argtypes = (ct.c_void_p,)
+cairo.cairo_device_destroy.argtypes = (ct.c_void_p,)
+
 cairo.cairo_surface_status.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_get_type.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_create_similar.restype = ct.c_void_p
@@ -2717,7 +2721,7 @@ class Surface :
         "returns the Device for this Surface."
         result = cairo.cairo_surface_get_device(self._cairobj)
         if result != None :
-            result = Device(result)
+            result = Device(cairo.cairo_device_reference(result))
         #end if
         return \
             result
@@ -3255,6 +3259,13 @@ class Device :
         self._check()
         self._user_data = {}
     #end __init__
+
+    def __del__(self) :
+        if self._cairobj != None :
+            cairo.cairo_device_destroy(self._cairobj)
+            self._cairobj = None
+        #end if
+    #end __del__
 
     @property
     def type(self) :
