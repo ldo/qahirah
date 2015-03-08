@@ -794,6 +794,8 @@ cairo.cairo_ft_font_face_create_for_pattern.argtypes = (ct.c_void_p,)
 cairo.cairo_ft_font_face_create_for_pattern.restype = ct.c_void_p
 cairo.cairo_ft_font_options_substitute.argtypes = (ct.c_void_p, ct.c_void_p)
 
+cairo.cairo_scaled_font_reference.restype = ct.c_void_p
+cairo.cairo_scaled_font_reference.argtypes = (ct.c_void_p,)
 cairo.cairo_scaled_font_destroy.argtypes = (ct.c_void_p,)
 cairo.cairo_scaled_font_status.argtypes = (ct.c_void_p,)
 cairo.cairo_scaled_font_create.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
@@ -2524,7 +2526,7 @@ class Context :
     def scaled_font(self) :
         "the current scaled font."
         return \
-            ScaledFont(cairo.cairo_get_scaled_font(self._cairobj))
+            ScaledFont(cairo.cairo_scaled_font_reference(cairo.cairo_get_scaled_font(self._cairobj)))
     #end scaled_font
 
     @scaled_font.setter
