@@ -1000,12 +1000,18 @@ class Vector :
             Vector(*v)
     #end from_tuple
 
+    def isint(self) :
+        "are the components integers."
+        return \
+            isinstance(self.x, int) and isinstance(self.y, int)
+    #end isint
+
     def __repr__(self) :
         return \
             (
                 "Vector(%%%(fmt)s, %%%(fmt)s)"
             %
-                {"fmt" : (".3f", "d")[isinstance(self.x, int) and isinstance(self.y, int)]}
+                {"fmt" : ("g", "d")[self.isint()]}
             %
                 (self.x, self.y)
             )
@@ -1346,7 +1352,7 @@ class Matrix :
     def __repr__(self) :
         return \
             (
-                "Matrix(%f, %f, %f, %f, %f, %f)"
+                "Matrix(%g, %g, %g, %g, %g, %g)"
             %
                 (
                     self.xx, self.yx,
@@ -1510,23 +1516,26 @@ class Rect :
             )
     #end __eq__
 
+    def isint(self) :
+        "are the components integers."
+        return \
+            (
+                isinstance(self.left, int)
+            and
+                isinstance(self.top, int)
+            and
+                isinstance(self.width, int)
+            and
+                isinstance(self.height, int)
+            )
+    #end isint
+
     def __repr__(self) :
         return \
             (
                 "Rect(%%%(fmt)s, %%%(fmt)s, %%%(fmt)s, %%%(fmt)s)"
             %
-                {"fmt" :
-                    (".3f", "d")
-                    [
-                        isinstance(self.left, int)
-                    and
-                        isinstance(self.top, int)
-                    and
-                        isinstance(self.width, int)
-                    and
-                        isinstance(self.height, int)
-                    ]
-                }
+                {"fmt" : ("g", "d") [self.isint()]}
             %
                 (self.left, self.top, self.width, self.height)
             )
@@ -2824,6 +2833,9 @@ class ImageSurface(Surface) :
         "creates a new ImageSurface with dynamically-allocated memory for the pixels." \
         " dimensions can be a Vector or a (width, height) tuple."
         dimensions = Vector.from_tuple(dimensions)
+        if not dimensions.isint() :
+            raise ValueError("dimensions must be integers")
+        #end if
         return \
             ImageSurface(cairo.cairo_image_surface_create(format, dimensions.x, dimensions.y))
     #end create
