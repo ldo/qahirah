@@ -1661,7 +1661,7 @@ def glyphs_to_cairo(glyphs) :
 #end glyphs_to_cairo
 
 class Context :
-    "a Cairo drawing context. Instantiate with a Surface object." \
+    "a Cairo drawing context. Do not instantiate directly; use the create method." \
     " Many methods return the context to allow method chaining."
     # <http://cairographics.org/manual/cairo-cairo-t.html>
 
@@ -1672,11 +1672,21 @@ class Context :
         check(cairo.cairo_status(self._cairobj))
     #end _check
 
-    def __init__(self, surface) :
-        self._cairobj = cairo.cairo_create(surface._cairobj)
+    def __init__(self, _cairobj) :
+        self._cairobj = _cairobj
         self._check()
         self._user_data = {}
     #end __init__
+
+    @staticmethod
+    def create(surface) :
+        "creates a new Context that draws into the specified Surface."
+        if not isinstance(surface, Surface) :
+            raise TypeError("surface must be a Surface")
+        #end if
+        return \
+            Context(cairo.cairo_create(surface._cairobj))
+    #end create
 
     def __del__(self) :
         if self._cairobj != None :
