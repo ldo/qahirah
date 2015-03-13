@@ -1625,9 +1625,7 @@ class Glyph :
     __slots__ = ("index", "pos") # to forestall typos
 
     def __init__(self, index, pos) :
-        if not isinstance(pos, Vector) :
-            raise TypeError("pos is not a Vector")
-        #end if
+        pos = Vector.from_tuple(pos)
         self.index = index
         self.pos = pos
     #end __init__
