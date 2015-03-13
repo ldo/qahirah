@@ -642,6 +642,7 @@ cairo.cairo_get_scaled_font.restype = ct.c_void_p
 cairo.cairo_get_scaled_font.argtypes = (ct.c_void_p,)
 cairo.cairo_show_text.argtypes = (ct.c_void_p, ct.c_char_p)
 cairo.cairo_show_glyphs.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_show_text_glyphs.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_void_p, ct.c_int, ct.c_void_p, ct.c_int, ct.c_uint)
 cairo.cairo_font_extents.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_text_extents.argtypes = (ct.c_void_p, ct.c_char_p, ct.c_void_p)
 cairo.cairo_glyph_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_void_p)
@@ -671,6 +672,8 @@ cairo.cairo_surface_write_to_png.argtypes = (ct.c_void_p, ct.c_char_p)
 cairo.cairo_surface_write_to_png_stream.argtypes = (ct.c_void_p, CAIRO.write_func_t, ct.c_void_p)
 cairo.cairo_surface_copy_page.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_show_page.argtypes = (ct.c_void_p,)
+cairo.cairo_surface_has_show_text_glyphs.restype = ct.c_bool
+cairo.cairo_surface_has_show_text_glyphs.argtypes = (ct.c_void_p,)
 
 cairo.cairo_format_stride_for_width.argtypes = (ct.c_int, ct.c_int)
 cairo.cairo_image_surface_create.restype = ct.c_void_p
@@ -2606,7 +2609,42 @@ class Context :
             self
     #end show_glyphs
 
-    # TODO: show_text_glyphs
+    def show_text_glyphs(self, text, glyphs, clusters, cluster_flags) :
+        "displays an array of Glyphs, also including text and cluster information" \
+        " (for, e.g., searching/indexing/selection purposes) if the back-end supports" \
+        " it. clusters is a sequence of 2-tuples, (nr_chars/nr_bytes, nr_glyphs); the" \
+        " first element of each pair is a number of characters if text is a Unicode string," \
+        " a number of bytes if text is a bytes object. If cluster_flags has" \
+        " CAIRO.TEXT_CLUSTER_FLAG_BACKWARD, set, then the numbers of glyphs in the clusters" \
+        " count from the end of the Glyphs array, not from the start."
+        encode = not isinstance(text, bytes)
+        nr_clusters = len(clusters)
+        if encode :
+            c_text = text.encode("utf-8")
+            e_clusters = []
+            pos = 0
+            for c in clusters :
+                # convert cluster num_chars to num_bytes
+                next_pos = pos + c[0]
+                e_clusters.append \
+                  (
+                    (len(text[pos:next_pos].encode("utf-8")), c[1])
+                  )
+                pos = next_pos
+            #end for
+        else :
+            c_text = text
+            e_clusters = clusters
+        #end if
+        c_glyphs, nr_glyphs = glyphs_to_cairo(glyphs)
+        c_clusters = (nr_clusters * CAIRO.cluster_t)()
+        for i, c in enumerate(e_clusters) :
+            c_clusters[i] = CAIRO.cluster_t(c[0], c[1])
+        #end for
+        cairo.cairo_show_text_glyphs(self._cairobj, c_text, len(c_text), ct.byref(c_glyphs), nr_glyphs, ct.byref(c_clusters), nr_clusters, cluster_flags)
+        return \
+            self
+    #end show_text_glyphs
 
     @property
     def font_extents(self) :
@@ -2769,7 +2807,13 @@ class Surface :
 
     # Cairo user_data not exposed to caller, probably not useful
 
-    # TODO: has_show_text_glyphs, mime_data, map/unmap image
+    @property
+    def has_show_text_glyphs(self) :
+        return \
+            cairo.cairo_surface_has_show_text_glyphs(self._cairobj)
+    #end has_show_text_glyphs
+
+    # TODO: mime_data, map/unmap image
     # <http://cairographics.org/manual/cairo-cairo-surface-t.html>
 
     def copy_page(self) :
