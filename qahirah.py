@@ -4306,6 +4306,7 @@ class FontFace :
 
     @property
     def ft_synthesize(self) :
+        "the bold/italic synthesize flags for the font, CAIRO.FT_SYNTHESIZE_xxx."
         return \
             cairo.cairo_ft_font_face_get_synthesize(self._cairobj)
     #end ft_synthesize
@@ -4455,7 +4456,7 @@ class ScaledFont :
             FontFace(cairo.cairo_font_face_reference(cairo.cairo_scaled_font_get_font_face(self._cairobj)))
     #end font_face
 
-    def text_to_glyphs(self, pos, text, cluster_mapping) :
+    def text_to_glyphs(self, pos, text, cluster_mapping = False) :
         "converts text (which can be a Unicode string or utf-8-encoded bytes) to an" \
         " array of glyphs, optionally including cluster mapping information." \
         " If not cluster_mapping, then the result will be a tuple of" \
