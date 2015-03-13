@@ -377,6 +377,10 @@ class CAIRO :
     FONT_WEIGHT_NORMAL = 0
     FONT_WEIGHT_BOLD = 1
 
+    # bit masks for cairo_ft_synthesize_t
+    FT_SYNTHESIZE_BOLD = 1 << 0
+    FT_SYNTHESIZE_OBLIQUE = 1 << 1
+
     read_func_t = ct.CFUNCTYPE(ct.c_int, ct.c_void_p, ct.c_void_p, ct.c_uint)
     write_func_t = ct.CFUNCTYPE(ct.c_int, ct.c_void_p, ct.c_void_p, ct.c_uint)
 
@@ -812,6 +816,10 @@ cairo.cairo_ft_font_face_create_for_ft_face.restype = ct.c_void_p
 cairo.cairo_ft_font_face_create_for_pattern.argtypes = (ct.c_void_p,)
 cairo.cairo_ft_font_face_create_for_pattern.restype = ct.c_void_p
 cairo.cairo_ft_font_options_substitute.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_ft_font_face_get_synthesize.restype = ct.c_uint
+cairo.cairo_ft_font_face_get_synthesize.argtypes = (ct.c_void_p,)
+cairo.cairo_ft_font_face_set_synthesize.argtypes = (ct.c_void_p, ct.c_uint)
+cairo.cairo_ft_font_face_unset_synthesize.argtypes = (ct.c_void_p, ct.c_uint)
 
 cairo.cairo_glyph_allocate.restype = ct.c_void_p
 cairo.cairo_glyph_free.argtypes = (ct.c_void_p,)
@@ -4296,7 +4304,28 @@ class FontFace :
             FontFace(cairo_face)
     #end create_for_pattern
 
-    # TODO: synthesize
+    @property
+    def ft_synthesize(self) :
+        return \
+            cairo.cairo_ft_font_face_get_synthesize(self._cairobj)
+    #end ft_synthesize
+
+    @ft_synthesize.setter
+    def ft_synthesize(self, synth_flags) :
+        self.ft_unset_synthesize(~synth_flags).ft_set_synthesize(synth_flags)
+    #end ft_synthesize
+
+    def ft_set_synthesize(self, synth_flags) :
+        cairo.cairo_ft_font_face_set_synthesize(self._cairobj, synth_flags)
+        return \
+            self
+    #end ft_set_synthesize
+
+    def ft_unset_synthesize(self, synth_flags) :
+        cairo.cairo_ft_font_face_unset_synthesize(self._cairobj, synth_flags)
+        return \
+            self
+    #end ft_unset_synthesize
 
     @property
     def user_data(self) :
