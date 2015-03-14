@@ -390,7 +390,7 @@ class CAIRO :
 
     # cairo_ps_level_t
     PS_LEVEL_2 = 0
-    PS_LEVEL_3 = 3
+    PS_LEVEL_3 = 1
 
     # codes for cairo_svg_version_t
     SVG_VERSION_1_1 = 0
