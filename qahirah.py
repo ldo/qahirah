@@ -47,6 +47,11 @@ class CAIRO :
     # variable, and pass the value of the variable instead.
 
     status_t = ct.c_uint
+    c_ptr_p = ct.POINTER(ct.c_void_p)
+    c_ubyte_p = ct.POINTER(ct.c_ubyte)
+    c_int_p = ct.POINTER(ct.c_int)
+    c_uint_p = ct.POINTER(ct.c_uint)
+    c_ulong_p = ct.POINTER(ct.c_ulong)
 
     # cairo_status_t codes
     STATUS_SUCCESS = 0
@@ -355,6 +360,7 @@ class CAIRO :
                 ("max_y_advance", ct.c_double),
             ]
     #end font_extents_t
+    font_extents_ptr_t = ct.POINTER(font_extents_t)
 
     class text_extents_t(ct.Structure) :
         _fields_ = \
@@ -367,6 +373,12 @@ class CAIRO :
                 ("y_advance", ct.c_double),
             ]
     #end text_extents_t
+    text_extents_ptr_t = ct.POINTER(text_extents_t)
+
+    user_scaled_font_init_func_t = ct.CFUNCTYPE(ct.c_int, ct.c_void_p, ct.c_void_p, font_extents_ptr_t)
+    user_scaled_font_render_glyph_func_t = ct.CFUNCTYPE(ct.c_int, ct.c_void_p, ct.c_ulong, ct.c_void_p, text_extents_ptr_t)
+    user_scaled_font_text_to_glyphs_func_t = ct.CFUNCTYPE(ct.c_int, ct.c_void_p, c_ubyte_p, ct.c_int, c_ptr_p, c_int_p, c_ptr_p, c_int_p, c_uint_p)
+    user_scaled_font_unicode_to_glyph_func_t = ct.CFUNCTYPE(ct.c_int, ct.c_void_p, ct.c_ulong, c_ulong_p)
 
     # codes for cairo_font_slant_t
     FONT_SLANT_NORMAL = 0
@@ -432,7 +444,7 @@ in \
         ("RECORDING_SURFACE", "recording_surface_create"),
         ("SCRIPT_SURFACE", "script_create"),
         ("SVG_SURFACE", "svg_surface_create"),
-        # TODO: USER_FONT
+        {"USER_FONT", "user_font_face_create"},
     ) \
 :
     setattr \
@@ -526,6 +538,8 @@ cairo.cairo_status_to_string.restype = ct.c_char_p
 cairo.cairo_status.argtypes = (ct.c_void_p,)
 cairo.cairo_create.argtypes = (ct.c_void_p,)
 cairo.cairo_create.restype = ct.c_void_p
+cairo.cairo_reference.restype = ct.c_void_p
+cairo.cairo_reference.argtypes = (ct.c_void_p,)
 cairo.cairo_destroy.restype = ct.c_void_p
 cairo.cairo_save.argtypes = (ct.c_void_p,)
 cairo.cairo_restore.argtypes = (ct.c_void_p,)
@@ -640,6 +654,21 @@ cairo.cairo_get_font_face.argtypes = (ct.c_void_p,)
 cairo.cairo_set_scaled_font.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_get_scaled_font.restype = ct.c_void_p
 cairo.cairo_get_scaled_font.argtypes = (ct.c_void_p,)
+
+cairo.cairo_user_font_face_create.restype = ct.c_void_p
+cairo.cairo_user_font_face_set_init_func.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_user_font_face_get_init_func.restype = ct.c_void_p
+cairo.cairo_user_font_face_get_init_func.argtypes = (ct.c_void_p,)
+cairo.cairo_user_font_face_set_render_glyph_func.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_user_font_face_get_render_glyph_func.restype = ct.c_void_p
+cairo.cairo_user_font_face_get_render_glyph_func.argtypes = (ct.c_void_p,)
+cairo.cairo_user_font_face_set_unicode_to_glyph_func.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_user_font_face_get_unicode_to_glyph_func.restype = ct.c_void_p
+cairo.cairo_user_font_face_get_unicode_to_glyph_func.argtypes = (ct.c_void_p,)
+cairo.cairo_user_font_face_set_text_to_glyphs_func.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_user_font_face_get_text_to_glyphs_func.restype = ct.c_void_p
+cairo.cairo_user_font_face_get_text_to_glyphs_func.argtypes = (ct.c_void_p,)
+
 cairo.cairo_show_text.argtypes = (ct.c_void_p, ct.c_char_p)
 cairo.cairo_show_glyphs.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_show_text_glyphs.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_void_p, ct.c_int, ct.c_void_p, ct.c_int, ct.c_uint)
@@ -2562,6 +2591,7 @@ class Context :
         "the current font face."
         return \
             FontFace(cairo.cairo_font_face_reference(cairo.cairo_get_font_face(self._cairobj)))
+            # fixme: might be UserFontFace
     #end font_face
 
     @font_face.setter
@@ -4360,7 +4390,8 @@ class FontFace :
 
     @property
     def ft_synthesize(self) :
-        "the bold/italic synthesize flags for the font, CAIRO.FT_SYNTHESIZE_xxx."
+        "the bold/italic synthesize flags for the font, CAIRO.FT_SYNTHESIZE_xxx" \
+        " (FreeType fonts only)."
         return \
             cairo.cairo_ft_font_face_get_synthesize(self._cairobj)
     #end ft_synthesize
@@ -4371,12 +4402,16 @@ class FontFace :
     #end ft_synthesize
 
     def ft_set_synthesize(self, synth_flags) :
+        "sets the specified bits in the bold/italic synthesize flags for the font," \
+        " CAIRO.FT_SYNTHESIZE_xxx (FreeType fonts only)."
         cairo.cairo_ft_font_face_set_synthesize(self._cairobj, synth_flags)
         return \
             self
     #end ft_set_synthesize
 
     def ft_unset_synthesize(self, synth_flags) :
+        "clears the specified bits in the bold/italic synthesize flags for the font," \
+        " CAIRO.FT_SYNTHESIZE_xxx (FreeType fonts only)."
         cairo.cairo_ft_font_face_unset_synthesize(self._cairobj, synth_flags)
         return \
             self
@@ -4508,6 +4543,7 @@ class ScaledFont :
         "the FontFace from which this ScaledFont was created."
         return \
             FontFace(cairo.cairo_font_face_reference(cairo.cairo_scaled_font_get_font_face(self._cairobj)))
+            # fixme: might be UserFontFace
     #end font_face
 
     def text_to_glyphs(self, pos, text, cluster_mapping = False) :
@@ -4636,7 +4672,305 @@ class ScaledFont :
 
 #end ScaledFont
 
-# TODO: user fonts
+class UserFontFace(FontFace) :
+    "font support with data provided by the user. Do not instantiate directly; use" \
+    " the create method. You supply up to four callbacks (only one of which is required)" \
+    " that define the behaviour of the font: init_func, render_glyph_func (required)," \
+    " text_to_glyphs_func and unicode_to_glyph_func."
+
+    __slots__ = \
+        (
+            "_init_func",
+            "_render_glyph_func",
+            "_text_to_glyphs_func",
+            "_unicode_to_glyph_func",
+            "pass_unicode",
+            # need to keep references to ctypes-wrapped functions
+            # so they don't disappear prematurely:
+            "_wrap_init_func",
+            "_wrap_render_glyph_func",
+            "_wrap_text_to_glyphs_func",
+            "_wrap_unicode_to_glyph_func",
+        ) # to forestall typos
+
+    @staticmethod
+    def create \
+      (
+        init_func = None,
+        render_glyph_func = None,
+        text_to_glyphs_func = None,
+        unicode_to_glyph_func = None,
+      ) :
+        "creates a new UserFontFace. You can specify callbacks here, or later, via assignment" \
+        " to the properties or using the set_xxx methods."
+        result = UserFontFace(cairo.cairo_user_font_face_create())
+        result._init_func = None
+        result._render_glyph_func = None
+        result._text_to_glyphs_func = None
+        result._unicode_to_glyph_func = None
+        result.pass_unicode = True
+        result._wrap_init_func = None
+        result._wrap_render_glyph_func = None
+        result._wrap_text_to_glyphs_func = None
+        result._wrap_unicode_to_glyph_func = None
+        if init_func != None :
+            result.set_init_func(init_func)
+        #end if
+        if render_glyph_func != None :
+            result.set_render_glyph_func(render_glyph_func)
+        #end if
+        if text_to_glyphs_func != None :
+            result.set_text_to_glyphs_func(text_to_glyphs_func)
+        #end if
+        if unicode_to_glyph_func != None :
+            result.set_unicode_to_glyph_func(unicode_to_glyph_func)
+        #end if
+        return \
+            result
+    #end create
+
+    @property
+    def init_func(self) :
+        "the current init_func, invoked as follows:\n" \
+        "\n" \
+        "    status = init_func(scaled_font : ScaledFont, ctx : Context, font_extents : FontExtents)\n" \
+        "\n" \
+        "Mainly, this should set fields in the font_extents to define the metrics of the font.\n" \
+        "This callback is optional."
+        return \
+            self._init_func
+    #end init_func
+
+    @init_func.setter
+    def init_func(self, init) :
+        self.set_init_func(init)
+    #end init_func
+
+    def set_init_func(self, init) :
+        "sets a new value for the init_func. Useful for method chaining; otherwise just" \
+        " assign to the init_func property."
+        temp = self._wrap_init_func # so the old value doesn't disappear until it's no longer needed
+        if init != None :
+            def wrap_init_func(c_scaled_font, c_ctx, c_font_extents) :
+                scaled_font = ScaledFont(cairo.cairo_scaled_font_reference(c_scaled_font))
+                ctx = Context(cairo.cairo_reference(cairo.cairo_reference(c_ctx)))
+                font_extents = FontExtents.from_cairo(c_font_extents.contents)
+                status = init(scaled_font, ctx, font_extents)
+                for f, _ in CAIRO.font_extents_t._fields_ :
+                    # return any changes made by user to caller
+                    setattr(c_font_extents.contents, f, getattr(font_extents, f))
+                #end for
+                return \
+                    status
+            #end wrap_init_func
+            self._wrap_init_func = CAIRO.user_scaled_font_init_func_t(wrap_init_func)
+        else :
+            self._wrap_init_func = None
+        #end if
+        cairo.cairo_user_font_face_set_init_func(self._cairobj, self._wrap_init_func)
+        self._init_func = init
+        return \
+            self
+    #end set_init_func
+
+    @property
+    def render_glyph_func(self) :
+        "the current render_glyph_func, invoked as follows\n" \
+        "\n" \
+        "    status = render_glyph_func(scaled_font : ScaledFont, glyph : int, ctx : Context, text_extents : TextExtents)\n" \
+        "\n" \
+        " where glyph is the index of the glyph to render, ctx is the Context into which to" \
+        " render the glyph, and text_extents can be adjusted to return the metrics of" \
+        " the glyph.\n" \
+        "This callback is mandatory."
+        return \
+            self._render_glyph_func
+    #end render_glyph_func
+
+    @render_glyph_func.setter
+    def render_glyph_func(self, render_glyph) :
+        self.set_render_glyph_func(render_glyph)
+    #end render_glyph_func
+
+    def set_render_glyph_func(self, render_glyph) :
+        "sets a new value for the render_glyph_func. Useful for method chaining; otherwise just" \
+        " assign to the render_glyph_func property."
+        temp = self._wrap_render_glyph_func # so the old value doesn't disappear until it's no longer needed
+        if render_glyph != None :
+            def wrap_render_glyph_func(c_scaled_font, glyph, c_ctx, c_text_extents) :
+                scaled_font = ScaledFont(cairo.cairo_scaled_font_reference(c_scaled_font))
+                ctx = Context(cairo.cairo_reference(cairo.cairo_reference(c_ctx)))
+                text_extents = TextExtents.from_cairo(c_text_extents.contents)
+                status = render_glyph(scaled_font, glyph, ctx, text_extents)
+                for f, _ in CAIRO.text_extents_t._fields_ :
+                    # return any changes made by user to caller
+                    setattr(c_text_extents.contents, f, getattr(text_extents, f))
+                #end for
+                return \
+                    status
+            #end wrap_render_glyph_func
+            self._wrap_render_glyph_func = CAIRO.user_scaled_font_render_glyph_func_t(wrap_render_glyph_func)
+        else :
+            self._wrap_render_glyph_func = None
+        #end if
+        cairo.cairo_user_font_face_set_render_glyph_func(self._cairobj, self._wrap_render_glyph_func)
+        self._render_glyph_func = render_glyph
+        return \
+            self
+    #end set_render_glyph_func
+
+    @property
+    def unicode_to_glyph_func(self) :
+        "the current unicode_to_glyph_func, invoked as follows:\n" \
+        "\n" \
+        "    status, glyph_index = unicode_to_glyph_func(scaled_font : ScaledFont, unicode : int)\n" \
+        "\n" \
+        "where it is expected to return the glyph code corresponding to the character code," \
+        " along with a status.\n" \
+        "This callback is optional, and is only used if a text_to_glyphs_func is not specified." \
+        " If neither is specified, then Unicode character codes are directly interpreted as" \
+        " glyph codes."
+        return \
+            self._unicode_to_glyph_func
+    #end unicode_to_glyph_func
+
+    @unicode_to_glyph_func.setter
+    def unicode_to_glyph_func(self, unicode_to_glyph) :
+        self.set_unicode_to_glyph_func(unicode_to_glyph)
+    #end unicode_to_glyph_func
+
+    def set_unicode_to_glyph_func(self, unicode_to_glyph) :
+        "sets a new value for the unicode_to_glyph_func. Useful for method chaining; otherwise" \
+        " just assign to the unicode_to_glyph_func property."
+        temp = self._wrap_unicode_to_glyph_func # so the old value doesn't disappear until it's no longer needed
+        if unicode_to_glyph != None :
+            def wrap_unicode_to_glyph_func(c_scaled_font, unicode, c_glyph_index) :
+                scaled_font = ScaledFont(cairo.cairo_scaled_font_reference(c_scaled_font))
+                status, glyph_index = unicode_to_glyph(scaled_font, unicode)
+                if glyph_index != None :
+                    c_glyph_index.contents.value = glyph_index
+                #end if
+                return \
+                    status
+            #end wrap_unicode_to_glyph_func
+            self._wrap_unicode_to_glyph_func = CAIRO.user_scaled_font_unicode_to_glyph_func_t(wrap_unicode_to_glyph_func)
+        else :
+            self._wrap_unicode_to_glyph_func = None
+        #end if
+        cairo.cairo_user_font_face_set_unicode_to_glyph_func(self._cairobj, self._wrap_unicode_to_glyph_func)
+        self._unicode_to_glyph_func = unicode_to_glyph
+        return \
+            self
+    #end set_unicode_to_glyph_func
+
+    @property
+    def text_to_glyphs_func(self) :
+        "the current text_to_glyphs_func, invoked as follows:\n" \
+        "\n" \
+        "    status, glyphs = text_to_glyphs(scaled_font : ScaledFont, text : str, False)\n" \
+        "or\n" \
+        "    status, glyphs, clusters, cluster_flags = text_to_glyphs(scaled_font : ScaledFont, text : str, True)\n" \
+        "\n" \
+        "The second element of the result tuple is a sequence of Glyph objects. If the third" \
+        " (cluster_mapping) argument is True, then the result tuple is expected to contain two" \
+        " more elements, being the sequence of clusters ((num_chars, num_glyphs) tuples) for" \
+        " mapping character indexes to glyph indexes, and the cluster flags.\n" \
+        "This callback is optional, and overrides the unicode_to_glyph_func if specified."
+        return \
+            self._text_to_glyphs_func
+    #end text_to_glyphs_func
+
+    @text_to_glyphs_func.setter
+    def text_to_glyphs_func(self, text_to_glyphs) :
+        self.set_text_to_glyphs_func(text_to_glyphs)
+    #end text_to_glyphs_func
+
+    def set_text_to_glyphs_func(self, text_to_glyphs) :
+        "sets a new value for the text_to_glyphs_func. Useful for method chaining; otherwise" \
+        " just assign to the text_to_glyphs_func property."
+        temp = self._wrap_text_to_glyphs_func # so the old value doesn't disappear until it's no longer needed
+        if text_to_glyphs != None :
+            def wrap_text_to_glyphs_func(c_scaled_font, c_utf8, utf8_len, c_glyphs, c_num_glyphs, c_clusters, c_num_clusters, c_cluster_flags) :
+                scaled_font = ScaledFont(cairo.cairo_scaled_font_reference(c_scaled_font))
+                text = bytes(c_utf8[i] for i in range(utf8_len))
+                if self.pass_unicode :
+                    text = text.decode("utf-8")
+                #end if
+                cluster_mapping = bool(c_clusters)
+                result = text_to_glyphs(scaled_font, text, cluster_mapping)
+                if cluster_mapping :
+                    status, glyphs, clusters, cluster_flags = result
+                else :
+                    status, glyphs = result[:2]
+                    clusters = None
+                #end if
+                if glyphs != None :
+                    nr_glyphs = len(glyphs)
+                    if c_num_glyphs.contents.value < nr_glyphs :
+                        c_glyphs.contents.value = cairo.cairo_glyph_allocate(nr_glyphs)
+                        if c_glyphs.contents.value == None :
+                            raise MemoryError("cairo_glyph_allocate failure")
+                              # don't bother trying to recover
+                        #end if
+                    #end if
+                    c_num_glyphs.contents.value = nr_glyphs
+                    dstarr = ct.cast(c_glyphs.contents, CAIRO.glyph_ptr_t)
+                    for i in range(nr_glyphs) :
+                        dst = dstarr[i]
+                        src = glyphs[i]
+                        dst.index = src.index
+                        dst.x = src.pos.x
+                        dst.y = src.pos.y
+                    #end for
+                #end if
+                if clusters != None :
+                    if self.pass_unicode :
+                        # convert cluster num_chars to num_bytes
+                        pos = 0
+                        e_clusters = []
+                        for c in clusters :
+                            next_pos = pos + c[0]
+                            e_clusters.append \
+                              (
+                                (len(text[pos:next_pos].encode("utf-8")), c[1])
+                              )
+                            pos = next_pos
+                        #end for
+                    else :
+                        e_clusters = clusters
+                    #end if
+                    nr_clusters = len(clusters)
+                    if c_num_clusters.contents.value < nr_clusters :
+                        c_clusters.contents.value = cairo.cairo_text_cluster_allocate(nr_clusters)
+                        if c_clusters.contents.value == None :
+                            raise MemoryError("cairo_text_cluster_allocate failure")
+                              # don't bother trying to recover
+                        #end if
+                    #end if
+                    c_num_clusters.contents.value = nr_clusters
+                    dstarr = ct.cast(c_clusters.contents, CAIRO.cluster_ptr_t)
+                    for i in range(nr_clusters) :
+                        dst = dstarr[i]
+                        src = e_clusters[i]
+                        dst.num_bytes = src[0]
+                        dst.num_glyphs = src[1]
+                    #end for
+                    c_cluster_flags.contents.value = cluster_flags
+                #end if
+                return \
+                    status
+            #end wrap_text_to_glyphs_func
+            self._wrap_text_to_glyphs_func = CAIRO.user_scaled_font_text_to_glyphs_func_t(wrap_text_to_glyphs_func)
+        else :
+            self._wrap_text_to_glyphs_func = None
+        #end if
+        cairo.cairo_user_font_face_set_text_to_glyphs_func(self._cairobj, self._wrap_text_to_glyphs_func)
+        self._text_to_glyphs_func = text_to_glyphs
+        return \
+            self
+    #end set_text_to_glyphs_func
+
+#end UserFontFace
 
 FontExtents = def_struct_class \
   (
