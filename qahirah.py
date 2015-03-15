@@ -2765,6 +2765,7 @@ class Surface :
         "do the two Surface objects refer to the same surface. Needed because" \
         " methods like Context.target and Pattern.surface cannot return the same" \
         " Surface object each time."
+        # FIXME: caller will see different user_data objects for each wrapper
         return \
             isinstance(other, Surface) and self._cairobj == other._cairobj
     #end __eq__
@@ -3641,6 +3642,7 @@ class Pattern :
     def __eq__(self, other) :
         "do the two Pattern objects refer to the same Pattern. Needed because" \
         " Context.source cannot return the same Pattern object each time."
+        # FIXME: caller will see different user_data objects for each wrapper
         return \
             isinstance(other, Pattern) and self._cairobj == other._cairobj
     #end __eq__
@@ -4314,6 +4316,7 @@ class FontFace :
     def __eq__(self, other) :
         "do the two FontFace objects refer to the same FontFace. Needed because" \
         " ScaledFont.font_face cannot return the same FontFace object each time."
+        # FIXME: caller will see different user_data objects for each wrapper
         return \
             isinstance(other, FontFace) and self._cairobj == other._cairobj
     #end __eq__
@@ -4488,6 +4491,14 @@ class ScaledFont :
             self._cairobj = None
         #end if
     #end __del__
+
+    def __eq__(self, other) :
+        "do the two ScaledFont objects refer to the same ScaledFont. Needed because" \
+        " Context.scaled_font cannot return the same ScaledFont object each time."
+        # FIXME: caller will see different user_data objects for each wrapper
+        return \
+            isinstance(other, ScaledFont) and self._cairobj == other._cairobj
+    #end __eq__
 
     @staticmethod
     def create(font_face, font_matrix, ctm, options) :
