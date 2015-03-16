@@ -20,6 +20,8 @@ from numbers import \
 import colorsys
 import array
 import ctypes as ct
+from weakref import \
+    WeakValueDictionary
 
 cairo = ct.cdll.LoadLibrary("libcairo.so.2")
 libc = ct.cdll.LoadLibrary("libc.so.6")
@@ -1689,23 +1691,51 @@ def glyphs_to_cairo(glyphs) :
         buf, nr_glyphs
 #end glyphs_to_cairo
 
+#+
+# Notes on object design:
+#
+# Qahirah objects which wrap Cairo objects store address of latter
+# in _cairobj attribute. Object constructors are reserved for internal
+# use.
+#
+# Round-trip object identity: when one Cairo object is set as an attribute
+# of another (e.g. a Context.source is set to a Pattern) and then retrieved
+# again, it is nice if the caller gets back the same Qahirah wrapper object.
+# I do this by maintaining a WeakValueDictionary in each of the relevant
+# (base) classes, which is updated by the constructors.
+#
+# Fixme: there is still a hole in this, in the situation where the caller
+# loses all references to the Qahirah object, so I create a new one when
+# retrieving the Cairo object. This will cause loss of the user_data dict.
+# So if they kept a reference to that, they will see it is now different.
+# Should I worry?
+#-
+
 class Context :
     "a Cairo drawing context. Do not instantiate directly; use the create method." \
     " Many methods return the context to allow method chaining."
     # <http://cairographics.org/manual/cairo-cairo-t.html>
 
-    __slots__ = ("_cairobj", "_user_data") # to forestall typos
+    __slots__ = ("_cairobj", "_user_data", "__weakref__") # to forestall typos
+
+    _instances = WeakValueDictionary()
 
     def _check(self) :
         # check for error from last operation on this Context.
         check(cairo.cairo_status(self._cairobj))
     #end _check
 
-    def __init__(self, _cairobj) :
-        self._cairobj = _cairobj
-        self._check()
-        self._user_data = {}
-    #end __init__
+    def __new__(celf, _cairobj) :
+        self = celf._instances.get(_cairobj)
+        if self == None :
+            self = super().__new__(celf)
+            self._cairobj = _cairobj
+            self._check()
+            self._user_data = {}
+        #end if
+        return \
+            self
+    #end __new__
 
     @staticmethod
     def create(surface) :
@@ -2591,7 +2621,6 @@ class Context :
         "the current font face."
         return \
             FontFace(cairo.cairo_font_face_reference(cairo.cairo_get_font_face(self._cairobj)))
-            # fixme: might be UserFontFace
     #end font_face
 
     @font_face.setter
@@ -2741,18 +2770,27 @@ class Surface :
     " provided by subclasses."
     # <http://cairographics.org/manual/cairo-cairo-surface-t.html>
 
-    __slots__ = ("_cairobj", "_user_data") # to forestall typos
+    __slots__ = ("_cairobj", "_user_data", "__weakref__") # to forestall typos
+
+    _instances = WeakValueDictionary()
 
     def _check(self) :
         # check for error from last operation on this Surface.
         check(cairo.cairo_surface_status(self._cairobj))
     #end _check
 
-    def __init__(self, _cairobj) :
-        self._cairobj = _cairobj
-        self._check()
-        self._user_data = {}
-    #end __init__
+    def __new__(celf, _cairobj) :
+        self = celf._instances.get(_cairobj)
+        if self == None :
+            self = super().__new__(celf)
+            self._cairobj = _cairobj
+            self._check()
+            self._user_data = {}
+            celf._instances[_cairobj] = self
+        #end if
+        return \
+            self
+    #end __new__
 
     def __del__(self) :
         if self._cairobj != None :
@@ -2760,15 +2798,6 @@ class Surface :
             self._cairobj = None
         #end if
     #end __del__
-
-    def __eq__(self, other) :
-        "do the two Surface objects refer to the same surface. Needed because" \
-        " methods like Context.target and Pattern.surface cannot return the same" \
-        " Surface object each time."
-        # FIXME: caller will see different user_data objects for each wrapper
-        return \
-            isinstance(other, Surface) and self._cairobj == other._cairobj
-    #end __eq__
 
     @property
     def type(self) :
@@ -3619,18 +3648,26 @@ class Pattern :
     "a Cairo Pattern object. Do not instantiate directly; use one of the create methods."
     # <http://cairographics.org/manual/cairo-cairo-pattern-t.html>
 
-    __slots__ = ("_cairobj", "_user_data", "_surface") # to forestall typos
+    __slots__ = ("_cairobj", "_user_data", "_surface", "__weakref__") # to forestall typos
+
+    _instances = WeakValueDictionary()
 
     def _check(self) :
         # check for error from last operation on this Pattern.
         check(cairo.cairo_pattern_status(self._cairobj))
     #end _check
 
-    def __init__(self, _cairobj) :
-        self._cairobj = _cairobj
-        self._check()
-        self._user_data = {}
-    #end __init__
+    def __new__(celf, _cairobj) :
+        self = celf._instances.get(_cairobj)
+        if self == None :
+            self = super().__new__(celf)
+            self._cairobj = _cairobj
+            self._check()
+            self._user_data = {}
+        #end if
+        return \
+            self
+    #end __new__
 
     def __del__(self) :
         if self._cairobj != None :
@@ -3638,14 +3675,6 @@ class Pattern :
             self._cairobj = None
         #end if
     #end __del__
-
-    def __eq__(self, other) :
-        "do the two Pattern objects refer to the same Pattern. Needed because" \
-        " Context.source cannot return the same Pattern object each time."
-        # FIXME: caller will see different user_data objects for each wrapper
-        return \
-            isinstance(other, Pattern) and self._cairobj == other._cairobj
-    #end __eq__
 
     def add_colour_stop(self, offset, c) :
         "adds a colour stop. This must be a gradient Pattern, offset is a number in [0, 1]" \
@@ -4293,18 +4322,26 @@ class FontFace :
     "a general Cairo font object. Do not instantiate directly; use the create methods."
     # <http://cairographics.org/manual/cairo-cairo-font-face-t.html>
 
-    __slots__ = ("_cairobj", "_user_data") # to forestall typos
+    __slots__ = ("_cairobj", "_user_data", "__weakref__") # to forestall typos
+
+    _instances = WeakValueDictionary()
 
     def _check(self) :
         # check for error from last operation on this FontFace.
         check(cairo.cairo_font_face_status(self._cairobj))
     #end _check
 
-    def __init__(self, _cairobj) :
-        self._cairobj = _cairobj
-        self._check()
-        self._user_data = {}
-    #end __init__
+    def __new__(celf, _cairobj) :
+        self = celf._instances.get(_cairobj)
+        if self == None :
+            self = super().__new__(celf)
+            self._cairobj = _cairobj
+            self._check()
+            self._user_data = {}
+        #end if
+        return \
+            self
+    #end __new__
 
     def __del__(self) :
         if self._cairobj != None :
@@ -4312,14 +4349,6 @@ class FontFace :
             self._cairobj = None
         #end if
     #end __del__
-
-    def __eq__(self, other) :
-        "do the two FontFace objects refer to the same FontFace. Needed because" \
-        " ScaledFont.font_face cannot return the same FontFace object each time."
-        # FIXME: caller will see different user_data objects for each wrapper
-        return \
-            isinstance(other, FontFace) and self._cairobj == other._cairobj
-    #end __eq__
 
     @property
     def type(self) :
@@ -4472,18 +4501,26 @@ class ScaledFont :
     " size and option settings. Do not instantiate directly; use the create method," \
     " or get one from Context.scaled_font."
 
-    __slots__ = ("_cairobj", "_user_data") # to forestall typos
+    __slots__ = ("_cairobj", "_user_data", "__weakref__") # to forestall typos
+
+    _instances = WeakValueDictionary()
 
     def _check(self) :
         # check for error from last operation on this ScaledFont.
         check(cairo.cairo_scaled_font_status(self._cairobj))
     #end _check
 
-    def __init__(self, _cairobj) :
-        self._cairobj = _cairobj
-        self._check()
-        self._user_data = {}
-    #end __init__
+    def __new__(celf, _cairobj) :
+        self = celf._instances.get(_cairobj)
+        if self == None :
+            self = super().__new__(celf)
+            self._cairobj = _cairobj
+            self._check()
+            self._user_data = {}
+        #end if
+        return \
+            self
+    #end __new__
 
     def __del__(self) :
         if self._cairobj != None :
@@ -4491,14 +4528,6 @@ class ScaledFont :
             self._cairobj = None
         #end if
     #end __del__
-
-    def __eq__(self, other) :
-        "do the two ScaledFont objects refer to the same ScaledFont. Needed because" \
-        " Context.scaled_font cannot return the same ScaledFont object each time."
-        # FIXME: caller will see different user_data objects for each wrapper
-        return \
-            isinstance(other, ScaledFont) and self._cairobj == other._cairobj
-    #end __eq__
 
     @staticmethod
     def create(font_face, font_matrix, ctm, options) :
@@ -4554,7 +4583,6 @@ class ScaledFont :
         "the FontFace from which this ScaledFont was created."
         return \
             FontFace(cairo.cairo_font_face_reference(cairo.cairo_scaled_font_get_font_face(self._cairobj)))
-            # fixme: might be UserFontFace
     #end font_face
 
     def text_to_glyphs(self, pos, text, cluster_mapping = False) :
