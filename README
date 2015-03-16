@@ -233,6 +233,22 @@ directly generates move_to, line_to, curve_to and close_path calls
 from its elements.
 
 
+Other Functional Differences From Pycairo
+=========================================
+
+Apart from the above differences, Qahirah is not exactly at functional
+parity with Pycairo. Qahirah implements the following major Cairo
+features that Pycairo does not:
+
+* Access to FreeType fonts
+* User fonts
+* Script surfaces
+
+while it does not implement the GUI-specific surface types that Pycairo
+does: Win32, XCB and XLib surfaces. Qahirah also does not implement
+regions as yet.
+
+
 Examples
 ========
 
@@ -241,4 +257,4 @@ Examples of Qahirah in action are available in my
 repository.
 
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
-2015 March 5
+2015 March 16
