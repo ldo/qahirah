@@ -1764,6 +1764,7 @@ class Context :
             self._cairobj = _cairobj
             self._check()
             self._user_data = {}
+            celf._instances[_cairobj] = self
         #end if
         return \
             self
@@ -3782,6 +3783,7 @@ class Pattern :
             self._cairobj = _cairobj
             self._check()
             self._user_data = {}
+            celf._instances[_cairobj] = self
         #end if
         return \
             self
@@ -4456,6 +4458,7 @@ class FontFace :
             self._cairobj = _cairobj
             self._check()
             self._user_data = {}
+            celf._instances[_cairobj] = self
         #end if
         return \
             self
@@ -4635,6 +4638,7 @@ class ScaledFont :
             self._cairobj = _cairobj
             self._check()
             self._user_data = {}
+            celf._instances[_cairobj] = self
         #end if
         return \
             self
