@@ -245,8 +245,7 @@ features that Pycairo does not:
 * Script surfaces
 
 while it does not implement the GUI-specific surface types that Pycairo
-does: Win32, XCB and XLib surfaces. Qahirah also does not implement
-regions as yet.
+does: Win32, XCB and XLib surfaces.
 
 
 Examples

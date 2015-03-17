@@ -321,6 +321,22 @@ class CAIRO :
     #end rectangle_list_t
     rectangle_list_ptr_t = ct.POINTER(rectangle_list_t)
 
+    class rectangle_int_t(ct.Structure) :
+        _fields_ = \
+            [
+                ("x", ct.c_int),
+                ("y", ct.c_int),
+                ("width", ct.c_int),
+                ("height", ct.c_int),
+            ]
+    #end rectangle_int_t
+    rectangle_int_ptr_t = ct.POINTER(rectangle_int_t)
+
+    # codes for cairo_region_overlap_t
+    REGION_OVERLAP_IN = 0
+    REGION_OVERLAP_OUT = 1
+    REGION_OVERLAP_PART = 2
+
     class glyph_t(ct.Structure) :
         _fields_ = \
             [
@@ -819,6 +835,36 @@ cairo.cairo_mesh_pattern_get_path.restype = ct.c_void_p
 cairo.cairo_mesh_pattern_get_path.argtypes = (ct.c_void_p, ct.c_uint)
 cairo.cairo_mesh_pattern_get_control_point.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint, ct.c_void_p, ct.c_void_p)
 cairo.cairo_mesh_pattern_get_corner_color_rgba.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+
+cairo.cairo_region_status.argtypes = (ct.c_void_p,)
+cairo.cairo_region_destroy.argtypes = (ct.c_void_p,)
+cairo.cairo_region_create.restype = ct.c_void_p
+cairo.cairo_region_create_rectangle.restype = ct.c_void_p
+cairo.cairo_region_create_rectangle.argtypes = (ct.c_void_p,)
+cairo.cairo_region_create_rectangles.restype = ct.c_void_p
+cairo.cairo_region_create_rectangles.argtypes = (ct.c_void_p, ct.c_int)
+cairo.cairo_region_copy.restype = ct.c_void_p
+cairo.cairo_region_copy.argtypes = (ct.c_void_p,)
+cairo.cairo_region_get_extents.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_region_num_rectangles.argtypes = (ct.c_void_p,)
+cairo.cairo_region_get_rectangle.argtypes = (ct.c_void_p, ct.c_int, ct.c_void_p)
+cairo.cairo_region_is_empty.argtypes = (ct.c_void_p,)
+cairo.cairo_region_is_empty.restype = ct.c_bool
+cairo.cairo_region_contains_point.argtypes = (ct.c_void_p, ct.c_int, ct.c_int)
+cairo.cairo_region_contains_point.restype = ct.c_bool
+cairo.cairo_region_contains_rectangle.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_region_contains_rectangle.restype = ct.c_int
+cairo.cairo_region_equal.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_region_equal.restype = ct.c_bool
+cairo.cairo_region_translate.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_region_intersect.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_region_intersect_rectangle.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_region_subtract.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_region_subtract_rectangle.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_region_union.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_region_union_rectangle.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_region_xor.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_region_xor_rectangle.argtypes = (ct.c_void_p, ct.c_void_p)
 
 cairo.cairo_font_options_status.argtypes = (ct.c_void_p,)
 cairo.cairo_font_options_create.restype = ct.c_void_p
@@ -1474,6 +1520,12 @@ class Rect :
         return \
             CAIRO.rectangle_t(self.left, self.top, self.width, self.height)
     #end to_cairo
+
+    def to_cairo_int(self) :
+        "converts the Rect to a CAIRO.rectangle_int_t."
+        return \
+            CAIRO.rectangle_int_t(self.left, self.top, self.width, self.height)
+    #end to_cairo_int
 
     @property
     def bottom(self) :
@@ -4170,7 +4222,223 @@ class MeshPattern(Pattern) :
 
 #end MeshPattern
 
-# TODO: Regions <http://cairographics.org/manual/cairo-Regions.html>
+class Region :
+    "a Cairo region. Do not instantiate directly; use the create or copy methods."
+    # <http://cairographics.org/manual/cairo-Regions.html>
+
+    __slots__ = ("_cairobj", "__weakref__") # to forestall typos
+
+    _instances = WeakValueDictionary()
+      # should I bother? regions cannot currently be attached to other objects.
+
+    def _check(self) :
+        # check for error from last operation on this Region.
+        check(cairo.cairo_region_status(self._cairobj))
+    #end _check
+
+    def __new__(celf, _cairobj) :
+        self = celf._instances.get(_cairobj)
+        if self == None :
+            self = super().__new__(celf)
+            self._cairobj = _cairobj
+            self._check()
+            # self._user_data = {} # not defined for regions
+            celf._instances[_cairobj] = self
+        #end if
+        return \
+            self
+    #end __new__
+
+    def __del__(self) :
+        if self._cairobj != None :
+            cairo.cairo_region_destroy(self._cairobj)
+            self._cairobj = None
+        #end if
+    #end __del__
+
+    @staticmethod
+    def create() :
+        "creates a new, empty Region."
+        return \
+            Region(cairo.cairo_region_create())
+    #end create
+
+    @staticmethod
+    def create_rectangle(rect) :
+        "creates a new Region covering just the specified Rect."
+        c_rect = rect.to_cairo_int()
+        return \
+            Region(cairo.cairo_region_create_rectangle(ct.byref(c_rect)))
+    #end create_rectangle
+
+    @staticmethod
+    def create_rectangles(rects) :
+        "creates a new Region covering the specified sequence of Rects."
+        count = len(rects)
+        c_rects = (count * CAIRO.rectangle_int_t)()
+        for i in range(count) :
+            c_rects[i] = rects[i].to_cairo_int()
+        #end for
+        return \
+            Region(cairo.cairo_region_create_rectangles(ct.byref(c_rects), count))
+    #end create_rectangles
+
+    def copy(self) :
+        "returns a new Region which is a copy of this one."
+        return \
+            Region(cairo.cairo_region_copy(self._cairobj))
+    #end copy
+
+    @property
+    def extents(self) :
+        "returns a Rect defining the extents of this Region."
+        result = CAIRO.rectangle_int_t()
+        cairo.cairo_region_get_extents(self._cairobj, ct.byref(result))
+        return \
+            Rect.from_cairo(result)
+    #end extents
+
+    @property
+    def rectangles(self) :
+        "iterates over the component Rects of this Region."
+        rect = CAIRO.rectangle_int_t()
+        for i in range(cairo.cairo_region_num_rectangles(self._cairobj)) :
+            cairo.cairo_region_get_rectangle(self._cairobj, i, ct.byref(rect))
+            yield Rect.from_cairo(rect)
+        #end for
+    #end rectangles
+
+    @property
+    def is_empty(self) :
+        "is this Region empty."
+        return \
+            cairo.cairo_region_is_empty(self._cairobj)
+    #end is_empty
+
+    def contains_point(self, p) :
+        "does this region contain the specified (integral) Vector point."
+        p = Vector.from_tuple(p)
+        if not p.isint() :
+            raise ValueError("point coordinates must be integers")
+        #end if
+        return \
+            cairo.cairo_region_contains_point(self._cairobj, p.x, p.y)
+    #end contains_point
+
+    def contains_rectangle(self, rect) :
+        "returns a CAIRO.REGION_OVERLAP_xxx code indicating how the specified" \
+        " Rect overlaps this Region."
+        c_rect = rect.to_cairo_int()
+        return \
+            cairo.cairo_region_contains_rectangle(self._cairobj, ct.byref(c_rect))
+    #end contains_rectangle
+
+    def __eq__(r1, r2) :
+        "equality of coverage of two Regions."
+        return \
+            isinstance(r2, Region) and cairo.cairo_region_equal(r1._cairobj, r2._cairobj)
+    #end __eq__
+
+    def __repr__(self) :
+        "displays the rectangles making up this Region."
+        return \
+            "Region{%s}" % repr(list(self.rectangles))
+    #end __repr__
+
+    def translate(self, p) :
+        "translates the Region by the specified (integral) Vector."
+        p = Vector.from_tuple(p)
+        if not p.isint() :
+            raise ValueError("point coordinates must be integers")
+        #end if
+        cairo.cairo_region_translate(self._cairobj, p.x, p.y)
+        return \
+            self
+    #end translate
+
+    def intersect(self, other) :
+        "replaces this Region with the intersection of itself and the other one."
+        if not isinstance(other, Region) :
+            raise TypeError("can only intersect with another Region")
+        #end if
+        check(cairo.cairo_region_intersect(self._cairobj, other._cairobj))
+        return \
+            self
+    #end intersect
+
+    def intersect_rectangle(self, rect) :
+        "replaces this Region with the intersection of itself and the specified Rect."
+        if not isinstance(rect, Rect) :
+            raise TypeError("can only intersect with a Rect")
+        #end if
+        c_rect = rect.to_cairo_int()
+        check(cairo.cairo_region_intersect_rectangle(self._cairobj, ct.byref(c_rect)))
+    #end intersect_rectangle
+
+    def subtract(self, other) :
+        "subtracts the other Region from this one."
+        if not isinstance(other, Region) :
+            raise TypeError("can only subtract another Region")
+        #end if
+        check(cairo.cairo_region_subtract(self._cairobj, other._cairobj))
+        return \
+            self
+    #end subtract
+
+    def subtract_rectangle(self, rect) :
+        "subtracts the specified Rect from this Region."
+        if not isinstance(rect, Rect) :
+            raise TypeError("can only subtract a Rect")
+        #end if
+        c_rect = rect.to_cairo_int()
+        check(cairo.cairo_region_subtract_rectangle(self._cairobj, ct.byref(c_rect)))
+        return \
+            self
+    #end subtract_rectangle
+
+    def union(self, other) :
+        "unites the other Region with this one."
+        if not isinstance(other, Region) :
+            raise TypeError("can only unite with another Region")
+        #end if
+        check(cairo.cairo_region_union(self._cairobj, other._cairobj))
+        return \
+            self
+    #end union
+
+    def union_rectangle(self, rect) :
+        "includes the specified Rect in this Region."
+        if not isinstance(rect, Rect) :
+            raise TypeError("can only union a Rect")
+        #end if
+        c_rect = rect.to_cairo_int()
+        check(cairo.cairo_region_union_rectangle(self._cairobj, ct.byref(c_rect)))
+        return \
+            self
+    #end union_rectangle
+
+    def xor(self, other) :
+        "exclusive-ors the other Region with this one."
+        if not isinstance(other, Region) :
+            raise TypeError("can only xor with another Region")
+        #end if
+        check(cairo.cairo_region_xor(self._cairobj, other._cairobj))
+        return \
+            self
+    #end xor
+
+    def xor_rectangle(self, rect) :
+        "replaces this Region with the exclusive-or between itself and the specified Rect."
+        if not isinstance(rect, Rect) :
+            raise TypeError("can only xor a Rect")
+        #end if
+        c_rect = rect.to_cairo_int()
+        check(cairo.cairo_region_xor_rectangle(self._cairobj, ct.byref(c_rect)))
+        return \
+            self
+    #end xor_rectangle
+
+#end Region
 
 class Path :
     "a high-level representation of a Cairo path_t. Instantiate with a sequence" \
