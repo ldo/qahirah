@@ -3674,8 +3674,10 @@ class Colour :
               )
     #end mix
 
-    class _X11_Colours :
+    class X11_Colours :
         "a dictionary mapping the X11 colour names to their standard values."
+
+        colours_filename = "/usr/share/X11/rgb.txt"
 
         def __init__(self) :
             self._colours = None
@@ -3686,22 +3688,26 @@ class Colour :
             # Every user-accessible method has to call this.
             if self._colours == None :
                 colours = {}
-                for line in open("/usr/share/X11/rgb.txt", "r") :
-                    if not line.startswith("!") :
-                        line = line.strip()
-                        for junk in ("\t", "  ") :
-                            while True :
-                                line2 = line.replace(junk, " ")
-                                if line2 == line :
-                                    break
-                                line = line2
-                            #end while
-                        #end for
-                        r, g, b, name = line.split(" ", 3)
-                        r, g, b = int(r), int(g), int(b)
-                        colours[name.lower()] = Colour.from_rgba((r / 255, g / 255, b / 255))
-                    #end if
-                #end line
+                try :
+                    for line in open(self.colours_filename, "r") :
+                        if not line.startswith("!") :
+                            line = line.strip()
+                            for junk in ("\t", "  ") :
+                                while True :
+                                    line2 = line.replace(junk, " ")
+                                    if line2 == line :
+                                        break
+                                    line = line2
+                                #end while
+                            #end for
+                            r, g, b, name = line.split(" ", 3)
+                            r, g, b = int(r), int(g), int(b)
+                            colours[name.lower()] = Colour.from_rgba((r / 255, g / 255, b / 255))
+                        #end if
+                    #end for
+                except IOError :
+                    pass
+                #end try
                 self._colours = colours
             #end if
         #end _load
@@ -3750,11 +3756,9 @@ class Colour :
                 repr(self._colours)
         #end __repr__
 
-    #end _X11_Colours
+    #end X11_Colours
 
-    x11 = _X11_Colours()
-
-    del _X11_Colours
+    x11 = X11_Colours()
 
 #end Colour
 
