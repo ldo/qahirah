@@ -1558,6 +1558,34 @@ class Rect :
             )
     #end __eq__
 
+    def union(r1, r2) :
+        "smallest rectangle enclosing both rectangles."
+        vmin = Vector(min(r1.left, r2.left), min(r1.top, r2.top))
+        vmax = Vector(max(r1.left + r1.width, r2.left + r2.width), max(r1.top + r1.height, r2.top + r2.height))
+        return \
+            Rect.from_corners(vmin, vmax)
+    #end union
+
+    def intersection(r1, r2) :
+        "largest rectangle contained by both rectangles."
+        vmin = Vector(max(r1.left, r2.left), max(r1.top, r2.top))
+        vmax = Vector(min(r1.left + r1.width, r2.left + r2.width), min(r1.top + r1.height, r2.top + r2.height))
+        return \
+            Rect.from_corners(vmin, vmax)
+    #end intersection
+
+    def __and__(r1, r2) :
+        "r1 & r2 = largest rectangle contained by both rectangles."
+        return \
+            r1.intersection(r2)
+    #end __and__
+
+    def __or__(r1, r2) :
+        "r1 | r2 = smallest rectangle enclosing both rectangles."
+        return \
+            r1.union(r2)
+    #end __union__
+
     def isint(self) :
         "are the components integers."
         return \
