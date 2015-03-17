@@ -515,17 +515,21 @@ def def_struct_class(name, ctname) :
 
 #begin def_struct_class
     result_class.__name__ = name
-    result_class.__doc__ = \
-        (
-            "representation of a Cairo %s structure. Fields are %s."
-            "\nCreate by decoding the Cairo form with the from_cairo method;"
-            " convert an instance to Cairo form with the to_cairo method."
-        %
+    try :
+        result_class.__doc__ = \
             (
-                ctname,
-                ", ".join(f[0] for f in ctstruct._fields_),
+                "representation of a Cairo %s structure. Fields are %s."
+                "\nCreate by decoding the Cairo form with the from_cairo method;"
+                " convert an instance to Cairo form with the to_cairo method."
+            %
+                (
+                    ctname,
+                    ", ".join(f[0] for f in ctstruct._fields_),
+                )
             )
-        )
+    except AttributeError :
+        pass # cannot write __doc__ on Python 3.2
+    #end try
     return \
         result_class
 #end def_struct_class
