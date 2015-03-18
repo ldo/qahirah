@@ -2679,7 +2679,7 @@ class Context :
     @property
     def font_options(self) :
         "a copy of the current font options."
-        result = FontOptions()
+        result = FontOptions.create()
         cairo.cairo_get_font_options(self._cairobj, result._cairobj)
         return \
             result
@@ -2938,7 +2938,7 @@ class Surface :
     @property
     def font_options(self) :
         "returns a copy of the font_options for this Surface."
-        result = FontOptions()
+        result = FontOptions.create()
         cairo.cairo_surface_get_font_options(self._cairobj, result._cairobj)
         return \
             result
@@ -4573,10 +4573,19 @@ class Path :
 #end Path
 
 class FontOptions :
-    "Cairo font options. Instantiate with no arguments to create a new font_options_t object."
+    "Cairo font options. Use the create method, with optional initial settings," \
+    " to create a new font_options_t object."
     # <http://cairographics.org/manual/cairo-cairo-font-options-t.html>
 
     __slots__ = ("_cairobj",) # to forestall typos
+
+    props = \
+        (
+            "antialias",
+            "subpixel_order",
+            "hint_style",
+            "hint_metrics",
+        )
 
     def _check(self) :
         # check for error from last operation on this FontOptions.
@@ -4598,6 +4607,24 @@ class FontOptions :
             self._cairobj = None
         #end if
     #end __del__
+
+    @staticmethod
+    def create(**kwargs) :
+        "creates a new FontOptions object. See FontOptions.props for valid arg keywords."
+        result = FontOptions()
+        for k in FontOptions.props :
+            if k in kwargs :
+                setattr(result, k, kwargs[k])
+            #end if
+        #end for
+        leftover = set(kwargs.keys()) - set(FontOptions.props)
+        if len(leftover) != 0 :
+            raise TypeError("unexpected arguments %s" % ", ".join(leftover))
+        #end if
+        return \
+            result
+    #end create
+    # create.__doc__ = "valid args are %s" % ", ".join(props) # either not allowed or no point
 
     def copy(self) :
         "returns a copy of this FontOptions in a new object."
@@ -4674,12 +4701,12 @@ class FontOptions :
     def __repr__(self) :
         return \
             (
-                "FontOptions({%s})"
+                "FontOptions.create(%s)"
             %
                 ", ".join
                   (
                     "%s = %d" % (name, getattr(self, name))
-                    for name in ("antialias", "subpixel_order", "hint_style", "hint_metrics")
+                    for name in self.props
                   )
             )
     #end __repr__
@@ -5029,7 +5056,7 @@ class ScaledFont :
     @property
     def font_options(self) :
         "a copy of the font options."
-        result = FontOptions()
+        result = FontOptions.create()
         cairo.cairo_scaled_font_get_font_options(self._cairobj, result._cairobj)
         return \
             result
