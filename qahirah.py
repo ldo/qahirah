@@ -4357,86 +4357,62 @@ class Region :
     #end translate
 
     def intersect(self, other) :
-        "replaces this Region with the intersection of itself and the other one."
-        if not isinstance(other, Region) :
-            raise TypeError("can only intersect with another Region")
+        "replaces this Region with the intersection of itself and the" \
+        " specified Rect or Region."
+        if isinstance(other, Region) :
+            check(cairo.cairo_region_intersect(self._cairobj, other._cairobj))
+        elif isinstance(other, Rect) :
+            c_rect = other.to_cairo_int()
+            check(cairo.cairo_region_intersect_rectangle(self._cairobj, ct.byref(c_rect)))
+        else :
+            raise TypeError("can only intersect with another Rect or Region")
         #end if
-        check(cairo.cairo_region_intersect(self._cairobj, other._cairobj))
         return \
             self
     #end intersect
 
-    def intersect_rectangle(self, rect) :
-        "replaces this Region with the intersection of itself and the specified Rect."
-        if not isinstance(rect, Rect) :
-            raise TypeError("can only intersect with a Rect")
-        #end if
-        c_rect = rect.to_cairo_int()
-        check(cairo.cairo_region_intersect_rectangle(self._cairobj, ct.byref(c_rect)))
-    #end intersect_rectangle
-
     def subtract(self, other) :
-        "subtracts the other Region from this one."
-        if not isinstance(other, Region) :
-            raise TypeError("can only subtract another Region")
+        "subtracts the specified Rect or Region from this Region."
+        if isinstance(other, Region) :
+            check(cairo.cairo_region_subtract(self._cairobj, other._cairobj))
+        elif isinstance(other, Rect) :
+            c_rect = other.to_cairo_int()
+            check(cairo.cairo_region_subtract_rectangle(self._cairobj, ct.byref(c_rect)))
+        else :
+            raise TypeError("can only subtract another Rect or Region")
         #end if
-        check(cairo.cairo_region_subtract(self._cairobj, other._cairobj))
         return \
             self
     #end subtract
 
-    def subtract_rectangle(self, rect) :
-        "subtracts the specified Rect from this Region."
-        if not isinstance(rect, Rect) :
-            raise TypeError("can only subtract a Rect")
-        #end if
-        c_rect = rect.to_cairo_int()
-        check(cairo.cairo_region_subtract_rectangle(self._cairobj, ct.byref(c_rect)))
-        return \
-            self
-    #end subtract_rectangle
-
     def union(self, other) :
-        "unites the other Region with this one."
-        if not isinstance(other, Region) :
-            raise TypeError("can only unite with another Region")
+        "includes the specified Rect or Region in this Region."
+        if isinstance(other, Region) :
+            check(cairo.cairo_region_union(self._cairobj, other._cairobj))
+        elif isinstance(other, Rect) :
+            c_rect = other.to_cairo_int()
+            check(cairo.cairo_region_union_rectangle(self._cairobj, ct.byref(c_rect)))
+        else :
+            raise TypeError("can only unite with another Rect or Region")
         #end if
-        check(cairo.cairo_region_union(self._cairobj, other._cairobj))
         return \
             self
     #end union
 
-    def union_rectangle(self, rect) :
-        "includes the specified Rect in this Region."
-        if not isinstance(rect, Rect) :
-            raise TypeError("can only union a Rect")
-        #end if
-        c_rect = rect.to_cairo_int()
-        check(cairo.cairo_region_union_rectangle(self._cairobj, ct.byref(c_rect)))
-        return \
-            self
-    #end union_rectangle
-
     def xor(self, other) :
-        "exclusive-ors the other Region with this one."
-        if not isinstance(other, Region) :
+        "replaces this Region with the exclusive-or between itself and the" \
+        " specified Rect or Region."
+        if isinstance(other, Region) :
+            check(cairo.cairo_region_xor(self._cairobj, other._cairobj))
+        elif isinstance(other, Rect) :
+            c_rect = other.to_cairo_int()
+            check(cairo.cairo_region_xor_rectangle(self._cairobj, ct.byref(c_rect)))
+        else :
             raise TypeError("can only xor with another Region")
         #end if
-        check(cairo.cairo_region_xor(self._cairobj, other._cairobj))
         return \
             self
     #end xor
-
-    def xor_rectangle(self, rect) :
-        "replaces this Region with the exclusive-or between itself and the specified Rect."
-        if not isinstance(rect, Rect) :
-            raise TypeError("can only xor a Rect")
-        #end if
-        c_rect = rect.to_cairo_int()
-        check(cairo.cairo_region_xor_rectangle(self._cairobj, ct.byref(c_rect)))
-        return \
-            self
-    #end xor_rectangle
 
 #end Region
 
