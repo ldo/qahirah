@@ -4257,31 +4257,30 @@ class Region :
     #end __del__
 
     @staticmethod
-    def create() :
-        "creates a new, empty Region."
+    def create(initial = None) :
+        "creates a new Region. If initial is not None, it must be a Rect or a tuple or" \
+        " list of Rects specifying the initial extent of the Region. Otherwise, the" \
+        " Region will be initially empty."
+        if initial != None :
+            if isinstance(initial, Rect) :
+                c_rect = initial.to_cairo_int()
+                result = cairo.cairo_region_create_rectangle(ct.byref(c_rect))
+            elif isinstance(initial, tuple) or isinstance(initial, list) :
+                count = len(initial)
+                c_rects = (count * CAIRO.rectangle_int_t)()
+                for i in range(count) :
+                    c_rects[i] = initial[i].to_cairo_int()
+                #end for
+                result = cairo.cairo_region_create_rectangles(ct.byref(c_rects), count)
+            else :
+                raise TypeError("initial arg must be a Rect, a tuple/list of Rects or None")
+            #end if
+        else :
+            result = cairo.cairo_region_create()
+        #end if
         return \
-            Region(cairo.cairo_region_create())
+            Region(result)
     #end create
-
-    @staticmethod
-    def create_rectangle(rect) :
-        "creates a new Region covering just the specified Rect."
-        c_rect = rect.to_cairo_int()
-        return \
-            Region(cairo.cairo_region_create_rectangle(ct.byref(c_rect)))
-    #end create_rectangle
-
-    @staticmethod
-    def create_rectangles(rects) :
-        "creates a new Region covering the specified sequence of Rects."
-        count = len(rects)
-        c_rects = (count * CAIRO.rectangle_int_t)()
-        for i in range(count) :
-            c_rects[i] = rects[i].to_cairo_int()
-        #end for
-        return \
-            Region(cairo.cairo_region_create_rectangles(ct.byref(c_rects), count))
-    #end create_rectangles
 
     def copy(self) :
         "returns a new Region which is a copy of this one."
