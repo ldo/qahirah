@@ -4518,6 +4518,11 @@ class Path :
         #end for
     #end __init__
 
+    def __repr__(self) :
+        return \
+            "Path(%s)" % repr(self.elements)
+    #end __repr__
+
     @classmethod
     def from_cairo(celf, path) :
         "translates a CAIRO.path_data_t to a Path."
