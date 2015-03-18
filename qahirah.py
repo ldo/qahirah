@@ -4611,16 +4611,16 @@ class FontOptions :
     @staticmethod
     def create(**kwargs) :
         "creates a new FontOptions object. See FontOptions.props for valid arg keywords."
+        leftover = set(kwargs.keys()) - set(FontOptions.props)
+        if len(leftover) != 0 :
+            raise TypeError("unexpected arguments %s" % ", ".join(leftover))
+        #end if
         result = FontOptions()
         for k in FontOptions.props :
             if k in kwargs :
                 setattr(result, k, kwargs[k])
             #end if
         #end for
-        leftover = set(kwargs.keys()) - set(FontOptions.props)
-        if len(leftover) != 0 :
-            raise TypeError("unexpected arguments %s" % ", ".join(leftover))
-        #end if
         return \
             result
     #end create
