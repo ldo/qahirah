@@ -4341,7 +4341,7 @@ class Region :
     def __repr__(self) :
         "displays the rectangles making up this Region."
         return \
-            "Region{%s}" % repr(list(self.rectangles))
+            "Region.create(%s)" % repr(list(self.rectangles))
     #end __repr__
 
     def translate(self, p) :
