@@ -1065,7 +1065,7 @@ class CairoError(Exception) :
 deg = math.pi / 180
   # All angles are in radians. You can use the standard Python functions math.degrees
   # and math.radians to convert back and forth, or multiply and divide by this deg
-  # factor: multiply by deg to convert degrees to radians, and devicie by deg to convert
+  # factor: multiply by deg to convert degrees to radians, and divide by deg to convert
   # the other way, e.g.
   #
   #     math.sin(45 * deg)
