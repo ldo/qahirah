@@ -939,6 +939,7 @@ cairo.cairo_scaled_font_get_type.argtypes = (ct.c_void_p,)
 
 libc.memcpy.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_size_t)
 
+_ft_destroy_key = ct.c_int() # dummy address
 
 if freetype2 != None :
 
@@ -1015,7 +1016,6 @@ else :
     #end if _fc != None
 
     _ft_lib = None
-    _ft_destroy_key = ct.c_int() # dummy address
 
     def _ensure_ft() :
         # ensures FreeType is usable, raising suitable exceptions if not.
@@ -4803,7 +4803,7 @@ class FontFace :
     if freetype2 != None :
 
         @staticmethod
-        def create_for_ft_face(face) :
+        def create_for_ft_face(face, load_flags = 0) :
             "creates a FontFace from a freetype2.Face."
             if not isinstance(face, freetype2.Face) :
                 raise TypeError("face must be a freetype2.Face")
@@ -4814,7 +4814,7 @@ class FontFace :
               (
                 cairo_face,
                 ct.byref(_ft_destroy_key),
-                ft_face.value,
+                ct.cast(face._ftobj, ct.c_void_p).value,
                 freetype2.ft.FT_Done_Face
               ))
             freetype2.check(freetype2.ft.FT_Reference_Face(face._ftobj))
