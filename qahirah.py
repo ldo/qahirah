@@ -25,13 +25,13 @@ from weakref import \
 
 cairo = ct.cdll.LoadLibrary("libcairo.so.2")
 libc = ct.cdll.LoadLibrary("libc.so.6")
-ft = ct.cdll.LoadLibrary("libfreetype.so.6")
+_ft = ct.cdll.LoadLibrary("libfreetype.so.6")
 try :
-    fc = ct.cdll.LoadLibrary("libfontconfig.so.1")
+    _fc = ct.cdll.LoadLibrary("libfontconfig.so.1")
 except OSError as fail :
     if True : # if fail.errno == 2 : # ENOENT
       # no point checking, because it is None! (Bug?)
-        fc = None
+        _fc = None
     else :
         raise
     #end if
@@ -931,16 +931,16 @@ cairo.cairo_scaled_font_get_type.argtypes = (ct.c_void_p,)
 
 libc.memcpy.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_size_t)
 
-if fc != None :
-    fc.FcInit.restype = ct.c_bool
-    fc.FcNameParse.argtypes = (ct.c_char_p,)
-    fc.FcNameParse.restype = ct.c_void_p
-    fc.FcConfigSubstitute.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int)
-    fc.FcConfigSubstitute.restype = ct.c_bool
-    fc.FcDefaultSubstitute.argtypes = (ct.c_void_p,)
-    fc.FcDefaultSubstitute.restype = None
-    fc.FcPatternDestroy.argtypes = (ct.c_void_p,)
-    fc.FcPatternDestroy.restype = None
+if _fc != None :
+    _fc.FcInit.restype = ct.c_bool
+    _fc.FcNameParse.argtypes = (ct.c_char_p,)
+    _fc.FcNameParse.restype = ct.c_void_p
+    _fc.FcConfigSubstitute.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int)
+    _fc.FcConfigSubstitute.restype = ct.c_bool
+    _fc.FcDefaultSubstitute.argtypes = (ct.c_void_p,)
+    _fc.FcDefaultSubstitute.restype = None
+    _fc.FcPatternDestroy.argtypes = (ct.c_void_p,)
+    _fc.FcPatternDestroy.restype = None
 
     class _FC :
         # minimal Fontconfig interface, just sufficient for my needs.
@@ -975,7 +975,7 @@ if fc != None :
 
         def __exit__(self, exception_type, exception_value, traceback) :
             for pattern in self.to_dispose :
-                fc.FcPatternDestroy(pattern)
+                _fc.FcPatternDestroy(pattern)
             #end for
         #end __exit__
 
@@ -983,35 +983,35 @@ if fc != None :
 
 #end if
 
-ft_lib = None
-ft_destroy_key = ct.c_int() # dummy address
+_ft_lib = None
+_ft_destroy_key = ct.c_int() # dummy address
 
 def _ensure_ft() :
     # ensures FreeType is usable, raising suitable exceptions if not.
-    global ft_lib
-    if ft_lib == None :
+    global _ft_lib
+    if _ft_lib == None :
         lib = ct.c_void_p()
-        status = ft.FT_Init_FreeType(ct.byref(lib))
+        status = _ft.FT_Init_FreeType(ct.byref(lib))
         if status != 0 :
             raise RuntimeError("Error %d initializing FreeType" % status)
         #end if
-        ft_lib = lib.value
+        _ft_lib = lib.value
     #end if
 #end _ensure_ft
 
-fc_inited = False
+_fc_inited = False
 
 def _ensure_fc() :
     # ensures Fontconfig is usable, raising suitable exceptions if not.
-    global fc_inited
-    if not fc_inited :
-        if fc == None :
+    global _fc_inited
+    if not _fc_inited :
+        if _fc == None :
             raise NotImplementedError("Fontconfig not available")
         #end if
-        if not fc.FcInit() :
+        if not _fc.FcInit() :
             raise RuntimeError("failed to initialize Fontconfig.")
         #end if
-        fc_inited = True
+        _fc_inited = True
     #end if
 #end _ensure_fc
 
@@ -4773,7 +4773,7 @@ class FontFace :
         " a new FontFace for it."
         _ensure_ft()
         ft_face = ct.c_void_p()
-        status = ft.FT_New_Face(ct.c_void_p(ft_lib), filename.encode("utf-8"), face_index, ct.byref(ft_face))
+        status = _ft.FT_New_Face(ct.c_void_p(_ft_lib), filename.encode("utf-8"), face_index, ct.byref(ft_face))
         if status != 0 :
             raise RuntimeError("Error %d loading FreeType font" % status)
         #end if
@@ -4783,14 +4783,14 @@ class FontFace :
             check(cairo.cairo_font_face_set_user_data
               (
                 cairo_face,
-                ct.byref(ft_destroy_key),
+                ct.byref(_ft_destroy_key),
                 ft_face.value,
-                ft.FT_Done_Face
+                _ft.FT_Done_Face
               ))
             ft_face = None # so I don't free it yet
         finally :
             if ft_face != None :
-                ft.FT_Done_Face(ft_face)
+                _ft.FT_Done_Face(ft_face)
             #end if
         #end try
         return \
@@ -4808,19 +4808,19 @@ class FontFace :
             raise TypeError("options must be a FontOptions")
         #end if
         with _FcPatternManager() as patterns :
-            search_pattern = patterns.collect(fc.FcNameParse(pattern.encode("utf-8")))
+            search_pattern = patterns.collect(_fc.FcNameParse(pattern.encode("utf-8")))
             if search_pattern == None :
                 raise RuntimeError("cannot parse FontConfig name pattern")
             #end if
-            if not fc.FcConfigSubstitute(None, search_pattern, _FC.FcMatchPattern) :
+            if not _fc.FcConfigSubstitute(None, search_pattern, _FC.FcMatchPattern) :
                 raise RuntimeError("cannot substitute Fontconfig configuration")
             #end if
             if options != None :
                 cairo_ft_font_options_substitute(search_pattern, options._cairobj)
             #end if
-            fc.FcDefaultSubstitute(search_pattern)
+            _fc.FcDefaultSubstitute(search_pattern)
             match_result = ct.c_int()
-            found_pattern = patterns.collect(fc.FcFontMatch(None, search_pattern, ct.byref(match_result)))
+            found_pattern = patterns.collect(_fc.FcFontMatch(None, search_pattern, ct.byref(match_result)))
             if found_pattern == None or match_result.value != _FC.FcResultMatch :
                 raise RuntimeError("Fontconfig cannot match font name")
             #end if
