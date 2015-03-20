@@ -952,6 +952,13 @@ if freetype2 != None :
         #end if
     #end _ensure_ft
 
+    def get_ft_lib() :
+        "returns the freetype2.Library object that I use."
+        _ensure_ft()
+        return \
+            ft_lib
+    #end get_ft_lib
+
 else :
     # fallback to my own minimal wrapper for FreeType and Fontconfig
 
@@ -4757,7 +4764,7 @@ class FontFace :
     "a general Cairo font object. Do not instantiate directly; use the create methods."
     # <http://cairographics.org/manual/cairo-cairo-font-face-t.html>
 
-    __slots__ = ("_cairobj", "_user_data", "__weakref__") # to forestall typos
+    __slots__ = ("_cairobj", "_user_data", "ft_face", "__weakref__") # to forestall typos
 
     _instances = WeakValueDictionary()
 
@@ -4813,6 +4820,7 @@ class FontFace :
             freetype2.check(freetype2.ft.FT_Reference_Face(face._ftobj))
               # need another reference since Cairo has stolen previous one
               # not expecting this to fail!
+            result.ft_face = face
             return \
                 result
         #end create_for_ft_face
@@ -4823,7 +4831,7 @@ class FontFace :
             " a new FontFace for it."
             _ensure_ft()
             return \
-                FontFace.create_for_ft_face(ft_lib.new_face(filename, face_index))
+                FontFace.create_for_ft_face(ft_lib.new_face(filename, face_index), load_flags)
         #end create_for_file
 
         @staticmethod
