@@ -734,6 +734,8 @@ cairo.cairo_image_surface_create_from_png_stream.restype = ct.c_void_p
 cairo.cairo_image_surface_create_from_png_stream.argtypes = (CAIRO.read_func_t, ct.c_void_p)
 cairo.cairo_image_surface_create_for_data.restype = ct.c_void_p
 cairo.cairo_image_surface_create_for_data.argtypes = (ct.c_void_p, ct.c_int, ct.c_int, ct.c_int, ct.c_int)
+cairo.cairo_image_surface_get_data.restype = ct.c_void_p
+cairo.cairo_image_surface_get_data.argtypes = (ct.c_void_p,)
 cairo.cairo_image_surface_get_format.argtypes = (ct.c_void_p,)
 cairo.cairo_image_surface_get_width.argtypes = (ct.c_void_p,)
 cairo.cairo_image_surface_get_height.argtypes = (ct.c_void_p,)
@@ -3093,14 +3095,41 @@ class ImageSurface(Surface) :
     #end create_from_png_bytes
 
     @staticmethod
+    def create_for_array(arr, format, dimensions, stride) :
+        "calls cairo_image_surface_create_for_data on arr, which must be" \
+        " a Python array.array object."
+        width, height = Vector.from_tuple(dimensions)
+        address, length = arr.buffer_info()
+        assert height * stride <= length * arr.itemsize
+        result = ImageSurface(cairo.cairo_image_surface_create_for_data(ct.c_void_p(address), format, width, height, stride))
+        result._arr = arr # to ensure it doesn't go away prematurely
+        return \
+            result
+    #end create_for_array
+
+    @staticmethod
+    def create_for_data(data, format, dimensions, stride) :
+        "LOW-LEVEL: calls cairo_image_surface_create_for_data with an arbitrary" \
+        " data address."
+        width, height = Vector.from_tuple(dimensions)
+        return \
+            ImageSurface(cairo.cairo_image_surface_create_for_data(data, format, width, height, stride))
+    #end create_for_data
+
+    @property
+    def data(self) :
+        "LOW-LEVEL: the data address."
+        return \
+            cairo.cairo_image_surface_get_data(self._cairobj)
+    #end data
+
+    @staticmethod
     def format_stride_for_width(format, width) :
         "returns a suitable stride value (number of bytes per row of pixels) for" \
         " an ImageSurface with the specified format CAIRO.FORMAT_xxx and pixel width."
         return \
             cairo.cairo_format_stride_for_width(format, width)
     #end format_stride_for_width
-
-    # TODO: get_data?
 
     @property
     def format(self) :
@@ -3144,21 +3173,6 @@ class ImageSurface(Surface) :
         return \
             result
     #end stride
-
-    @staticmethod
-    def create_for_array(arr, format, dimensions, stride) :
-        "calls cairo_image_surface_create_for_data on arr, which must be" \
-        " a Python array.array object."
-        width, height = Vector.from_tuple(dimensions)
-        address, length = arr.buffer_info()
-        assert height * stride <= length * arr.itemsize
-        result = ImageSurface(cairo.cairo_image_surface_create_for_data(ct.c_void_p(address), format, width, height, stride))
-        result._arr = arr # to ensure it doesn't go away prematurely
-        return \
-            result
-    #end create_for_array
-
-    # do I need a more general interface to create_for_data than create_for_array?
 
 #end ImageSurface
 
