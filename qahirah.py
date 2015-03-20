@@ -5406,6 +5406,24 @@ class UserFontFace(FontFace) :
             self
     #end set_text_to_glyphs_func
 
+    def copy(self) :
+        "returns a new UserFontFace with the same callbacks as this one, and a copy" \
+        "of the user_data. The purpose is to that Cairo’s scaled fonts will not" \
+        " recognize the copy as the same as the original font."
+        result = UserFontFace.create \
+          (
+            init_func = self.init_func,
+            render_glyph_func = self.render_glyph_func,
+            text_to_glyphs_func = self.text_to_glyphs_func,
+            unicode_to_glyph_func = self.unicode_to_glyph_func,
+          )
+        for k in self.user_data :
+            result.user_data[k] = self.user_data[k]
+        #end for
+        return \
+            result
+    #end copy
+
 #end UserFontFace
 
 FontExtents = def_struct_class \
