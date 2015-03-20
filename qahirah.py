@@ -5417,6 +5417,7 @@ class UserFontFace(FontFace) :
             text_to_glyphs_func = self.text_to_glyphs_func,
             unicode_to_glyph_func = self.unicode_to_glyph_func,
           )
+        result.pass_unicode = self.pass_unicode
         for k in self.user_data :
             result.user_data[k] = self.user_data[k]
         #end for
