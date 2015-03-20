@@ -33,17 +33,17 @@ cairo = ct.cdll.LoadLibrary("libcairo.so.2")
 libc = ct.cdll.LoadLibrary("libc.so.6")
 if freetype2 == None :
     _ft = ct.cdll.LoadLibrary("libfreetype.so.6")
-    try :
-        _fc = ct.cdll.LoadLibrary("libfontconfig.so.1")
-    except OSError as fail :
-        if True : # if fail.errno == 2 : # ENOENT
-          # no point checking, because it is None! (Bug?)
-            _fc = None
-        else :
-            raise
-        #end if
-    #end try
 #end if
+try :
+    _fc = ct.cdll.LoadLibrary("libfontconfig.so.1")
+except OSError as fail :
+    if True : # if fail.errno == 2 : # ENOENT
+      # no point checking, because it is None! (Bug?)
+        _fc = None
+    else :
+        raise
+    #end if
+#end try
 
 class CAIRO :
     "useful definitions adapted from cairo.h. You will need to use the constants," \
@@ -961,59 +961,7 @@ if freetype2 != None :
     #end get_ft_lib
 
 else :
-    # fallback to my own minimal wrapper for FreeType and Fontconfig
-
-    if _fc != None :
-        _fc.FcInit.restype = ct.c_bool
-        _fc.FcNameParse.argtypes = (ct.c_char_p,)
-        _fc.FcNameParse.restype = ct.c_void_p
-        _fc.FcConfigSubstitute.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int)
-        _fc.FcConfigSubstitute.restype = ct.c_bool
-        _fc.FcDefaultSubstitute.argtypes = (ct.c_void_p,)
-        _fc.FcDefaultSubstitute.restype = None
-        _fc.FcPatternDestroy.argtypes = (ct.c_void_p,)
-        _fc.FcPatternDestroy.restype = None
-
-        class _FC :
-            # minimal Fontconfig interface, just sufficient for my needs.
-
-            FcMatchPattern = 0
-            FcResultMatch = 0
-
-        #end _FC
-
-        class _FcPatternManager :
-            # context manager which collects a list of FcPattern objects requiring disposal.
-
-            def __init__(self) :
-                self.to_dispose = []
-            #end __init__
-
-            def __enter__(self) :
-                return \
-                    self
-            #end __enter__
-
-            def collect(self, pattern) :
-                "collects another FcPattern reference to be disposed."
-                # c_void_p function results are peculiar: they return integers
-                # for non-null values, but None for null.
-                if pattern != None :
-                    self.to_dispose.append(pattern)
-                #end if
-                return \
-                    pattern
-            #end collect
-
-            def __exit__(self, exception_type, exception_value, traceback) :
-                for pattern in self.to_dispose :
-                    _fc.FcPatternDestroy(pattern)
-                #end for
-            #end __exit__
-
-        #end _FcPatternManager
-
-    #end if _fc != None
+    # fallback to my own minimal wrapper for FreeType
 
     _ft_lib = None
 
@@ -1030,23 +978,80 @@ else :
         #end if
     #end _ensure_ft
 
-    _fc_inited = False
-
-    def _ensure_fc() :
-        # ensures Fontconfig is usable, raising suitable exceptions if not.
-        global _fc_inited
-        if not _fc_inited :
-            if _fc == None :
-                raise NotImplementedError("Fontconfig not available")
-            #end if
-            if not _fc.FcInit() :
-                raise RuntimeError("failed to initialize Fontconfig.")
-            #end if
-            _fc_inited = True
-        #end if
-    #end _ensure_fc
+    def get_ft_lib() :
+        "not available without python_freetype."
+        raise NotImplementedError("not available without freetype2.")
+    #end get_ft_lib
 
 #end if freetype2 != None
+
+if _fc != None :
+    _fc.FcInit.restype = ct.c_bool
+    _fc.FcNameParse.argtypes = (ct.c_char_p,)
+    _fc.FcNameParse.restype = ct.c_void_p
+    _fc.FcConfigSubstitute.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int)
+    _fc.FcConfigSubstitute.restype = ct.c_bool
+    _fc.FcDefaultSubstitute.argtypes = (ct.c_void_p,)
+    _fc.FcDefaultSubstitute.restype = None
+    _fc.FcPatternDestroy.argtypes = (ct.c_void_p,)
+    _fc.FcPatternDestroy.restype = None
+
+    class _FC :
+        # minimal Fontconfig interface, just sufficient for my needs.
+
+        FcMatchPattern = 0
+        FcResultMatch = 0
+
+    #end _FC
+
+    class _FcPatternManager :
+        # context manager which collects a list of FcPattern objects requiring disposal.
+
+        def __init__(self) :
+            self.to_dispose = []
+        #end __init__
+
+        def __enter__(self) :
+            return \
+                self
+        #end __enter__
+
+        def collect(self, pattern) :
+            "collects another FcPattern reference to be disposed."
+            # c_void_p function results are peculiar: they return integers
+            # for non-null values, but None for null.
+            if pattern != None :
+                self.to_dispose.append(pattern)
+            #end if
+            return \
+                pattern
+        #end collect
+
+        def __exit__(self, exception_type, exception_value, traceback) :
+            for pattern in self.to_dispose :
+                _fc.FcPatternDestroy(pattern)
+            #end for
+        #end __exit__
+
+    #end _FcPatternManager
+
+#end if _fc != None
+
+_fc_inited = False
+
+def _ensure_fc() :
+    # ensures Fontconfig is usable, raising suitable exceptions if not.
+    global _fc_inited
+    if not _fc_inited :
+        if _fc == None :
+            raise NotImplementedError("Fontconfig not available")
+        #end if
+        if not _fc.FcInit() :
+            raise RuntimeError("failed to initialize Fontconfig.")
+        #end if
+        _fc_inited = True
+    #end if
+#end _ensure_fc
 
 #+
 # Higher-level stuff begins here
@@ -4834,16 +4839,6 @@ class FontFace :
                 FontFace.create_for_ft_face(ft_lib.new_face(filename, face_index), load_flags)
         #end create_for_file
 
-        @staticmethod
-        def create_for_pattern(pattern, options = None) :
-            "uses Fontconfig to find a font matching the specified pattern string," \
-            " uses FreeType to load the font, and returns a new FontFace for it." \
-            " options, if present, must be a FontOptions object."
-            _ensure_ft()
-            return \
-                FontFace.create_for_ft_face(ft_lib.find_face(pattern))
-        #end create_for_pattern
-
     else :
 
         @staticmethod
@@ -4882,40 +4877,40 @@ class FontFace :
                 result
         #end create_for_file
 
-        @staticmethod
-        def create_for_pattern(pattern, options = None) :
-            "uses Fontconfig to find a font matching the specified pattern string," \
-            " uses FreeType to load the font, and returns a new FontFace for it." \
-            " options, if present, must be a FontOptions object."
-            _ensure_ft()
-            _ensure_fc()
-            if options != None and not isinstance(options, FontOptions) :
-                raise TypeError("options must be a FontOptions")
-            #end if
-            with _FcPatternManager() as patterns :
-                search_pattern = patterns.collect(_fc.FcNameParse(pattern.encode("utf-8")))
-                if search_pattern == None :
-                    raise RuntimeError("cannot parse FontConfig name pattern")
-                #end if
-                if not _fc.FcConfigSubstitute(None, search_pattern, _FC.FcMatchPattern) :
-                    raise RuntimeError("cannot substitute Fontconfig configuration")
-                #end if
-                if options != None :
-                    cairo_ft_font_options_substitute(search_pattern, options._cairobj)
-                #end if
-                _fc.FcDefaultSubstitute(search_pattern)
-                match_result = ct.c_int()
-                found_pattern = patterns.collect(_fc.FcFontMatch(None, search_pattern, ct.byref(match_result)))
-                if found_pattern == None or match_result.value != _FC.FcResultMatch :
-                    raise RuntimeError("Fontconfig cannot match font name")
-                #end if
-                cairo_face = cairo.cairo_ft_font_face_create_for_pattern(found_pattern)
-            #end with
-            return \
-                FontFace(cairo_face)
-        #end create_for_pattern
-
     #end if freetype2 != None
+
+    @staticmethod
+    def create_for_pattern(pattern, options = None) :
+        "uses Fontconfig to find a font matching the specified pattern string," \
+        " uses FreeType to load the font, and returns a new FontFace for it." \
+        " options, if present, must be a FontOptions object."
+        _ensure_ft()
+        _ensure_fc()
+        if options != None and not isinstance(options, FontOptions) :
+            raise TypeError("options must be a FontOptions")
+        #end if
+        with _FcPatternManager() as patterns :
+            search_pattern = patterns.collect(_fc.FcNameParse(pattern.encode("utf-8")))
+            if search_pattern == None :
+                raise RuntimeError("cannot parse FontConfig name pattern")
+            #end if
+            if not _fc.FcConfigSubstitute(None, search_pattern, _FC.FcMatchPattern) :
+                raise RuntimeError("cannot substitute Fontconfig configuration")
+            #end if
+            if options != None :
+                cairo.cairo_ft_font_options_substitute(search_pattern, options._cairobj)
+            #end if
+            _fc.FcDefaultSubstitute(search_pattern)
+            match_result = ct.c_int()
+            found_pattern = patterns.collect(_fc.FcFontMatch(None, search_pattern, ct.byref(match_result)))
+            if found_pattern == None or match_result.value != _FC.FcResultMatch :
+                raise RuntimeError("Fontconfig cannot match font name")
+            #end if
+            cairo_face = cairo.cairo_ft_font_face_create_for_pattern(found_pattern)
+        #end with
+        return \
+            FontFace(cairo_face)
+    #end create_for_pattern
 
     @property
     def ft_synthesize(self) :
