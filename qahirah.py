@@ -623,6 +623,7 @@ cairo.cairo_get_source.restype = ct.c_void_p
 cairo.cairo_set_source_rgb.argtypes = (ct.c_void_p, ct.c_double, ct.c_double, ct.c_double) # not used
 cairo.cairo_set_source_rgba.argtypes = (ct.c_void_p, ct.c_double, ct.c_double, ct.c_double, ct.c_double)
 cairo.cairo_set_source.argtypes = (ct.c_void_p, ct.c_void_p)
+cairo.cairo_set_source_surface.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_get_antialias.argtypes = (ct.c_void_p,)
 cairo.cairo_set_dash.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_double)
 cairo.cairo_get_dash_count.argtypes = (ct.c_void_p,)
@@ -1986,12 +1987,39 @@ class Context :
 
     def set_source_colour(self, c) :
         "sets a new plain-colour pattern as the source. c must be a Colour" \
-        " object or a tuple."
+        " object or a tuple. Use for method-chaining; otherwise it’s probably" \
+        " more convenient to assign to the source_colour property."
         cairo.cairo_set_source_rgba(*((self._cairobj,) + tuple(Colour.from_rgba(c))))
         self._check()
         return \
             self
     #end set_source_colour
+
+    @property
+    def source_surface(self) :
+        "returns the current source pattern Surface. The current source Pattern" \
+        " must be a surface Pattern."
+        return \
+            self.source.surface
+    #end source_surface
+
+    @source_surface.setter
+    def source_surface(self, surface) :
+        self.set_source_surface(surface)
+    #end source_surface
+
+    def set_source_surface(self, surface) :
+        "creates a Pattern from a Surface and sets it as the source in one step." \
+        " Use for method-chaining; otherwise it’s probably more convenient to" \
+        " assign to the source_surface property."
+        if not isinstance(surface, Surface) :
+            raise TypeError("surface must be a Surface")
+        #end if
+        cairo.cairo_set_source_surface(self._cairobj, surface._cairobj)
+        self._check()
+        return \
+            self
+    #end set_source_surface
 
     @property
     def antialias(self) :
