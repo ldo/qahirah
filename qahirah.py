@@ -899,6 +899,8 @@ cairo.cairo_font_face_destroy.argtypes = (ct.c_void_p,)
 cairo.cairo_font_face_status.argtypes = (ct.c_void_p,)
 cairo.cairo_font_face_get_type.argtypes = (ct.c_void_p,)
 cairo.cairo_font_face_set_user_data.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+cairo.cairo_font_face_get_user_data.restype = ct.c_void_p
+cairo.cairo_font_face_get_user_data.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_toy_font_face_create.argtypes = (ct.c_char_p, ct.c_int, ct.c_int)
 cairo.cairo_toy_font_face_create.restype = ct.c_void_p
 cairo.cairo_toy_font_face_get_family.argtypes = (ct.c_void_p,)
@@ -4815,16 +4817,18 @@ class FontFace :
             #end if
             cairo_face = cairo.cairo_ft_font_face_create_for_ft_face(face._ftobj, load_flags)
             result = FontFace(cairo_face)
-            check(cairo.cairo_font_face_set_user_data
-              (
-                cairo_face,
-                ct.byref(_ft_destroy_key),
-                ct.cast(face._ftobj, ct.c_void_p).value,
-                freetype2.ft.FT_Done_Face
-              ))
-            freetype2.check(freetype2.ft.FT_Reference_Face(face._ftobj))
-              # need another reference since Cairo has stolen previous one
-              # not expecting this to fail!
+            if cairo.cairo_font_face_get_user_data(cairo_face, ct.byref(_ft_destroy_key)) == None :
+                check(cairo.cairo_font_face_set_user_data
+                  (
+                    cairo_face,
+                    ct.byref(_ft_destroy_key),
+                    ct.cast(face._ftobj, ct.c_void_p).value,
+                    freetype2.ft.FT_Done_Face
+                  ))
+                freetype2.check(freetype2.ft.FT_Reference_Face(face._ftobj))
+                  # need another reference since Cairo has stolen previous one
+                  # not expecting this to fail!
+            #end if
             result.ft_face = face
             return \
                 result
