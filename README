@@ -65,6 +65,7 @@ However, Qahirah introduces some important differences from Pycairo
 * Colours
 * Rects
 * Paths
+* FreeType fonts
 
 These are further explained in the sections below.
 
@@ -233,6 +234,15 @@ directly generates move_to, line_to, curve_to and close_path calls
 from its elements.
 
 
+FreeType Fonts
+==============
+
+Qahirah gives access to Cairo’s support for FreeType fonts. It has
+a built-in minimal FreeType wrapper, but it can also take advantage
+of the more extensive freetype2 Python module, available from
+<https://github.com/ldo/python_freetype>.
+
+
 Other Functional Differences From Pycairo
 =========================================
 
@@ -240,20 +250,23 @@ Apart from the above differences, Qahirah is not exactly at functional
 parity with Pycairo. Qahirah implements the following major Cairo
 features that Pycairo does not:
 
-* Access to FreeType fonts
 * User fonts
 * Script surfaces
+* ScaledFont.text_to_glyphs
 
-while it does not implement the GUI-specific surface types that Pycairo
+while it does not handle the GUI-specific surface types that Pycairo
 does: Win32, XCB and XLib surfaces.
 
 
 Examples
 ========
 
-Examples of Qahirah in action are available in my
-[qahirah_examples](https://github.com/ldo/qahirah_examples)
-and [hersheypy](https://github.com/ldo/hersheypy) repositories.
+Examples of Qahirah in action are available in the following
+repositories:
+
+* [qahirah_examples](https://github.com/ldo/qahirah_examples)
+* [python_freetype_examples](https://github.com/ldo/python_freetype_examples)
+* [hersheypy](https://github.com/ldo/hersheypy)
 
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
-2015 March 16
+2015 March 21
