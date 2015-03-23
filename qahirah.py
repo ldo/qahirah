@@ -4652,6 +4652,87 @@ class Path :
               )
     #end transform
 
+    def reverse(self) :
+        "returns a Path with the same shape, but which goes through the points" \
+        " in the opposite order from this one."
+
+        def finish_partial(pt) :
+            nonlocal partial, current_point
+            if partial != None :
+                if pt != None :
+                    current_point = pt
+                elif start_point != None :
+                    current_point = start_point
+                else :
+                    current_point = partial[0]
+                #end if
+                if len(partial) == 2 :
+                    elt = Path.CurveTo(partial[1], partial[0], current_point)
+                else :
+                    elt = Path.LineTo(current_point)
+                #end if
+                result.append(elt)
+                partial = None
+            elif pt != None :
+                current_point = pt
+                result.append(Path.MoveTo(current_point))
+            #end if
+        #end finish_partial
+
+    #begin reverse
+        result = []
+        i = len(self.elements)
+        close_path = False
+        partial = None
+        current_point = None
+        start_point = None
+        while True :
+            if i == 0 :
+                elt = None
+            else :
+                i -= 1
+                elt = self.elements[i]
+            #end if
+            if elt == None or elt.type == CAIRO.PATH_MOVE_TO or elt.type == CAIRO.PATH_CLOSE_PATH :
+                finish_partial \
+                  (
+                    (lambda : None, lambda : elt.points[0])
+                        [elt != None and elt.type != CAIRO.PATH_CLOSE_PATH]()
+                  )
+                if close_path :
+                    result.append(Path.Close())
+                #end if
+                current_point = None
+                start_point = None
+                close_path = False
+            #end if
+            if elt == None :
+                break
+            if elt.type == CAIRO.PATH_MOVE_TO :
+                # finish_partial(elt.points[0]) # already done
+                current_point = elt.points[0]
+                if close_path and start_point == None :
+                    start_point = current_point
+                #end if
+            elif elt.type == CAIRO.PATH_LINE_TO :
+                finish_partial(elt.points[0])
+                partial = elt.points[:1]
+                if close_path and start_point == None :
+                    start_point = current_point
+                #end if
+            elif elt.type == CAIRO.PATH_CURVE_TO :
+                finish_partial(elt.points[2])
+                partial = elt.points[:2]
+            elif elt.type == CAIRO.PATH_CLOSE_PATH :
+                # finish_partial(None) # already done
+                close_path = True
+                start_point = None
+            #end if
+        #end while
+        return \
+            Path(result)
+    #end reverse
+
 #end Path
 
 class FontOptions :
