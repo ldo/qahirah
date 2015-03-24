@@ -1899,9 +1899,7 @@ class Context :
 
     @property
     def target(self) :
-        "a copy of the current target Surface. Will not return the same" \
-        " wrapper object each time, but Surface objects can be compared for equality," \
-        " which means they reference the same underlying Cairo surface_t object."
+        "the current target Surface."
         return \
             Surface(cairo.cairo_surface_reference(cairo.cairo_get_target(self._cairobj)))
     #end target
@@ -1947,9 +1945,7 @@ class Context :
 
     @property
     def source(self) :
-        "a copy of the current source Pattern. Will not return the same" \
-        " wrapper object each time, but Pattern objects can be compared for equality," \
-        " which means they reference the same underlying Cairo pattern_t object."
+        "the current source Pattern."
         return \
             Pattern(cairo.cairo_pattern_reference(cairo.cairo_get_source(self._cairobj)))
     #end source
