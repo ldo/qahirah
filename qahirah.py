@@ -1321,16 +1321,28 @@ class Matrix :
     #end identity
 
     def __mul__(m1, m2) :
-        "returns concatenation with another Matrix."
-        return Matrix \
-          (
-            xx = m1.xx * m2.xx + m1.xy * m2.yx,
-            yx = m1.yx * m2.xx + m1.yy * m2.yx,
-            xy = m1.xx * m2.xy + m1.xy * m2.yy,
-            yy = m1.yx * m2.xy + m1.yy * m2.yy,
-            x0 = m1.xx * m2.x0 + m1.xy * m2.y0 + m1.x0,
-            y0 = m1.yx * m2.x0 + m1.yy * m2.y0 + m1.y0,
-          )
+        "returns concatenation with another Matrix, or mapping of a Vector."
+        if isinstance(m2, Matrix) :
+            result = Matrix \
+              (
+                xx = m1.xx * m2.xx + m1.xy * m2.yx,
+                yx = m1.yx * m2.xx + m1.yy * m2.yx,
+                xy = m1.xx * m2.xy + m1.xy * m2.yy,
+                yy = m1.yx * m2.xy + m1.yy * m2.yy,
+                x0 = m1.xx * m2.x0 + m1.xy * m2.y0 + m1.x0,
+                y0 = m1.yx * m2.x0 + m1.yy * m2.y0 + m1.y0,
+              )
+        elif isinstance(m2, Vector) :
+            result = Vector \
+              (
+                x = m2.x * m1.xx + m2.y * m1.xy + m1.x0,
+                y = m2.x * m1.yx + m2.y * m1.yy + m1.y0
+              )
+        else :
+            result = NotImplemented
+        #end if
+        return \
+            result
     #end __mul__
 
     def __pow__(m, p) :
