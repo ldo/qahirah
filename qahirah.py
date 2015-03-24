@@ -4499,18 +4499,153 @@ class Region :
 
 class Path :
     "a high-level representation of a Cairo path_t. Instantiate with a sequence" \
-    " of Path.Element subclass instances."
+    " of Path.Segment objects, or use the from_cairo or from_elements class methods." \
+    " Elements are a representation of paths that correspond directly to Cairo" \
+    " path-construction calls, while Segments are a simpler form for doing various" \
+    " path manipulations. Conversions are provided in both directions."
 
     # Unfortunately I cannot provide a to_cairo method, because there is no
     # public Cairo call for allocating a cairo_path_data_t structure. So
     # the conversion from Cairo is one-way, and I have to implement all
     # the drawing from then on.
 
-    __slots__ = ("elements",) # to forestall typos
+    __slots__ = ("segments",) # to forestall typos
+
+    class Point :
+        "a control point on a Path.Segment. “pt” is the Vector coordinate," \
+        " and “off” is a boolean, True if the point is off-curve, False if" \
+        " on-curve. Two successive on-curve points define a straight line;" \
+        " one off-curve in-between defines a quadratic Bézier, while two" \
+        " successive off-curve points in-between define a cubic Bézier."
+
+        __slots__ = ("pt", "off")
+
+        def __init__(self, pt, off) :
+            self.pt = Vector.from_tuple(pt)
+            self.off = bool(off)
+        #end __init__
+
+        def transform(self, matrix) :
+            "returns the Point transformed through the Matrix."
+            return \
+                Path.Point(matrix.map(self.pt), self.off)
+        #end transform
+
+        def __repr__(self) :
+            return \
+                "Path.Point(%s, %s)" % (repr(self.pt), repr(self.off))
+        #end __repr__
+
+    #end Point
+
+    class Segment :
+        "represents a continuous segment of a Path, consisting of a sequence" \
+        " of Points, and an indication of whether the path is closed or not." \
+        " The segment must start and end with on-curve points."
+
+        __slots__ = ("points", "closed")
+
+        def __init__(self, points, closed) :
+            self.points = tuple(Path.Point(p.pt, p.off) for p in points)
+            self.closed = bool(closed)
+            assert len(self.points) == 0 or not (self.points[0].off or self.points[-1].off)
+        #end __init__
+
+        def __repr__(self) :
+            return \
+                "Path.Segment(%s, %s)" % (", ".join(repr(p) for p in self.points), self.closed)
+        #end __repr__
+
+        def transform(self, matrix) :
+            "returns the Segment transformed through the Matrix."
+            return \
+                Path.Segment((p.transform(matrix) for p in self.points), self.closed)
+        #end transform
+
+        def reverse(self) :
+            "returns a Segment with the same control points, but in reverse order."
+            return \
+                Path.Segment(reversed(self.points), self.closed)
+        #end reverse
+
+        def to_elements(self) :
+            "yields a sequence of Path.Element objects that will draw the path segment."
+            pts = []
+            prevpt = None
+            for p in self.points :
+                pts.append(p.pt)
+                if p.off :
+                    assert prevpt != None
+                else :
+                    if prevpt == None :
+                        yield Path.MoveTo(pts[0])
+                    #end if
+                    if len(pts) == 1 :
+                        if prevpt != None :
+                            yield Path.LineTo(pts[0])
+                        #end if
+                    elif len(pts) == 2 :
+                        # quadratic-to-cubic conversion taken from
+                        # <http://stackoverflow.com/questions/3162645/convert-a-quadratic-bezier-to-a-cubic>
+                        if prevpt != None :
+                            p0 = prevpt
+                        else :
+                            p0 = pts[0]
+                        #end if
+                        midp = pts[0]
+                        p3 = pts[1]
+                        p1 = p0 + 2 * (midp - p0) / 3
+                        p2 = p3 + 2 * (midp - p3) / 3
+                        yield Path.CurveTo(p1, p2, p3)
+                    elif len(pts) == 3 :
+                        yield Path.CurveTo(*pts)
+                    else :
+                        raise NotImplementedError \
+                          (
+                            "Cairo cannot handle higher-order Béziers than cubic"
+                          )
+                    #end if
+                    prevpt = pts[-1]
+                    pts = []
+                #end if
+            #end for
+            assert len(pts) == 0
+            if self.closed :
+                yield Path.Close()
+            #end if
+        #end to_elements
+
+        def draw(self, ctx, matrix = None) :
+            "draws the path segment into the Context, optionally transformed by" \
+            " the Matrix."
+            if not isinstance(ctx, Context) :
+                raise TypeError("ctx must be a Context")
+            #end if
+            for elt in self.to_elements() :
+                elt.draw(ctx, matrix)
+            #end for
+        #end draw
+
+    #end Segment
+
+    def __init__(self, segments) :
+        self.segments = []
+        for seg in segments :
+            if not isinstance(seg, Path.Segment) :
+                raise TypeError("path segment is not a Path.Segment")
+            #end if
+            self.segments.append(seg)
+        #end for
+    #end __init__
+
+    def __repr__(self) :
+        return \
+            "Path(%s)" % repr(tuple(self.segments))
+    #end __repr__
 
     class Element :
-        "base class for Path elements. Do not instantiate directly;" \
-        " instantiate subclasses intead."
+        "base class for path elements that map directly to Cairo path-construction" \
+        " calls. Do not instantiate directly; instantiate subclasses intead."
 
         __slots__ = ("type", "points", "meth")
 
@@ -4590,20 +4725,53 @@ class Path :
             CAIRO.PATH_CLOSE_PATH : {"nr" : 0, "type" : Close},
         }
 
-    def __init__(self, elements) :
-        self.elements = []
-        for element in elements :
-            if not isinstance(element, Path.Element) :
-                raise TypeError("path element is not a Path.Element")
+    @classmethod
+    def from_elements(celf, elts) :
+        "constructs a Path from a sequence of Path.Element objects."
+        segs = []
+        seg = None
+        elts = iter(elts)
+        while True :
+            elt = next(elts, None)
+            if elt == None or elt.type == CAIRO.PATH_MOVE_TO :
+                if seg != None :
+                    segs.append(Path.Segment(seg, False))
+                    seg = None
+                #end if
+                if elt == None :
+                    break
             #end if
-            self.elements.append(element)
-        #end for
-    #end __init__
-
-    def __repr__(self) :
+            if elt.type == CAIRO.PATH_CLOSE_PATH :
+                if seg != None :
+                    seg.append(seg[0])
+                    segs.append(Path.Segment(seg, True))
+                    seg = None
+                #end if
+            else :
+                segstarted = False
+                if seg == None :
+                    seg = [Path.Point(elt.points[0], False)]
+                    segstarted = True
+                #end if
+                if elt.type == CAIRO.PATH_LINE_TO :
+                    if not segstarted :
+                        seg.append(Path.Point(elt.points[0], False))
+                    #end if
+                elif elt.type == CAIRO.PATH_CURVE_TO :
+                    seg.extend \
+                      (
+                        [
+                            Path.Point(elt.points[0], True),
+                            Path.Point(elt.points[1], True),
+                            Path.Point(elt.points[2], False),
+                        ]
+                      )
+                #end if
+            #end if
+        #end while
         return \
-            "Path(%s)" % repr(self.elements)
-    #end __repr__
+            celf(segs)
+    #end from_elements
 
     @classmethod
     def from_cairo(celf, path) :
@@ -4630,16 +4798,25 @@ class Path :
             elements.append(celf.element_types[header.type]["type"](*points))
         #end for
         return \
-            Path(elements)
+            celf.from_elements(elements)
     #end from_cairo
+
+    def to_elements(self) :
+        "yields a sequence of Path.Element objects that will draw the path."
+        for seg in self.segments :
+            for elt in seg.to_elements() :
+                yield elt
+            #end for
+        #end for
+    #end to_elements
 
     def draw(self, ctx, matrix = None) :
         "draws the Path into a Context, optionally transformed by the given Matrix."
         if not isinstance(ctx, Context) :
             raise TypeError("ctx must be a Context")
         #end if
-        for element in self.elements :
-            element.draw(ctx, matrix)
+        for seg in self.segments :
+            seg.draw(ctx, matrix)
         #end for
     #end draw
 
@@ -4648,89 +4825,15 @@ class Path :
         return \
             Path \
               (
-                element.transform(matrix) for element in self.elements
+                seg.transform(matrix) for seg in self.segments
               )
     #end transform
 
     def reverse(self) :
         "returns a Path with the same shape, but which goes through the points" \
         " in the opposite order from this one."
-
-        def finish_partial(pt) :
-            nonlocal partial, current_point
-            if partial != None :
-                if pt != None :
-                    current_point = pt
-                elif start_point != None :
-                    current_point = start_point
-                else :
-                    current_point = partial[0]
-                #end if
-                if len(partial) == 2 :
-                    elt = Path.CurveTo(partial[1], partial[0], current_point)
-                else :
-                    elt = Path.LineTo(current_point)
-                #end if
-                result.append(elt)
-                partial = None
-            elif pt != None :
-                current_point = pt
-                result.append(Path.MoveTo(current_point))
-            #end if
-        #end finish_partial
-
-    #begin reverse
-        result = []
-        i = len(self.elements)
-        close_path = False
-        partial = None
-        current_point = None
-        start_point = None
-        while True :
-            if i == 0 :
-                elt = None
-            else :
-                i -= 1
-                elt = self.elements[i]
-            #end if
-            if elt == None or elt.type == CAIRO.PATH_MOVE_TO or elt.type == CAIRO.PATH_CLOSE_PATH :
-                finish_partial \
-                  (
-                    (lambda : None, lambda : elt.points[0])
-                        [elt != None and elt.type != CAIRO.PATH_CLOSE_PATH]()
-                  )
-                if close_path :
-                    result.append(Path.Close())
-                #end if
-                current_point = None
-                start_point = None
-                close_path = False
-            #end if
-            if elt == None :
-                break
-            if elt.type == CAIRO.PATH_MOVE_TO :
-                # finish_partial(elt.points[0]) # already done
-                current_point = elt.points[0]
-                if close_path and start_point == None :
-                    start_point = current_point
-                #end if
-            elif elt.type == CAIRO.PATH_LINE_TO :
-                finish_partial(elt.points[0])
-                partial = elt.points[:1]
-                if close_path and start_point == None :
-                    start_point = current_point
-                #end if
-            elif elt.type == CAIRO.PATH_CURVE_TO :
-                finish_partial(elt.points[2])
-                partial = elt.points[:2]
-            elif elt.type == CAIRO.PATH_CLOSE_PATH :
-                # finish_partial(None) # already done
-                close_path = True
-                start_point = None
-            #end if
-        #end while
         return \
-            Path(result)
+            Path(reversed(tuple(seg.reverse() for seg in self.segments)))
     #end reverse
 
 #end Path
