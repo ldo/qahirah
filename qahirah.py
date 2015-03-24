@@ -4531,6 +4531,17 @@ class Path :
                 Path.Point(matrix.map(self.pt), self.off)
         #end transform
 
+        def __eq__(p1, p2) :
+            return \
+                (
+                    isinstance(p2, Path.Point)
+                and
+                    p1.pt == p2.pt
+                and
+                    p1.off == p2.off
+                )
+        #end __eq__
+
         def __repr__(self) :
             return \
                 "Path.Point(%s, %s)" % (repr(self.pt), repr(self.off))
@@ -4553,7 +4564,7 @@ class Path :
 
         def __repr__(self) :
             return \
-                "Path.Segment(%s, %s)" % (", ".join(repr(p) for p in self.points), self.closed)
+                "Path.Segment([%s], %s)" % (", ".join(repr(p) for p in self.points), self.closed)
         #end __repr__
 
         def transform(self, matrix) :
@@ -4726,8 +4737,9 @@ class Path :
         }
 
     @classmethod
-    def from_elements(celf, elts) :
-        "constructs a Path from a sequence of Path.Element objects."
+    def from_elements(celf, elts, clean = True) :
+        "constructs a Path from a sequence of Path.Element objects. clean indicates" \
+        " whether to omit isolated single-point segments."
         segs = []
         seg = None
         elts = iter(elts)
@@ -4735,7 +4747,9 @@ class Path :
             elt = next(elts, None)
             if elt == None or elt.type == CAIRO.PATH_MOVE_TO :
                 if seg != None :
-                    segs.append(Path.Segment(seg, False))
+                    if not clean or len(seg) > 1 :
+                        segs.append(Path.Segment(seg, False))
+                    #end if
                     seg = None
                 #end if
                 if elt == None :
@@ -4743,8 +4757,12 @@ class Path :
             #end if
             if elt.type == CAIRO.PATH_CLOSE_PATH :
                 if seg != None :
-                    seg.append(seg[0])
-                    segs.append(Path.Segment(seg, True))
+                    if not clean or len(seg) > 1 :
+                        if not clean or seg[-1] != seg[0] :
+                            seg.append(seg[0])
+                        #end if
+                        segs.append(Path.Segment(seg, True))
+                    #end if
                     seg = None
                 #end if
             else :
