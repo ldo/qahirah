@@ -4507,7 +4507,9 @@ class Region :
 
 class Path :
     "a high-level representation of a Cairo path_t. Instantiate with a sequence" \
-    " of Path.Segment objects, or use the from_cairo or from_elements class methods." \
+    " of Path.Segment objects, or use the from_cairo, from_elements or from_ft_outline" \
+    " class methods.\n" \
+    "\n" \
     " Elements are a representation of paths that correspond directly to Cairo" \
     " path-construction calls, while Segments are a simpler form for doing various" \
     " path manipulations. Conversions are provided in both directions."
@@ -4826,6 +4828,63 @@ class Path :
         return \
             celf.from_elements(elements)
     #end from_cairo
+
+    @classmethod
+    def from_ft_outline(celf, outline, shift = 0, delta = 0) :
+        "converts a freetype2.Outline to a Path."
+
+        segs = []
+        seg = None
+
+        def flush_seg() :
+            nonlocal seg
+            if seg != None :
+                segs.append(Path.Segment(seg, True))
+                seg = None
+            #end if
+        #end flush_seg
+
+        def move_to(p, _) :
+            nonlocal seg
+            flush_seg()
+            seg = [Path.Point(p, False)]
+            return \
+                0
+        #end move_to
+
+        def line_to(p, _) :
+            seg.append(Path.Point(p, False))
+            return \
+                0
+        #end line_to
+
+        def conic_to(p1, p2, _) :
+            seg.extend([Path.Point(p1, True), Path.Point(p2, False)])
+            return \
+                0
+        #end conic_to
+
+        def cubic_to(p1, p2, p3, _) :
+            seg.extend([Path.Point(p1, True), Path.Point(p2, True), Path.Point(p3, False)])
+            return \
+                0
+        #end cubic_to
+
+    #begin from_ft_outline
+        outline.decompose \
+          (
+            move_to = move_to,
+            line_to = line_to,
+            conic_to = conic_to,
+            cubic_to = cubic_to,
+            arg = None,
+            shift = shift,
+            delta = delta,
+          )
+        flush_seg()
+        return \
+            Path(segs)
+    #end from_ft_outline
 
     def to_elements(self) :
         "yields a sequence of Path.Element objects that will draw the path."
