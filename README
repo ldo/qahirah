@@ -226,12 +226,13 @@ to retrieve a copy of the path data.
 
 Qahirah instead offers the Path class. While one of these can
 be created with Context.copy_path or Context.copy_path_flat, you can
-also construct them yourself from a sequence of Path.Element objects.
-Furthermore, Qahirah allows you to transform a Path through a Matrix,
-either at drawing time or to produce a new Path. Context.append_path
-no longer calls cairo_append_path; instead, the Path object
-directly generates move_to, line_to, curve_to and close_path calls
-from its elements.
+also construct them yourself from a sequence of Path.Segment objects
+(directly representing control point geometry) or Path.Element objects
+(mapping more directly to Cairo path-construction calls). Furthermore,
+Qahirah allows you to transform a Path through a Matrix, either at
+drawing time or to produce a new Path. Context.append_path no longer
+calls cairo_append_path; instead, the Path object directly generates
+move_to, line_to, curve_to and close_path calls from its elements.
 
 
 FreeType Fonts
@@ -241,6 +242,10 @@ Qahirah gives access to Cairo’s support for FreeType fonts. It has
 a built-in minimal FreeType wrapper, but it can also take advantage
 of the more extensive freetype2 Python module, available from
 <https://github.com/ldo/python_freetype>.
+
+For example, with this module installed, the Path.from_ft_outline
+method becomes available, for converting a freetype2.Outline to a
+Path.
 
 
 Other Functional Differences From Pycairo
@@ -269,4 +274,4 @@ repositories:
 * [hersheypy](https://github.com/ldo/hersheypy)
 
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
-2015 March 21
+2015 March 25
