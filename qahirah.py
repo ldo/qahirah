@@ -1250,6 +1250,12 @@ class Vector :
             Vector(math.cos(angle), math.sin(angle))
     #end unit
 
+    def dot(v1, v2) :
+        "returns the dot product of two Vectors."
+        return \
+            v1.x * v2.x + v1.y * v2.y
+    #end dot
+
     def rotate(self, angle) :
         "returns the Vector rotated by the specified angle."
         cos = math.cos(angle)
@@ -4588,6 +4594,20 @@ class Path :
             return \
                 Path.Segment(reversed(self.points), self.closed)
         #end reverse
+
+        def clockwise(self) :
+            "does the path segment go in a clockwise direction (assuming the default" \
+            " Cairo coordinate orientation)."
+            sum = 0
+            prevpt = self.points[-1].pt
+            for pt in self.points :
+                pt = pt.pt
+                sum += prevpt.rotate(math.pi / 2).dot(pt - prevpt)
+                prevpt = pt
+            #end for
+            return \
+                sum >= 0
+        #end clockwise
 
         def to_elements(self) :
             "yields a sequence of Path.Element objects that will draw the path segment."
