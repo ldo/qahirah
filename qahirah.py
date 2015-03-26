@@ -4626,18 +4626,12 @@ class Path :
                             yield Path.LineTo(pts[0])
                         #end if
                     elif len(pts) == 2 :
-                        # quadratic-to-cubic conversion taken from
-                        # <http://stackoverflow.com/questions/3162645/convert-a-quadratic-bezier-to-a-cubic>
                         if prevpt != None :
                             p0 = prevpt
                         else :
                             p0 = pts[0]
                         #end if
-                        midp = pts[0]
-                        p3 = pts[1]
-                        p1 = p0 + 2 * (midp - p0) / 3
-                        p2 = p3 + 2 * (midp - p3) / 3
-                        yield Path.CurveTo(p1, p2, p3)
+                        yield Path.CurveTo(*Path.cubify(*([p0] + pts))[1:])
                     elif len(pts) == 3 :
                         yield Path.CurveTo(*pts)
                     else :
@@ -4914,6 +4908,21 @@ class Path :
             #end for
         #end for
     #end to_elements
+
+    @staticmethod
+    def cubify(p1, p2, p3) :
+        "given three Vectors defining a quadratic Bézier, returns a tuple of four" \
+        " Vectors defining the same curve as a cubic Bézier."
+        # quadratic-to-cubic conversion taken from
+        # <http://stackoverflow.com/questions/3162645/convert-a-quadratic-bezier-to-a-cubic>
+        return \
+            (
+                p1,
+                p1 + 2 * (p2 - p1) / 3,
+                p3 + 2 * (p2 - p3) / 3,
+                p3
+            )
+    #end cubify
 
     def draw(self, ctx, matrix = None) :
         "draws the Path into a Context, optionally transformed by the given Matrix."
