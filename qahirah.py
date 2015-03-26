@@ -4609,6 +4609,30 @@ class Path :
                 sum >= 0
         #end clockwise
 
+        def pieces(self) :
+            "iterates over the pieces of the path, namely the sequence of Vector coordinates" \
+            " of the points between two successive on-curve points."
+            seg_points = iter(self.points)
+            p0 = next(seg_points)
+            assert not p0.off
+            p0 = p0.pt
+            while True :
+                pt = next(seg_points, None)
+                if pt == None :
+                    break
+                pts = [p0]
+                while True :
+                    # piece ends at next on-curve point
+                    pts.append(pt.pt)
+                    if not pt.off :
+                        break
+                    pt = next(seg_points)
+                #end while
+                yield tuple(pts)
+                p0 = pts[-1]
+            #end while
+        #end pieces
+
         def to_elements(self) :
             "yields a sequence of Path.Element objects that will draw the path segment."
             pts = []
