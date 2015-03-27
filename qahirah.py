@@ -1256,6 +1256,12 @@ class Vector :
             v1.x * v2.x + v1.y * v2.y
     #end dot
 
+    def cross(v1, v2) :
+        "returns the scalar-cross product of two Vectors."
+        return \
+            v1.x * v2.y - v1.y * v2.x
+    #enc cross
+
     def rotate(self, angle) :
         "returns the Vector rotated by the specified angle."
         cos = math.cos(angle)
@@ -4602,7 +4608,7 @@ class Path :
             prevpt = self.points[-1].pt
             for pt in self.points :
                 pt = pt.pt
-                sum += prevpt.rotate(math.pi / 2).dot(pt - prevpt)
+                sum += prevpt.cross(pt - prevpt)
                 prevpt = pt
             #end for
             return \
