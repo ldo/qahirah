@@ -1257,7 +1257,7 @@ class Vector :
     #end dot
 
     def cross(v1, v2) :
-        "returns the scalar-cross product of two Vectors."
+        "returns the (scalar) cross product of two Vectors."
         return \
             v1.x * v2.y - v1.y * v2.x
     #enc cross
@@ -1281,6 +1281,12 @@ class Vector :
         return \
             math.atan2(self.y, self.x)
     #end angle
+
+    def norm(self) :
+        "returns the unit Vector in the same direction as this one."
+        return \
+            Vector.unit(self.angle())
+    #end norm
 
     @staticmethod
     def from_polar(length, angle) :
