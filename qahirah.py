@@ -2041,7 +2041,8 @@ class Context :
         if not isinstance(surface, Surface) :
             raise TypeError("surface must be a Surface")
         #end if
-        cairo.cairo_set_source_surface(self._cairobj, surface._cairobj, origin.x, origin.y)
+        x, y = Vector.from_tuple(origin)
+        cairo.cairo_set_source_surface(self._cairobj, surface._cairobj, x, y)
         self._check()
         return \
             self
