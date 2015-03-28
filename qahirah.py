@@ -1905,6 +1905,21 @@ class Context :
             Context(cairo.cairo_create(surface._cairobj))
     #end create
 
+    @staticmethod
+    def create_for_dummy() :
+        "creates a new Context that draws into a 0×0-pixel ImageSurface." \
+        " This is useful for doing path/text calculations without drawing."
+        return \
+            Context.create \
+              (
+                ImageSurface.create
+                  (
+                    format = CAIRO.FORMAT_ARGB32,
+                    dimensions = (0, 0)
+                  )
+              )
+    #end create_for_dummy
+
     def __del__(self) :
         if self._cairobj != None :
             cairo.cairo_destroy(self._cairobj)
