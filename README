@@ -272,6 +272,7 @@ repositories:
 * [qahirah_examples](https://github.com/ldo/qahirah_examples)
 * [python_freetype_examples](https://github.com/ldo/python_freetype_examples)
 * [hersheypy](https://github.com/ldo/hersheypy)
+* [curve](https://github.com/ldo/curve)
 
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
-2015 March 25
+2015 March 31
