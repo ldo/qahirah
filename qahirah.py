@@ -14,6 +14,8 @@ that may be read and written.
 # Licensed under the GNU Lesser General Public License v2.1 or later.
 #-
 
+__all__ = ("death_to_wildcard_imports",)
+
 import math
 from numbers import \
     Number
