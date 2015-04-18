@@ -1871,6 +1871,8 @@ def glyphs_to_cairo(glyphs) :
         buf, nr_glyphs
 #end glyphs_to_cairo
 
+default_tolerance = 0.1 # for flattening paths
+
 #+
 # Notes on object design:
 #
@@ -4721,6 +4723,31 @@ class Path :
             #end for
         #end draw
 
+        def flatten(self, tolerance = default_tolerance) :
+            "returns a flattened version of this Segment, with all curves expanded" \
+            " to straight-line segments according to the specified tolerance."
+            result_path = \
+                (Context.create_for_dummy()
+                    .set_tolerance(tolerance)
+                    .append_path(Path([self]))
+                    .copy_path_flat()
+                )
+            assert len(result_path.segments) == 1
+            return \
+                result_path.segments[0]
+        #end flatten
+
+        @property
+        def extents(self, tolerance = default_tolerance) :
+            "returns a Rect representing the extents of this path segment."
+            return \
+                (Context.create_for_dummy()
+                    .set_tolerance(tolerance)
+                    .append_path(Path([self]))
+                    .path_extents
+                )
+        #end extents
+
     #end Segment
 
     def __init__(self, segments) :
@@ -5009,6 +5036,28 @@ class Path :
         return \
             Path(reversed(tuple(seg.reverse() for seg in self.segments)))
     #end reverse
+
+    def flatten(self, tolerance = default_tolerance) :
+        "returns a flattened version of this Path, with all curves expanded" \
+        " to straight-line segments according to the specified tolerance."
+        return \
+            (Context.create_for_dummy()
+                .set_tolerance(tolerance)
+                .append_path(self)
+                .copy_path_flat()
+            )
+    #end flatten
+
+    @property
+    def extents(self, tolerance = default_tolerance) :
+        "returns a Rect representing the extents of this Path."
+        return \
+            (Context.create_for_dummy()
+                .set_tolerance(tolerance)
+                .append_path(self)
+                .path_extents
+            )
+    #end extents
 
 #end Path
 
