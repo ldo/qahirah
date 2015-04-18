@@ -1689,20 +1689,41 @@ class Rect :
             )
     #end __eq__
 
+    @property
+    def is_empty(self) :
+        "is this Rect empty."
+        return \
+            self.width <= 0 or self.height <= 0
+    #end is_empty
+
     def union(r1, r2) :
         "smallest rectangle enclosing both rectangles."
-        vmin = Vector(min(r1.left, r2.left), min(r1.top, r2.top))
-        vmax = Vector(max(r1.left + r1.width, r2.left + r2.width), max(r1.top + r1.height, r2.top + r2.height))
+        if r1.is_empty :
+            result = r2
+        elif r2.is_empty :
+            result = r1
+        else :
+            vmin = Vector(min(r1.left, r2.left), min(r1.top, r2.top))
+            vmax = Vector(max(r1.left + r1.width, r2.left + r2.width), max(r1.top + r1.height, r2.top + r2.height))
+            result = Rect.from_corners(vmin, vmax)
+        #end if
         return \
-            Rect.from_corners(vmin, vmax)
+            result
     #end union
 
     def intersection(r1, r2) :
         "largest rectangle contained by both rectangles."
-        vmin = Vector(max(r1.left, r2.left), max(r1.top, r2.top))
-        vmax = Vector(min(r1.left + r1.width, r2.left + r2.width), min(r1.top + r1.height, r2.top + r2.height))
+        if r1.is_empty :
+            result = r1
+        elif r2.is_empty :
+            result = r2
+        else :
+            vmin = Vector(max(r1.left, r2.left), max(r1.top, r2.top))
+            vmax = Vector(min(r1.left + r1.width, r2.left + r2.width), min(r1.top + r1.height, r2.top + r2.height))
+            result = Rect.from_corners(vmin, vmax)
+        #end if
         return \
-            Rect.from_corners(vmin, vmax)
+            result
     #end intersection
 
     def __and__(r1, r2) :
