@@ -4735,7 +4735,6 @@ class Path :
                 result_path.segments[0]
         #end flatten
 
-        @property
         def extents(self, tolerance = default_tolerance) :
             "returns a Rect representing the extents of this path segment."
             return \
@@ -5046,7 +5045,6 @@ class Path :
             )
     #end flatten
 
-    @property
     def extents(self, tolerance = default_tolerance) :
         "returns a Rect representing the extents of this Path."
         return \
