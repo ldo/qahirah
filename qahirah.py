@@ -5970,37 +5970,3 @@ TextExtents = def_struct_class \
   )
 
 del def_struct_class # my work is done
-
-#+
-# Higher-level useful stuff
-#-
-
-def make_draw(*draw_settings) :
-    "draw_settings must be a tuple of 2-tuples; in each 2-tuple, the first element is" \
-    " a Context method name, and the second element is a tuple of arguments to that" \
-    " method. This function returns a procedure that makes the specified sequence of" \
-    " calls on a given Cairo context."
-
-    def apply_settings(g) :
-        for method, args in draw_settings :
-            getattr(g, method)(*args)
-        #end for
-    #end apply_settings
-
-#begin make_draw
-    if (
-            len(draw_settings) == 1
-        and
-            type(draw_settings[0]) == tuple
-        and
-                (
-                    len(draw_settings[0]) != 2
-                or
-                    len(draw_settings[0]) == 2 and type(draw_settings[0][0]) != str
-                )
-    ) :
-        draw_settings = draw_settings[0]
-    #end if
-    return \
-        apply_settings
-#end make_draw
