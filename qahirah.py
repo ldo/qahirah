@@ -5939,7 +5939,7 @@ class UserFontFace(FontFace) :
 
     def copy(self) :
         "returns a new UserFontFace with the same callbacks as this one, and a copy" \
-        "of the user_data. The purpose is to that Cairo’s scaled fonts will not" \
+        "of the user_data. The purpose is so that Cairo’s scaled fonts will not" \
         " recognize the copy as the same as the original font."
         result = UserFontFace.create \
           (
