@@ -728,6 +728,14 @@ cairo.cairo_surface_get_device.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_get_font_options.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_surface_get_content.restype = ct.c_int
 cairo.cairo_surface_get_content.argtypes = (ct.c_void_p,)
+cairo.cairo_surface_mark_dirty.argtypes = (ct.c_void_p,)
+cairo.cairo_surface_mark_dirty_rectangle.argtypes = (ct.c_void_p, ct.c_int, ct.c_int, ct.c_int, ct.c_int)
+cairo.cairo_surface_set_device_offset.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
+cairo.cairo_surface_get_device_offset.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p)
+cairo.cairo_surface_set_device_scale.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
+cairo.cairo_surface_get_device_scale.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p)
+cairo.cairo_surface_set_fallback_resolution.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
+cairo.cairo_surface_get_fallback_resolution.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p)
 cairo.cairo_surface_write_to_png.argtypes = (ct.c_void_p, ct.c_char_p)
 cairo.cairo_surface_write_to_png_stream.argtypes = (ct.c_void_p, CAIRO.write_func_t, ct.c_void_p)
 cairo.cairo_surface_copy_page.argtypes = (ct.c_void_p,)
@@ -3071,7 +3079,95 @@ class Surface :
             cairo.cairo_surface_get_content(self._cairobj)
     #end content
 
-    # TODO: mark_dirty, device_offset, fallback_resolution
+    def mark_dirty(self) :
+        "tells Cairo that you have modified the Surface in some way outside Cairo."
+        cairo.cairo_surface_mark_dirty(self._cairobj)
+        self._check()
+    #end mark_dirty
+
+    def mark_dirty_rectangle(self, rect) :
+        "tells Cairo that you have modified the specified Rect portion of the Surface" \
+        " in some way outside Cairo."
+        assert rect.isint()
+        cairo.cairo_surface_mark_dirty_rectangle(self._cairobj, rect.left, rect.top, rect.width, rect.height)
+        self._check()
+    #end mark_dirty_rectangle
+
+    @property
+    def device_offset(self) :
+        "the current device offset as a Vector."
+        x = ct.c_double()
+        y = ct.c_double()
+        cairo.cairo_surface_get_device_offset(self._cairobj, ct.byref(x), ct.byref(y))
+        return \
+            Vector(x.value, y.value)
+    #end device_offset
+
+    @device_offset.setter
+    def device_offset(self, offset) :
+        self.set_device_offset(offset)
+    #end device_offset
+
+    def set_device_offset(self, offset) :
+        "sets a new device offset Vector. Use for method chaining; otherwise, it’s" \
+        " probably more convenient to assign to the device_offset property."
+        offset = Vector.from_tuple(offset)
+        cairo.cairo_surface_set_device_offset(self._cairobj, offset.x, offset.y)
+        self._check()
+        return \
+            self
+    #end device_offset
+
+    @property
+    def device_scale(self) :
+        "the current device scale as a Vector."
+        x = ct.c_double()
+        y = ct.c_double()
+        cairo.cairo_surface_get_device_scale(self._cairobj, ct.byref(x), ct.byref(y))
+        return \
+            Vector(x.value, y.value)
+    #end device_scale
+
+    @device_scale.setter
+    def device_scale(self, scale) :
+        self.set_device_scale(scale)
+    #end device_scale
+
+    def set_device_scale(self, scale) :
+        "sets a new device scale Vector. Use for method chaining; otherwise, it’s" \
+        " probably more convenient to assign to the device_scale property."
+        scale = Vector.from_tuple(scale)
+        cairo.cairo_surface_set_device_scale(self._cairobj, scale.x, scale.y)
+        self._check()
+        return \
+            self
+    #end device_scale
+
+    @property
+    def fallback_resolution(self) :
+        "the current device fallback_resolution as a Vector."
+        x = ct.c_double()
+        y = ct.c_double()
+        cairo.cairo_surface_get_fallback_resolution(self._cairobj, ct.byref(x), ct.byref(y))
+        return \
+            Vector(x.value, y.value)
+    #end fallback_resolution
+
+    @fallback_resolution.setter
+    def fallback_resolution(self, fallback_resolution) :
+        self.set_fallback_resolution(fallback_resolution)
+    #end fallback_resolution
+
+    def set_fallback_resolution(self, fallback_resolution) :
+        "sets a new device fallback_resolution Vector. Use for method chaining;" \
+        " otherwise, it’s  probably more convenient to assign to the" \
+        " fallback_resolution property."
+        fallback_resolution = Vector.from_tuple(fallback_resolution)
+        cairo.cairo_surface_set_fallback_resolution(self._cairobj, fallback_resolution.x, fallback_resolution.y)
+        self._check()
+        return \
+            self
+    #end fallback_resolution
 
     @property
     def user_data(self) :
