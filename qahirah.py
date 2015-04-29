@@ -1256,6 +1256,22 @@ class Vector :
             result
     #end __truediv__
 
+    def __floordiv__(v, f) :
+        "inverse-scale an integer Vector uniformly by an integer or non-uniformly" \
+        " by another integer Vector."
+        v.assert_isint()
+        if isinstance(f, Vector) :
+            f.assert_isint()
+            result = v.__class__(v.x // f.x, v.y // f.y)
+        elif isinstance(f, int) :
+            result = v.__class__(v.x // f, v.y // f)
+        else :
+            result = NotImplemented
+        #end if
+        return \
+            result
+    #end __floordiv__
+
     def __mod__(v, f) :
         "remainder on division of one Vector by another."
         if isinstance(f, Vector) :
