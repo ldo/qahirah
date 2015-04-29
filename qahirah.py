@@ -1147,12 +1147,15 @@ class Vector :
         self.y = y
     #end __init__
 
-    @staticmethod
-    def from_tuple(v) :
+    @classmethod
+    def from_tuple(celf, v) :
         "converts a tuple of 2 numbers to a Vector. Can be used to ensure that" \
         " v is a Vector."
+        if not isinstance(v, Vector) :
+            v = celf(*v)
+        #end if
         return \
-            Vector(*v)
+            v
     #end from_tuple
 
     def isint(self) :
@@ -1173,11 +1176,11 @@ class Vector :
     def __repr__(self) :
         return \
             (
-                "Vector(%%%(fmt)s, %%%(fmt)s)"
+                "%%s(%%%(fmt)s, %%%(fmt)s)"
             %
                 {"fmt" : ("g", "d")[self.isint()]}
             %
-                (self.x, self.y)
+                (self.__class__.__name__, self.x, self.y)
             )
     #end __repr__
 
@@ -1210,7 +1213,7 @@ class Vector :
 
     def __neg__(self) :
         "reflect across origin."
-        return Vector \
+        return self.__class__ \
           (
             x = - self.x,
             y = - self.y
@@ -1222,16 +1225,16 @@ class Vector :
         return \
             (
                 lambda : NotImplemented,
-                lambda : Vector(v1.x - v2.x, v1.y - v2.y)
+                lambda : v1.__class__(v1.x - v2.x, v1.y - v2.y)
             )[isinstance(v2, Vector)]()
     #end __sub__
 
     def __mul__(v, f) :
         "scale a Vector uniformly by a number or non-uniformly by another Vector."
         if isinstance(f, Vector) :
-            result = Vector(v.x * f.x, v.y * f.y)
+            result = v.__class__(v.x * f.x, v.y * f.y)
         elif isinstance(f, Number) :
-            result = Vector(v.x * f, v.y * f)
+            result = v.__class__(v.x * f, v.y * f)
         else :
             result = NotImplemented
         #end if
@@ -1243,9 +1246,9 @@ class Vector :
     def __truediv__(v, f) :
         "inverse-scale a Vector uniformly by a number or non-uniformly by another Vector."
         if isinstance(f, Vector) :
-            result = Vector(v.x / f.x, v.y / f.y)
+            result = v.__class__(v.x / f.x, v.y / f.y)
         elif isinstance(f, Number) :
-            result = Vector(v.x / f, v.y / f)
+            result = v.__class__(v.x / f, v.y / f)
         else :
             result = NotImplemented
         #end if
@@ -1256,9 +1259,9 @@ class Vector :
     def __mod__(v, f) :
         "remainder on division of one Vector by another."
         if isinstance(f, Vector) :
-            result = Vector(v.x % f.x, v.y % f.y)
+            result = v.__class__(v.x % f.x, v.y % f.y)
         elif isinstance(f, Number) :
-            result = Vector(v.x % f, v.y % f)
+            result = v.__class__(v.x % f, v.y % f)
         else :
             result = NotImplemented
         #end if
@@ -1269,14 +1272,14 @@ class Vector :
     def __round__(self) :
         "returns the Vector with all coordinates rounded to integers."
         return \
-            Vector(round(self.x), round(self.y))
+            self.__class__(round(self.x), round(self.y))
     #end __round__
 
-    @staticmethod
-    def unit(angle) :
+    @classmethod
+    def unit(celf, angle) :
         "returns the unit vector with the specified direction."
         return \
-            Vector(math.cos(angle), math.sin(angle))
+            celf(math.cos(angle), math.sin(angle))
     #end unit
 
     def dot(v1, v2) :
@@ -1296,7 +1299,7 @@ class Vector :
         cos = math.cos(angle)
         sin = math.sin(angle)
         return \
-            Vector(self.x * cos - self.y * sin, self.x * sin + self.y * cos)
+            self.__class__(self.x * cos - self.y * sin, self.x * sin + self.y * cos)
     #end rotate
 
     def __abs__(self) :
@@ -1314,14 +1317,14 @@ class Vector :
     def norm(self) :
         "returns the unit Vector in the same direction as this one."
         return \
-            Vector.unit(self.angle())
+            self.__class__.unit(self.angle())
     #end norm
 
-    @staticmethod
-    def from_polar(length, angle) :
+    @classmethod
+    def from_polar(celf, length, angle) :
         "constructs a Vector from a length and a direction."
         return \
-            Vector(length * math.cos(angle), length * math.sin(angle))
+            celf(length * math.cos(angle), length * math.sin(angle))
     #end from_polar
 
 #end Vector
@@ -1350,10 +1353,10 @@ class Matrix :
         # self.w = 1
     #end __init__
 
-    @staticmethod
-    def from_cairo(m) :
+    @classmethod
+    def from_cairo(celf, m) :
         return \
-            Matrix(m.xx, m.yx, m.xy, m.yy, m.x0, m.y0)
+            celf(m.xx, m.yx, m.xy, m.yy, m.x0, m.y0)
     #end from_cairo
 
     def to_cairo(m) :
@@ -1361,16 +1364,16 @@ class Matrix :
             CAIRO.matrix_t(m.xx, m.yx, m.xy, m.yy, m.x0, m.y0)
     #end to_cairo
 
-    @staticmethod
-    def identity() :
+    @classmethod
+    def identity(celf) :
         "returns an identity matrix."
-        return Matrix(1, 0, 0, 1, 0, 0)
+        return celf(1, 0, 0, 1, 0, 0)
     #end identity
 
     def __mul__(m1, m2) :
         "returns concatenation with another Matrix, or mapping of a Vector."
         if isinstance(m2, Matrix) :
-            result = Matrix \
+            result = m1.__class__ \
               (
                 xx = m1.xx * m2.xx + m1.xy * m2.yx,
                 yx = m1.yx * m2.xx + m1.yy * m2.yx,
@@ -1380,7 +1383,7 @@ class Matrix :
                 y0 = m1.yx * m2.x0 + m1.yy * m2.y0 + m1.y0,
               )
         elif isinstance(m2, Vector) :
-            result = Vector \
+            result = m2.__class__ \
               (
                 x = m2.x * m1.xx + m2.y * m1.xy + m1.x0,
                 y = m2.x * m1.yx + m2.y * m1.yy + m1.y0
@@ -1400,7 +1403,7 @@ class Matrix :
                 m = m.inv()
                 p = -p
             #end if
-            result = Matrix.identity()
+            result = m.__class__.identity()
             # O(N) exponentiation algorithm should be good enough for small
             # powers, not expecting large ones
             for i in range(p) :
@@ -1413,59 +1416,59 @@ class Matrix :
             result
     #end __pow__
 
-    @staticmethod
-    def translate(delta) :
+    @classmethod
+    def translate(celf, delta) :
         "returns a Matrix that translates by the specified delta Vector."
         tx, ty = Vector.from_tuple(delta)
-        return Matrix(1, 0, 0, 1, tx, ty)
+        return celf(1, 0, 0, 1, tx, ty)
     #end translate
 
-    @staticmethod
-    def scale(factor, centre = None) :
+    @classmethod
+    def scale(celf, factor, centre = None) :
         "returns a Matrix that scales by the specified scalar or Vector factors" \
         " about Vector centre, or the origin if not specified."
         if isinstance(factor, Number) :
-            result = Matrix(factor, 0, 0, factor, 0, 0)
+            result = celf(factor, 0, 0, factor, 0, 0)
         elif isinstance(factor, Vector) :
-            result = Matrix(factor.x, 0, 0, factor.y, 0, 0)
+            result = celf(factor.x, 0, 0, factor.y, 0, 0)
         elif isinstance(factor, tuple) :
             sx, sy = factor
-            result = Matrix(sx, 0, 0, sy, 0, 0)
+            result = celf(sx, 0, 0, sy, 0, 0)
         else :
             raise TypeError("factor must be a number or a Vector")
         #end if
         if centre != None :
             centre = Vector.from_tuple(centre)
-            result = Matrix.translate(centre) * result * Matrix.translate(- centre)
+            result = celf.translate(centre) * result * celf.translate(- centre)
         #end if
         return \
             result
     #end scale
 
-    @staticmethod
-    def rotate(angle, centre = None) :
+    @classmethod
+    def rotate(celf, angle, centre = None) :
         "returns a Matrix that rotates about the origin by the specified" \
         " angle in radians about Vector centre, or the origin if not specified."
         cos = math.cos(angle)
         sin = math.sin(angle)
-        result = Matrix(cos, sin, -sin, cos, 0, 0)
+        result = celf(cos, sin, -sin, cos, 0, 0)
         if centre != None :
             centre = Vector.from_tuple(centre)
-            result = Matrix.translate(centre) * result * Matrix.translate(- centre)
+            result = celf.translate(centre) * result * celf.translate(- centre)
         #end if
         return \
             result
     #end rotate
 
-    @staticmethod
-    def skew(vec, centre = None) :
+    @classmethod
+    def skew(celf, vec, centre = None) :
         "returns a Matrix that skews by the specified vec.x and vec.y factors" \
         " about Vector centre, or the origin if not specified."
         sx, sy = Vector.from_tuple(vec)
-        result = Matrix(1, sy, sx, 1, 0, 0)
+        result = celf(1, sy, sx, 1, 0, 0)
         if centre != None :
             centre = Vector.from_tuple(centre)
-            result = Matrix.translate(centre) * result * Matrix.translate(- centre)
+            result = celf.translate(centre) * result * celf.translate(- centre)
         #end if
         return \
             result
@@ -1479,7 +1482,7 @@ class Matrix :
 
     def adj(self) :
         "matrix adjoint."
-        return Matrix \
+        return self.__class__ \
           (
             xx = self.yy,
             yx = - self.yx,
@@ -1495,7 +1498,7 @@ class Matrix :
         # computed using minors <http://mathworld.wolfram.com/MatrixInverse.html>
         adj = self.adj()
         det = self.det()
-        return Matrix \
+        return self.__class__ \
           (
             xx = adj.xx / det,
             yx = adj.yx / det,
@@ -1508,21 +1511,21 @@ class Matrix :
 
     def map(self, pt) :
         "maps a Vector through the Matrix."
-        x, y = Vector.from_tuple(pt)
-        return Vector \
+        pt = Vector.from_tuple(pt)
+        return pt.__class__ \
           (
-            x = x * self.xx + y * self.xy + self.x0,
-            y = x * self.yx + y * self.yy + self.y0
+            x = pt.x * self.xx + pt.y * self.xy + self.x0,
+            y = pt.x * self.yx + pt.y * self.yy + self.y0
           )
     #end map
 
     def mapdelta(self, pt) :
         "maps a Vector through the Matrix, ignoring the translation part."
-        x, y = Vector.from_tuple(pt)
-        return Vector \
+        pt = Vector.from_tuple(pt)
+        return pt.__class__ \
           (
-            x = x * self.xx + y * self.xy,
-            y = x * self.yx + y * self.yy
+            x = pt.x * self.xx + pt.y * self.xy,
+            y = pt.x * self.yx + pt.y * self.yy
           )
     #end mapdelta
 
@@ -1546,9 +1549,10 @@ class Matrix :
     def __repr__(self) :
         return \
             (
-                "Matrix(%g, %g, %g, %g, %g, %g)"
+                "%s(%g, %g, %g, %g, %g, %g)"
             %
                 (
+                    self.__class__.__name__,
                     self.xx, self.yx,
                     self.xy, self.yy,
                     self.x0, self.y0,
@@ -1589,8 +1593,8 @@ class Rect :
         self.height = height
     #end __init__
 
-    @staticmethod
-    def from_corners(pt1, pt2) :
+    @classmethod
+    def from_corners(celf, pt1, pt2) :
         "constructs a Rect from two opposite corner Vectors."
         pt1 = Vector.from_tuple(pt1)
         pt2 = Vector.from_tuple(pt2)
@@ -1599,22 +1603,22 @@ class Rect :
         min_y = min(pt1.y, pt2.y)
         max_y = max(pt1.y, pt2.y)
         return \
-            Rect(min_x, min_y, max_x - min_x, max_y - min_y)
+            celf(min_x, min_y, max_x - min_x, max_y - min_y)
     #end from_corners
 
-    @staticmethod
-    def from_dimensions(pt) :
+    @classmethod
+    def from_dimensions(celf, pt) :
         "a Rect with its top left at (0, 0) and the given width and height."
         pt = Vector.from_tuple(pt)
         return \
-            Rect(0, 0, pt.x, pt.y)
+            celf(0, 0, pt.x, pt.y)
     #end from_dimensions
 
-    @staticmethod
-    def from_cairo(r) :
+    @classmethod
+    def from_cairo(celf, r) :
         "converts a CAIRO.rectangle_t to a Rect."
         return \
-            Rect(r.x, r.y, r.width, r.height)
+            celf(r.x, r.y, r.width, r.height)
     #end from_cairo
 
     def to_cairo(self) :
@@ -1625,6 +1629,7 @@ class Rect :
 
     def to_cairo_int(self) :
         "converts the Rect to a CAIRO.rectangle_int_t."
+        self.assert_isint()
         return \
             CAIRO.rectangle_int_t(self.left, self.top, self.width, self.height)
     #end to_cairo_int
@@ -1674,13 +1679,13 @@ class Rect :
     def __round__(self) :
         "returns the Rect with all coordinates rounded to integers."
         return \
-            Rect(round(self.left), round(self.top), round(self.width), round(self.height))
+            self.__class__(round(self.left), round(self.top), round(self.width), round(self.height))
     #end __round__
 
     def __add__(self, v) :
         "add a Rect to a Vector to return the Rect offset by the Vector."
         if isinstance(v, Vector) :
-            result = Rect(self.left + v.x, self.top + v.y, self.width, self.height)
+            result = self.__class__(self.left + v.x, self.top + v.y, self.width, self.height)
         else :
             result = NotImplemented
         #end if
@@ -1692,7 +1697,7 @@ class Rect :
         "subtract a Vector from a Rect to return the Rect offset in the" \
         " opposite direction to the Vector."
         if isinstance(v, Vector) :
-            result = Rect(self.left - v.x, self.top - v.y, self.width, self.height)
+            result = self.__class__(self.left - v.x, self.top - v.y, self.width, self.height)
         else :
             result = NotImplemented
         #end if
@@ -1732,7 +1737,7 @@ class Rect :
         else :
             vmin = Vector(min(r1.left, r2.left), min(r1.top, r2.top))
             vmax = Vector(max(r1.left + r1.width, r2.left + r2.width), max(r1.top + r1.height, r2.top + r2.height))
-            result = Rect.from_corners(vmin, vmax)
+            result = r1.__class__.from_corners(vmin, vmax)
         #end if
         return \
             result
@@ -1747,7 +1752,7 @@ class Rect :
         else :
             vmin = Vector(max(r1.left, r2.left), max(r1.top, r2.top))
             vmax = Vector(min(r1.left + r1.width, r2.left + r2.width), min(r1.top + r1.height, r2.top + r2.height))
-            result = Rect.from_corners(vmin, vmax)
+            result = r1.__class__.from_corners(vmin, vmax)
         #end if
         return \
             result
@@ -1791,11 +1796,11 @@ class Rect :
     def __repr__(self) :
         return \
             (
-                "Rect(%%%(fmt)s, %%%(fmt)s, %%%(fmt)s, %%%(fmt)s)"
+                "%%s(%%%(fmt)s, %%%(fmt)s, %%%(fmt)s, %%%(fmt)s)"
             %
                 {"fmt" : ("g", "d") [self.isint()]}
             %
-                (self.left, self.top, self.width, self.height)
+                (self.__class__.__name__, self.left, self.top, self.width, self.height)
             )
     #end __repr__
 
@@ -1804,7 +1809,7 @@ class Rect :
         " (use negative values to outset)."
         dx, dy = Vector.from_tuple(v)
         return \
-            Rect(self.left + dx, self.top + dy, self.width - 2 * dx, self.height - 2 * dy)
+            self.__class__(self.left + dx, self.top + dy, self.width - 2 * dx, self.height - 2 * dy)
     #end inset
 
     def position(self, relpt, halign = None, valign = None) :
@@ -1823,7 +1828,7 @@ class Rect :
         if valign != None :
             top = relpt.y - interp(valign, 0, self.height)
         #end if
-        return Rect(left = left, top = top, width = self.width, height = self.height)
+        return self.__class__(left = left, top = top, width = self.width, height = self.height)
     #end position
 
     def align(self, within, halign = None, valign = None) :
@@ -1842,7 +1847,7 @@ class Rect :
         if valign != None :
             top = interp(valign, within.top, within.top + within.height - self.height)
         #end if
-        return Rect(left = left, top = top, width = self.width, height = self.height)
+        return self.__class__(left = left, top = top, width = self.width, height = self.height)
     #end align
 
     def transform_to(src, dst) :
@@ -3859,7 +3864,7 @@ class Colour :
 
     def __repr__(self) :
         return \
-            "Colour%s" % repr(tuple(self))
+            "%s%s" % (self.__class__.__name__, repr(tuple(self)))
     #end __repr__
 
     @classmethod
@@ -3884,40 +3889,40 @@ class Colour :
             conv(*c[:3]) + (c[3],)
     #end _convert_space
 
-    @staticmethod
-    def from_rgba(c) :
+    @classmethod
+    def from_rgba(celf, c) :
         "constructs a Colour from an (r, g, b) or (r, g, b, a) tuple."
         return \
-            Colour(*Colour._alpha_tuple(c))
+            celf(*celf._alpha_tuple(c))
     #end from_rgba
 
-    @staticmethod
-    def from_hsva(c) :
+    @classmethod
+    def from_hsva(celf, c) :
         "constructs a Colour from an (h, s, v) or (h, s, v, a) tuple."
         return \
-            Colour(*Colour._convert_space(c, colorsys.hsv_to_rgb))
+            celf(*celf._convert_space(c, colorsys.hsv_to_rgb))
     #end from_hsva
 
-    @staticmethod
-    def from_hlsa(c) :
+    @classmethod
+    def from_hlsa(celf, c) :
         "constructs a Colour from an (h, l, s) or (h, l, s, a) tuple."
         return \
-            Colour(*Colour._convert_space(c, colorsys.hls_to_rgb))
+            celf(*celf._convert_space(c, colorsys.hls_to_rgb))
     #end from_hlsa
 
-    @staticmethod
-    def from_yiqa(c) :
+    @classmethod
+    def from_yiqa(celf, c) :
         "constructs a Colour from a (y, i, q) or (y, i, q, a) tuple."
         return \
-            Colour(*Colour._convert_space(c, colorsys.yiq_to_rgb))
+            celf(*celf._convert_space(c, colorsys.yiq_to_rgb))
     #end from_yiqa
 
-    @staticmethod
-    def grey(i, a = 1) :
+    @classmethod
+    def grey(celf, i, a = 1) :
         "constructs a monochrome Colour with r, g and b components set to i" \
         " and alpha set to a."
         return \
-            Colour(i, i, i, a)
+            celf(i, i, i, a)
     #end grey
 
     def to_rgba(self) :
@@ -3931,25 +3936,25 @@ class Colour :
     def to_hsva(self) :
         "returns an (h, s, v, a) tuple."
         return \
-            Colour._convert_space(self, colorsys.rgb_to_hsv)
+            self.__class__._convert_space(self, colorsys.rgb_to_hsv)
     #end to_hsva
 
     def to_hlsa(self) :
         "returns an (h, l, s, a) tuple."
         return \
-            Colour._convert_space(self, colorsys.rgb_to_hls)
+            self.__class__._convert_space(self, colorsys.rgb_to_hls)
     #end to_hlsa
 
     def to_yiqa(self) :
         "returns a (y, i, q, a) tuple."
         return \
-            Colour._convert_space(self, colorsys.rgb_to_yiq)
+            self.__class__._convert_space(self, colorsys.rgb_to_yiq)
     #end to_yiqa
 
     def replace_alpha(self, new_alpha) :
         "returns a new Colour with the same r, g and b components but the specified alpha."
         return \
-            Colour(self.r, self.g, self.b, new_alpha)
+            self.__class__(self.r, self.g, self.b, new_alpha)
     #end replace_alpha
 
     def combine(self, other, rgb_func, alpha_func) :
@@ -3960,7 +3965,7 @@ class Colour :
         " colour component. alpha_func takes two arguments (aa, ba), being the alpha" \
         " values, and returns the new alpha."
         return \
-            Colour \
+            self.__class__ \
               (
                 r = rgb_func(self.r, self.a, other.r, other.a),
                 g = rgb_func(self.g, self.a, other.g, other.a),
