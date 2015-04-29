@@ -1125,6 +1125,18 @@ circle = 2 * math.pi
   # Alternatively, you can work in units of full circles. E.g.
   # 0.25 * circle is equivalent to 90°
 
+def int_fits_bits(val, bits) :
+    "is val a signed integer that fits within the specified number of bits."
+    limit = (1 << bits - 1) - 1
+    return \
+        (
+            isinstance(val, int)
+        and
+            - limit <= val <= limit
+              # yes, I ignore the extra negative value in 2s-complement
+        )
+#end int_fits_bits
+
 class Vector :
     "something missing from Cairo itself, a representation of a 2D point."
 
@@ -1144,10 +1156,19 @@ class Vector :
     #end from_tuple
 
     def isint(self) :
-        "are the components integers."
+        "are the components signed 32-bit integers."
         return \
-            isinstance(self.x, int) and isinstance(self.y, int)
+            int_fits_bits(self.x, 32) and int_fits_bits(self.y, 32)
     #end isint
+
+    def assert_isint(self) :
+        "checks that the components are signed 32-bit integers."
+        if not self.isint() :
+            raise ValueError("components must be signed 32-bit integers")
+        #end if
+        return \
+            self
+    #end assert_isint
 
     def __repr__(self) :
         return \
@@ -1745,18 +1766,27 @@ class Rect :
     #end __union__
 
     def isint(self) :
-        "are the components integers."
+        "are the components signed 32-bit integers."
         return \
             (
-                isinstance(self.left, int)
+                int_fits_bits(self.left, 32)
             and
-                isinstance(self.top, int)
+                int_fits_bits(self.top, 32)
             and
-                isinstance(self.width, int)
+                int_fits_bits(self.width, 32)
             and
-                isinstance(self.height, int)
+                int_fits_bits(self.height, 32)
             )
     #end isint
+
+    def assert_isint(self) :
+        "checks that the components are signed 32-bit integers."
+        if not self.isint() :
+            raise ValueError("components must be signed 32-bit integers")
+        #end if
+        return \
+            self
+    #end assert_isint
 
     def __repr__(self) :
         return \
@@ -3088,7 +3118,7 @@ class Surface :
     def mark_dirty_rectangle(self, rect) :
         "tells Cairo that you have modified the specified Rect portion of the Surface" \
         " in some way outside Cairo."
-        assert rect.isint()
+        rect.assert_isint()
         cairo.cairo_surface_mark_dirty_rectangle(self._cairobj, rect.left, rect.top, rect.width, rect.height)
         self._check()
     #end mark_dirty_rectangle
@@ -3253,10 +3283,7 @@ class ImageSurface(Surface) :
     def create(format, dimensions) :
         "creates a new ImageSurface with dynamically-allocated memory for the pixels." \
         " dimensions can be a Vector or a (width, height) tuple."
-        dimensions = Vector.from_tuple(dimensions)
-        if not dimensions.isint() :
-            raise ValueError("dimensions must be integers")
-        #end if
+        dimensions = Vector.from_tuple(dimensions).assert_isint()
         return \
             ImageSurface(cairo.cairo_image_surface_create(format, dimensions.x, dimensions.y))
     #end create
@@ -4544,10 +4571,7 @@ class Region :
 
     def contains_point(self, p) :
         "does this region contain the specified (integral) Vector point."
-        p = Vector.from_tuple(p)
-        if not p.isint() :
-            raise ValueError("point coordinates must be integers")
-        #end if
+        p = Vector.from_tuple(p).assert_isint()
         return \
             cairo.cairo_region_contains_point(self._cairobj, p.x, p.y)
     #end contains_point
@@ -4574,10 +4598,7 @@ class Region :
 
     def translate(self, p) :
         "translates the Region by the specified (integral) Vector."
-        p = Vector.from_tuple(p)
-        if not p.isint() :
-            raise ValueError("point coordinates must be integers")
-        #end if
+        p = Vector.from_tuple(p).assert_isint()
         cairo.cairo_region_translate(self._cairobj, p.x, p.y)
         return \
             self
