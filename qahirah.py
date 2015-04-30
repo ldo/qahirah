@@ -3134,6 +3134,8 @@ class Surface :
         "tells Cairo that you have modified the Surface in some way outside Cairo."
         cairo.cairo_surface_mark_dirty(self._cairobj)
         self._check()
+        return \
+            self
     #end mark_dirty
 
     def mark_dirty_rectangle(self, rect) :
@@ -3142,6 +3144,8 @@ class Surface :
         rect.assert_isint()
         cairo.cairo_surface_mark_dirty_rectangle(self._cairobj, rect.left, rect.top, rect.width, rect.height)
         self._check()
+        return \
+            self
     #end mark_dirty_rectangle
 
     @property
