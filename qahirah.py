@@ -1291,6 +1291,18 @@ class Vector :
             self.__class__(round(self.x), round(self.y))
     #end __round__
 
+    def __floor__(self) :
+        "returns the Vector with all coordinates rounded down to integers."
+        return \
+            self.__class__(math.floor(self.x), math.floor(self.y))
+    #end __floor__
+
+    def __ceil__(self) :
+        "returns the Vector with all coordinates rounded up to integers."
+        return \
+            self.__class__(math.ceil(self.x), math.ceil(self.y))
+    #end __ceil__
+
     @classmethod
     def unit(celf, angle) :
         "returns the unit vector with the specified direction."
