@@ -3313,6 +3313,13 @@ class ImageSurface(Surface) :
             ImageSurface(cairo.cairo_image_surface_create(format, dimensions.x, dimensions.y))
     #end create
 
+    def create_like(self) :
+        "convenience method which creates an ImageSurface with the same format and" \
+        " dimensions as this one."
+        return \
+            ImageSurface.create(self.format, self.dimensions)
+    #end create_like
+
     @staticmethod
     def create_from_png(filename) :
         "loads an image from a PNG file and creates an ImageSurface for it."
