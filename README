@@ -270,10 +270,11 @@ Examples of Qahirah in action are available in the following
 repositories:
 
 * [qahirah_examples](https://github.com/ldo/qahirah_examples)
+* [python_pixman_examples](https://github.com/ldo/python_pixman_examples)
 * [python_freetype_examples](https://github.com/ldo/python_freetype_examples)
 * [hersheypy](https://github.com/ldo/hersheypy)
 * [anim_framework_examples](https://github.com/ldo/anim_framework_examples)
 * [curve](https://github.com/ldo/curve)
 
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
-2015 April 16
+2015 May 9
