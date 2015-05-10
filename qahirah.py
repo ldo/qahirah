@@ -2861,7 +2861,7 @@ class Context :
         if not isinstance(matrix, Matrix) :
             raise TypeError("matrix must be a Matrix")
         #end if
-        matrix = matrix.from_cairo()
+        matrix = matrix.to_cairo()
         cairo.cairo_set_font_matrix(self._cairobj, ct.byref(matrix))
         return \
             self
