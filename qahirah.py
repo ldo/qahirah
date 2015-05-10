@@ -1207,7 +1207,7 @@ class Vector :
         return \
             (
                 lambda : NotImplemented,
-                lambda : Vector(v1.x + v2.x, v1.y + v2.y)
+                lambda : v1.__class__(v1.x + v2.x, v1.y + v2.y)
             )[isinstance(v2, Vector)]()
     #end __add__
 
