@@ -3907,7 +3907,7 @@ class Colour :
     #end __repr__
 
     @classmethod
-    def _alpha_tuple(celf, c, norm_hue) :
+    def _alpha_tuple(celf, c, norm_hue = False) :
         # ensures that c is a tuple of 4 elements, appending a default alpha if omitted
         c = tuple(c)
         if len(c) == 3 :
