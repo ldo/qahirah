@@ -17,6 +17,8 @@ that may be read and written.
 import math
 from numbers import \
     Number
+from collections import \
+    namedtuple
 import colorsys
 import array
 import ctypes as ct
@@ -3888,6 +3890,12 @@ class Colour :
 
     __slots__ = ("r", "g", "b", "a") # to forestall typos
 
+    # to allow referencing colour components by name:
+    rgba = namedtuple("rgba", ("r", "g", "b", "a"))
+    hsva = namedtuple("hsva", ("h", "s", "v", "a"))
+    hlsa = namedtuple("hlsa", ("h", "l", "s", "a"))
+    yiqa = namedtuple("yiqa", ("y", "i", "q", "a"))
+
     def __init__(self, r, g, b, a) :
         self.r = r
         self.g = g
@@ -3924,12 +3932,16 @@ class Colour :
     #end _alpha_tuple
 
     @classmethod
-    def _convert_space(celf, c, conv, norm_hue = False) :
+    def _convert_space(celf, c, conv, tupleclass = None, norm_hue = False) :
         # puts the non-alpha components of c through the conversion function conv
         # and returns the result with the alpha restored.
         c = celf._alpha_tuple(c, norm_hue)
+        result = conv(*c[:3]) + (c[3],)
+        if tupleclass != None :
+            result = tupleclass(*result)
+        #end if
         return \
-            conv(*c[:3]) + (c[3],)
+            result
     #end _convert_space
 
     @classmethod
@@ -3969,29 +3981,27 @@ class Colour :
     #end grey
 
     def to_rgba(self) :
-        "returns an (r, g, b, a) tuple. Present just for completeness," \
-        " since the Colour object itself can be directly converted to" \
-        " such a tuple."
+        "returns an (r, g, b, a) namedtuple."
         return \
-            tuple(self)
+            self.rgba(*tuple(self))
     #end to_rgba
 
     def to_hsva(self) :
         "returns an (h, s, v, a) tuple."
         return \
-            self.__class__._convert_space(self, colorsys.rgb_to_hsv)
+            self.__class__._convert_space(self, colorsys.rgb_to_hsv, self.hsva)
     #end to_hsva
 
     def to_hlsa(self) :
         "returns an (h, l, s, a) tuple."
         return \
-            self.__class__._convert_space(self, colorsys.rgb_to_hls)
+            self.__class__._convert_space(self, colorsys.rgb_to_hls, self.hlsa)
     #end to_hlsa
 
     def to_yiqa(self) :
         "returns a (y, i, q, a) tuple."
         return \
-            self.__class__._convert_space(self, colorsys.rgb_to_yiq)
+            self.__class__._convert_space(self, colorsys.rgb_to_yiq, self.yiqa)
     #end to_yiqa
 
     def replace_rgba(self, r = None, g = None, b = None, a = None) :
