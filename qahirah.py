@@ -3990,11 +3990,53 @@ class Colour :
             self.__class__._convert_space(self, colorsys.rgb_to_yiq)
     #end to_yiqa
 
-    def replace_alpha(self, new_alpha) :
-        "returns a new Colour with the same r, g and b components but the specified alpha."
+    def replace_rgba(self, r = None, g = None, b = None, a = None) :
+        "returns a new Colour with the specified (r, g, b, a) components replaced with new values."
         return \
-            self.__class__(self.r, self.g, self.b, new_alpha)
-    #end replace_alpha
+            Colour.from_rgba \
+              (
+                c2[j] if c2[j] != None else c1[j]
+                for c1 in (self.to_rgba(),)
+                for c2 in ((r, g, b, a),)
+                for j in range(4)
+              )
+    #end replace_rgba
+
+    def replace_hsva(self, h = None, s = None, v = None, a = None) :
+        "returns a new Colour with the specified (h, s, v, a) components replaced with new values."
+        return \
+            Colour.from_hsva \
+              (
+                c2[j] if c2[j] != None else c1[j]
+                for c1 in (self.to_hsva(),)
+                for c2 in ((h, s, v, a),)
+                for j in range(4)
+              )
+    #end replace_hsva
+
+    def replace_hlsa(self, h = None, l = None, s = None, a = None) :
+        "returns a new Colour with the specified (h, l, s, a) components replaced with new values."
+        return \
+            Colour.from_hlsa \
+              (
+                c2[j] if c2[j] != None else c1[j]
+                for c1 in (self.to_hlsa(),)
+                for c2 in ((h, l, s, a),)
+                for j in range(4)
+              )
+    #end replace_hlsa
+
+    def replace_yiqa(self, y = None, i = None, q = None, a = None) :
+        "returns a new Colour with the specified (y, i, q, a) components replaced with new values."
+        return \
+            Colour.from_yiqa \
+              (
+                c2[j] if c2[j] != None else c1[j]
+                for c1 in (self.to_yiqa(),)
+                for c2 in ((y, i, q, a),)
+                for j in range(4)
+              )
+    #end replace_yiqa
 
     def combine(self, other, rgb_func, alpha_func) :
         "produces a combination of this Colour with other by applying the specified" \
