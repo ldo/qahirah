@@ -3907,7 +3907,7 @@ class Colour :
     #end __repr__
 
     @classmethod
-    def _alpha_tuple(celf, c) :
+    def _alpha_tuple(celf, c, norm_hue) :
         # ensures that c is a tuple of 4 elements, appending a default alpha if omitted
         c = tuple(c)
         if len(c) == 3 :
@@ -3915,15 +3915,19 @@ class Colour :
         elif len(c) != 4 :
             raise TypeError("colour tuple must have 3 or 4 elements")
         #end if
+        if norm_hue :
+            # first component is hue, normalize to [0, 1) range
+            c = (c[0] % 1,) + c[1:]
+        #end if
         return \
             c
     #end _alpha_tuple
 
     @classmethod
-    def _convert_space(celf, c, conv) :
+    def _convert_space(celf, c, conv, norm_hue = False) :
         # puts the non-alpha components of c through the conversion function conv
         # and returns the result with the alpha restored.
-        c = celf._alpha_tuple(c)
+        c = celf._alpha_tuple(c, norm_hue)
         return \
             conv(*c[:3]) + (c[3],)
     #end _convert_space
@@ -3939,14 +3943,14 @@ class Colour :
     def from_hsva(celf, c) :
         "constructs a Colour from an (h, s, v) or (h, s, v, a) tuple."
         return \
-            celf(*celf._convert_space(c, colorsys.hsv_to_rgb))
+            celf(*celf._convert_space(c, colorsys.hsv_to_rgb, norm_hue = True))
     #end from_hsva
 
     @classmethod
     def from_hlsa(celf, c) :
         "constructs a Colour from an (h, l, s) or (h, l, s, a) tuple."
         return \
-            celf(*celf._convert_space(c, colorsys.hls_to_rgb))
+            celf(*celf._convert_space(c, colorsys.hls_to_rgb, norm_hue = True))
     #end from_hlsa
 
     @classmethod
