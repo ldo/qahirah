@@ -3891,10 +3891,10 @@ class Colour :
     __slots__ = ("r", "g", "b", "a") # to forestall typos
 
     # to allow referencing colour components by name:
-    rgba = namedtuple("rgba", ("r", "g", "b", "a"))
-    hsva = namedtuple("hsva", ("h", "s", "v", "a"))
-    hlsa = namedtuple("hlsa", ("h", "l", "s", "a"))
-    yiqa = namedtuple("yiqa", ("y", "i", "q", "a"))
+    RGBA = namedtuple("RGBA", ("r", "g", "b", "a"))
+    HSVA = namedtuple("HSVA", ("h", "s", "v", "a"))
+    HLSA = namedtuple("HLSA", ("h", "l", "s", "a"))
+    YIQA = namedtuple("YIQA", ("y", "i", "q", "a"))
 
     def __init__(self, r, g, b, a) :
         self.r = r
@@ -3989,19 +3989,19 @@ class Colour :
     def to_hsva(self) :
         "returns an (h, s, v, a) tuple."
         return \
-            self.__class__._convert_space(self, colorsys.rgb_to_hsv, self.hsva)
+            self.__class__._convert_space(self, colorsys.rgb_to_hsv, self.HSVA)
     #end to_hsva
 
     def to_hlsa(self) :
         "returns an (h, l, s, a) tuple."
         return \
-            self.__class__._convert_space(self, colorsys.rgb_to_hls, self.hlsa)
+            self.__class__._convert_space(self, colorsys.rgb_to_hls, self.HLSA)
     #end to_hlsa
 
     def to_yiqa(self) :
         "returns a (y, i, q, a) tuple."
         return \
-            self.__class__._convert_space(self, colorsys.rgb_to_yiq, self.yiqa)
+            self.__class__._convert_space(self, colorsys.rgb_to_yiq, self.YIQA)
     #end to_yiqa
 
     def replace_rgba(self, r = None, g = None, b = None, a = None) :
