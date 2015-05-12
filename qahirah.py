@@ -1153,7 +1153,7 @@ class Vector :
     def from_tuple(celf, v) :
         "converts a tuple of 2 numbers to a Vector. Can be used to ensure that" \
         " v is a Vector."
-        if not isinstance(v, Vector) :
+        if not isinstance(v, celf) :
             v = celf(*v)
         #end if
         return \
