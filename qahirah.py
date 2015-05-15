@@ -1785,6 +1785,30 @@ class Rect :
             self.width <= 0 or self.height <= 0
     #end is_empty
 
+    def transform(self, matrix) :
+        "returns the transformation of this Rect by a Matrix. Only" \
+        " scaling and translation is allowed."
+        topleft, topright, botleft, botright = matrix.mapiter \
+          ((
+            self.topleft,
+            Vector(self.right, self.top),
+            Vector(self.left, self.bottom),
+            self.botright,
+          ))
+        assert \
+            (
+                topleft.y == topright.y
+            and
+                topright.x == botright.x
+            and
+                botright.y == botleft.y
+            and
+                botleft.x == topleft.x
+            )
+        return \
+            self.__class__.from_corners(topleft, botright)
+    #end transform
+
     def union(r1, r2) :
         "smallest rectangle enclosing both rectangles."
         if r1.is_empty :
@@ -1860,6 +1884,25 @@ class Rect :
                 (self.__class__.__name__, self.left, self.top, self.width, self.height)
             )
     #end __repr__
+
+    def to_path(self) :
+        "returns a Path object which draws this rectangle."
+        return \
+            Path \
+              (
+                [
+                    Path.Segment
+                      (
+                        [
+                            Path.Point((self.left, self.top), False),
+                            Path.Point((self.right, self.top), False),
+                            Path.Point((self.right, self.bottom), False),
+                        ],
+                        True
+                      )
+                ]
+              )
+    #end to_path
 
     def inset(self, v) :
         "returns a Rect inset by the specified x and y amounts from this one" \
