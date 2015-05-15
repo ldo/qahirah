@@ -5006,6 +5006,15 @@ class Path :
             "Path(%s)" % repr(tuple(self.segments))
     #end __repr__
 
+    def __add__(p1, p2) :
+        "returns a Path which combines the Segments from two Paths."
+        if not isinstance(p2, Path) :
+            raise TypeError("can only add to another Path")
+        #end if
+        return \
+            Path(p1.segments + p2.segments)
+    #end __add__
+
     class Element :
         "base class for path elements that map directly to Cairo path-construction" \
         " calls. Do not instantiate directly; instantiate subclasses intead."
