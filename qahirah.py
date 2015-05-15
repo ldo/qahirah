@@ -1735,6 +1735,33 @@ class Rect :
             result
     #end __sub__
 
+    def __mul__(self, f) :
+        "scale a Rect uniformly by a number or non-uniformly by a Vector."
+        if isinstance(f, Vector) :
+            result = self.__class__(self.left * f.x, self.top * f.y, self.width * f.x, self.height * f.y)
+        elif isinstance(f, Number) :
+            result = self.__class__(self.left * f, self.top * f, self.width * f, self.height * f)
+        else :
+            result = NotImplemented
+        #end if
+        return \
+            result
+    #end __mul__
+    __rmul__ = __mul__
+
+    def __div__(self, f) :
+        "invserse-scale a Rect uniformly by a number or non-uniformly by a Vector."
+        if isinstance(f, Vector) :
+            result = self.__class__(self.left / f.x, self.top / f.y, self.width / f.x, self.height / f.y)
+        elif isinstance(f, Number) :
+            result = self.__class__(self.left / f, self.top / f, self.width / f, self.height / f)
+        else :
+            result = NotImplemented
+        #end if
+        return \
+            result
+    #end __div__
+
     def __eq__(r1, r2) :
         "equality of two rectangles."
         return \
