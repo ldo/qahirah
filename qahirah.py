@@ -1897,6 +1897,7 @@ class Rect :
                             Path.Point((self.left, self.top), False),
                             Path.Point((self.right, self.top), False),
                             Path.Point((self.right, self.bottom), False),
+                            Path.Point((self.left, self.bottom), False),
                         ],
                         True
                       )
