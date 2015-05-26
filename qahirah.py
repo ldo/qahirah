@@ -5281,6 +5281,16 @@ class Path :
             Path(segs)
     #end from_ft_outline
 
+    @staticmethod
+    def create_arc(centre, radius, angle1, angle2, negative) :
+        "creates a Path consisting of a segment of a circular arc as constructed" \
+        " by Context.arc (if not negative) or Context.arc_negative (if negative)."
+        g = Context.create_for_dummy()
+        getattr(g, ("arc", "arc_negative")[negative])(centre, radius, angle1, angle2)
+        return \
+            g.copy_path()
+    #end create_arc
+
     def to_elements(self) :
         "yields a sequence of Path.Element objects that will draw the path."
         for seg in self.segments :
