@@ -2675,23 +2675,16 @@ class Context :
             self
     #end close_path
 
-    def arc(self, centre, radius, angle1, angle2) :
-        "draws a segment of a circular arc in the positive-x-to-positive-y direction." \
-        " centre can be a Vector or a tuple of 2 coord values."
+    def arc(self, centre, radius, angle1, angle2, negative) :
+        "draws a segment of a circular arc in the positive-x-to-positive-y" \
+        " direction (if not negative) or the positive-y-to-positive-x direction" \
+        " (if negative). centre can be a Vector or a tuple of 2 coord values."
         centre = Vector.from_tuple(centre)
-        cairo.cairo_arc(self._cairobj, centre.x, centre.y, radius, angle1, angle2)
+        getattr(cairo, ("cairo_arc", "cairo_arc_negative")[negative])\
+            (self._cairobj, centre.x, centre.y, radius, angle1, angle2)
         return \
             self
     #end arc
-
-    def arc_negative(self, centre, radius, angle1, angle2) :
-        "draws a segment of a circular arc in the positive-y-to-positive-x direction." \
-        " centre can be a Vector or a tuple of 2 coord values."
-        centre = Vector.from_tuple(centre)
-        cairo.cairo_arc_negative(self._cairobj, centre.x, centre.y, radius, angle1, angle2)
-        return \
-            self
-    #end arc_negative
 
     def curve_to(self, p1, p2, p3) :
         "curve_to(p1, p2, p3) or curve_to((x1, y1), (x2, y2), (x3, y3)) -- draws a cubic" \
@@ -5285,10 +5278,11 @@ class Path :
     def create_arc(centre, radius, angle1, angle2, negative) :
         "creates a Path consisting of a segment of a circular arc as constructed" \
         " by Context.arc (if not negative) or Context.arc_negative (if negative)."
-        g = Context.create_for_dummy()
-        getattr(g, ("arc", "arc_negative")[negative])(centre, radius, angle1, angle2)
         return \
-            g.copy_path()
+            (Context.create_for_dummy()
+                .arc(centre, radius, angle1, angle2, negative)
+                .copy_path()
+            )
     #end create_arc
 
     def to_elements(self) :
