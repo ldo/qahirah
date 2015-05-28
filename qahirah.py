@@ -4054,7 +4054,7 @@ class Colour :
     def to_rgba(self) :
         "returns an (r, g, b, a) namedtuple."
         return \
-            self.rgba(*tuple(self))
+            self.RGBA(*tuple(self))
     #end to_rgba
 
     def to_hsva(self) :
