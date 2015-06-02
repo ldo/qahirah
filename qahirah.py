@@ -4051,19 +4051,19 @@ class Colour :
     #end to_rgba
 
     def to_hsva(self) :
-        "returns an (h, s, v, a) tuple."
+        "returns an (h, s, v, a) namedtuple."
         return \
             self.__class__._convert_space(self, colorsys.rgb_to_hsv, self.HSVA)
     #end to_hsva
 
     def to_hlsa(self) :
-        "returns an (h, l, s, a) tuple."
+        "returns an (h, l, s, a) namedtuple."
         return \
             self.__class__._convert_space(self, colorsys.rgb_to_hls, self.HLSA)
     #end to_hlsa
 
     def to_yiqa(self) :
-        "returns a (y, i, q, a) tuple."
+        "returns a (y, i, q, a) namedtuple."
         return \
             self.__class__._convert_space(self, colorsys.rgb_to_yiq, self.YIQA)
     #end to_yiqa
