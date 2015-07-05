@@ -1982,6 +1982,7 @@ class Rect :
     #end fit_to
 
 #end Rect
+Rect.empty = Rect(0, 0, 0, 0)
 
 class Glyph :
     "specifies a glyph index and position relative to the origin."
