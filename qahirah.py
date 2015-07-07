@@ -1538,6 +1538,7 @@ class Matrix :
             y0 = adj.y0 / det,
           )
     #end inv
+    __invert__ = inv # so ~Matrix works
 
     def map(self, pt) :
         "maps a Vector through the Matrix."
