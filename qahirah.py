@@ -541,21 +541,17 @@ def def_struct_class(name, ctname) :
 
 #begin def_struct_class
     result_class.__name__ = name
-    try :
-        result_class.__doc__ = \
+    result_class.__doc__ = \
+        (
+            "representation of a Cairo %s structure. Fields are %s."
+            "\nCreate by decoding the Cairo form with the from_cairo method;"
+            " convert an instance to Cairo form with the to_cairo method."
+        %
             (
-                "representation of a Cairo %s structure. Fields are %s."
-                "\nCreate by decoding the Cairo form with the from_cairo method;"
-                " convert an instance to Cairo form with the to_cairo method."
-            %
-                (
-                    ctname,
-                    ", ".join(f[0] for f in ctstruct._fields_),
-                )
+                ctname,
+                ", ".join(f[0] for f in ctstruct._fields_),
             )
-    except AttributeError :
-        pass # cannot write __doc__ on Python 3.2
-    #end try
+        )
     return \
         result_class
 #end def_struct_class
@@ -1317,6 +1313,7 @@ class Vector :
         return \
             v1.x * v2.x + v1.y * v2.y
     #end dot
+    __matmul__ = dot # allow v1 @ v2 for dot product (Python 3.5 and later)
 
     def cross(v1, v2) :
         "returns the (scalar) cross product of two Vectors."

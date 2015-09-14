@@ -13,8 +13,8 @@ import distutils.core
 distutils.core.setup \
   (
     name = "Qahirah",
-    version = "0.85",
-    description = "language bindings for the Cairo graphics library, for Python 3.2 or later",
+    version = "0.86",
+    description = "language bindings for the Cairo graphics library, for Python 3.3 or later",
     author = "Lawrence D'Oliveiro",
     author_email = "ldo@geek-central.gen.nz",
     url = "http://github.com/ldo/qahirah",

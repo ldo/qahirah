@@ -1,5 +1,5 @@
 **Qahirah** is yet another Python language binding for the [Cairo graphics
-library](http://cairographics.org/), for use with Python 3.2 or later.
+library](http://cairographics.org/), for use with Python 3.3 or later.
 It is modelled to some extent on [Pycairo](http://cairographics.org/pycairo/),
 but differs from it in important ways:
 
@@ -15,10 +15,6 @@ but differs from it in important ways:
   to the underlying Cairo library, there is nothing to prevent you from
   doing so. Whether your code will still work with a future version of
   Qahirah is another matter...
-
-**WARNING:** This Python binding is still to be considered in a state of
-flux for now, subject to whatever reorganization looks to be necessary
-as experience is gained with using it.
 
 
 Installation
