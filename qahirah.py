@@ -1828,9 +1828,11 @@ class Rect :
             result = r1
         elif r2.is_empty :
             result = r2
+        elif r1.right <= r2.left or r2.right <= r1.left or r1.bottom <= r2.top or r2.bottom <= r1.top :
+            result = Rect.empty
         else :
             vmin = Vector(max(r1.left, r2.left), max(r1.top, r2.top))
-            vmax = Vector(min(r1.left + r1.width, r2.left + r2.width), min(r1.top + r1.height, r2.top + r2.height))
+            vmax = Vector(min(r1.right, r2.right), min(r1.bottom, r2.bottom))
             result = r1.__class__.from_corners(vmin, vmax)
         #end if
         return \
