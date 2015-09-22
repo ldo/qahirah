@@ -1705,9 +1705,9 @@ class Rect :
     #end middle
 
     def __round__(self) :
-        "returns the Rect with all coordinates rounded to integers."
+        "returns the Rect with all corner coordinates rounded to integers."
         return \
-            self.__class__(round(self.left), round(self.top), round(self.width), round(self.height))
+            self.__class__.from_corners(round(self.topleft), round(self.botright))
     #end __round__
 
     def __add__(self, v) :
