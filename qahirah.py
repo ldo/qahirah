@@ -5278,7 +5278,7 @@ class Path :
     @staticmethod
     def create_arc(centre, radius, angle1, angle2, negative) :
         "creates a Path consisting of a segment of a circular arc as constructed" \
-        " by Context.arc (if not negative) or Context.arc_negative (if negative)."
+        " by Context.arc."
         return \
             (Context.create_for_dummy()
                 .arc(centre, radius, angle1, angle2, negative)
