@@ -5301,6 +5301,9 @@ class Path :
         " Vectors defining the same curve as a cubic Bézier."
         # quadratic-to-cubic conversion taken from
         # <http://stackoverflow.com/questions/3162645/convert-a-quadratic-bezier-to-a-cubic>
+        p1 = Vector.from_tuple(p1)
+        p2 = Vector.from_tuple(p2)
+        p3 = Vector.from_tuple(p3)
         return \
             (
                 p1,
