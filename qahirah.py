@@ -5202,7 +5202,12 @@ class Path :
                 break
             i += 1
             header = ct.cast(data, CAIRO.path_data_t.header_ptr_t).contents
-            assert header.length == celf.element_types[header.type]["nr"] + 1, "expecting %d control points for path elt type %d, got %d" % (celf.element_types[header.type]["nr"] + 1, header.type, header.length)
+            assert header.length == celf.element_types[header.type]["nr"] + 1, \
+                (
+                    "expecting %d control points for path elt type %d, got %d"
+                %
+                    (celf.element_types[header.type]["nr"] + 1, header.type, header.length)
+                )
             data += ct.sizeof(CAIRO.path_data_t)
             points = []
             for j in range(header.length - 1) :
