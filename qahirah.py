@@ -4951,21 +4951,24 @@ class Path :
             #end while
         #end pieces
 
-        def to_elements(self) :
+        def to_elements(self, relative = False) :
             "yields a sequence of Path.Element objects that will draw the path segment."
             pts = []
             prevpt = None
             for p in self.points :
+                if relative and prevpt != None :
+                    p = Path.Point(p.pt - prevpt, p.off)
+                #end if
                 pts.append(p.pt)
                 if p.off :
                     assert prevpt != None
                 else :
                     if prevpt == None :
-                        yield Path.MoveTo(pts[0])
+                        yield (Path.MoveTo, Path.RelMoveTo)[relative](pts[0])
                     #end if
                     if len(pts) == 1 :
                         if prevpt != None :
-                            yield Path.LineTo(pts[0])
+                            yield (Path.LineTo, Path.RelLineTo)[relative](pts[0])
                         #end if
                     elif len(pts) == 2 :
                         if prevpt != None :
@@ -4973,16 +4976,20 @@ class Path :
                         else :
                             p0 = pts[0]
                         #end if
-                        yield Path.CurveTo(*Path.cubify(*([p0] + pts))[1:])
+                        yield (Path.CurveTo, Path.RelCurveTo)[relative](*Path.cubify(*([p0] + pts))[1:])
                     elif len(pts) == 3 :
-                        yield Path.CurveTo(*pts)
+                        yield (Path.CurveTo, Path.RelCurveTo)[relative](*pts)
                     else :
                         raise NotImplementedError \
                           (
                             "Cairo cannot handle higher-order Béziers than cubic"
                           )
                     #end if
-                    prevpt = pts[-1]
+                    if prevpt != None :
+                        prevpt += pts[-1]
+                    else :
+                        prevpt = pts[-1]
+                    #end if
                     pts = []
                 #end if
             #end for
@@ -4992,13 +4999,13 @@ class Path :
             #end if
         #end to_elements
 
-        def draw(self, ctx, matrix = None) :
+        def draw(self, ctx, matrix = None, relative = False) :
             "draws the path segment into the Context, optionally transformed by" \
             " the Matrix."
             if not isinstance(ctx, Context) :
                 raise TypeError("ctx must be a Context")
             #end if
-            for elt in self.to_elements() :
+            for elt in self.to_elements(relative) :
                 elt.draw(ctx, matrix)
             #end for
         #end draw
@@ -5057,13 +5064,16 @@ class Path :
         "base class for path elements that map directly to Cairo path-construction" \
         " calls. Do not instantiate directly; instantiate subclasses intead."
 
-        __slots__ = ("type", "points", "meth")
+        __slots__ = ("type", "relative", "points", "meth")
 
-        def __init__(self, type, points, meth) :
+        def __init__(self, type, relative, points, meth) :
             # type is CAIRO.PATH_xxxx code, points is tuple of points,
-            # meth is Context instance method to draw the Element
+            # relative indicates whether to use relative or absolute Cairo
+            # path-construction calls, meth is Context instance method
+            # to draw the Element
             self.type = type
             self.points = tuple(Vector.from_tuple(p) for p in points)
+            self.relative = relative
             self.meth = meth
         #end __init__
 
@@ -5095,50 +5105,78 @@ class Path :
         "represents a move_to the specified Vector position."
 
         def __init__(self, p) :
-            super().__init__(CAIRO.PATH_MOVE_TO, (p,), Context.move_to)
+            super().__init__(CAIRO.PATH_MOVE_TO, False, (p,), Context.move_to)
         #end __init__
 
     #end MoveTo
+
+    class RelMoveTo(Element) :
+        "represents a rel_move_to the specified Vector position."
+
+        def __init__(self, p) :
+            super().__init__(CAIRO.PATH_MOVE_TO, True, (p,), Context.rel_move_to)
+        #end __init__
+
+    #end RelMoveTo
 
     class LineTo(Element) :
         "represents a line_to the specified Vector position."
 
         def __init__(self, p) :
-            super().__init__(CAIRO.PATH_LINE_TO, (p,), Context.line_to)
+            super().__init__(CAIRO.PATH_LINE_TO, False, (p,), Context.line_to)
         #end __init__
 
     #end LineTo
+
+    class RelLineTo(Element) :
+        "represents a rel_line_to the specified Vector position."
+
+        def __init__(self, p) :
+            super().__init__(CAIRO.PATH_LINE_TO, True, (p,), Context.rel_line_to)
+        #end __init__
+
+    #end RelLineTo
 
     class CurveTo(Element) :
         "represents a curve_to via the specified three Vector positions."
 
         def __init__(self, p1, p2, p3) :
-            super().__init__(CAIRO.PATH_CURVE_TO, (p1, p2, p3), Context.curve_to)
+            super().__init__(CAIRO.PATH_CURVE_TO, False, (p1, p2, p3), Context.curve_to)
         #end __init__
 
     #end CurveTo
+
+    class RelCurveTo(Element) :
+        "represents a rel_curve_to via the specified three Vector positions."
+
+        def __init__(self, p1, p2, p3) :
+            super().__init__(CAIRO.PATH_CURVE_TO, True, (p1, p2, p3), Context.rel_curve_to)
+        #end __init__
+
+    #end RelCurveTo
 
     class Close(Element) :
         "represents a closing of the current path."
 
         def __init__(self) :
-            super().__init__(CAIRO.PATH_CLOSE_PATH, (), Context.close_path)
+            super().__init__(CAIRO.PATH_CLOSE_PATH, False, (), Context.close_path)
         #end __init__
 
     #end Close
 
     element_types = \
-        { # number of control points and Element subclass for each path element type
-            CAIRO.PATH_MOVE_TO : {"nr" : 1, "type" : MoveTo},
-            CAIRO.PATH_LINE_TO : {"nr" : 1, "type" : LineTo},
-            CAIRO.PATH_CURVE_TO : {"nr" : 3, "type" : CurveTo},
-            CAIRO.PATH_CLOSE_PATH : {"nr" : 0, "type" : Close},
+        { # number of control points and Element subclasses for each path element type
+            CAIRO.PATH_MOVE_TO : {"nr" : 1, "type" : MoveTo, "reltype" : RelMoveTo},
+            CAIRO.PATH_LINE_TO : {"nr" : 1, "type" : LineTo, "reltype" : RelLineTo},
+            CAIRO.PATH_CURVE_TO : {"nr" : 3, "type" : CurveTo, "reltype" : RelCurveTo},
+            CAIRO.PATH_CLOSE_PATH : {"nr" : 0, "type" : Close, "reltype" : Close},
         }
 
     @classmethod
-    def from_elements(celf, elts, clean = True) :
-        "constructs a Path from a sequence of Path.Element objects. clean indicates" \
-        " whether to omit isolated single-point segments."
+    def from_elements(celf, elts, clean = True, origin = None) :
+        "constructs a Path from a sequence of Path.Element objects in elts. clean indicates" \
+        " whether to omit isolated single-point segments. origin is a Vector only" \
+        " needed if elts begins with a relative operator; otherwise it is ignored."
         segs = []
         seg = None
         elts = iter(elts)
@@ -5166,21 +5204,28 @@ class Path :
                 #end if
             else :
                 segstarted = False
+                if elt.relative :
+                    assert origin != None, "no origin available for relative path element"
+                    points = list(p + origin for p in elt.points)
+                else :
+                    points = elt.points
+                #end if
+                origin = points[-1]
                 if seg == None :
-                    seg = [Path.Point(elt.points[0], False)]
+                    seg = [Path.Point(points[0], False)]
                     segstarted = True
                 #end if
                 if elt.type == CAIRO.PATH_LINE_TO :
                     if not segstarted :
-                        seg.append(Path.Point(elt.points[0], False))
+                        seg.append(Path.Point(points[0], False))
                     #end if
                 elif elt.type == CAIRO.PATH_CURVE_TO :
                     seg.extend \
                       (
                         [
-                            Path.Point(elt.points[0], True),
-                            Path.Point(elt.points[1], True),
-                            Path.Point(elt.points[2], False),
+                            Path.Point(points[0], True),
+                            Path.Point(points[1], True),
+                            Path.Point(points[2], False),
                         ]
                       )
                 #end if
@@ -5291,10 +5336,10 @@ class Path :
             )
     #end create_arc
 
-    def to_elements(self) :
+    def to_elements(self, relative = False) :
         "yields a sequence of Path.Element objects that will draw the path."
         for seg in self.segments :
-            for elt in seg.to_elements() :
+            for elt in seg.to_elements(relative) :
                 yield elt
             #end for
         #end for
@@ -5318,13 +5363,13 @@ class Path :
             )
     #end cubify
 
-    def draw(self, ctx, matrix = None) :
+    def draw(self, ctx, matrix = None, relative = False) :
         "draws the Path into a Context, optionally transformed by the given Matrix."
         if not isinstance(ctx, Context) :
             raise TypeError("ctx must be a Context")
         #end if
         for seg in self.segments :
-            seg.draw(ctx, matrix)
+            seg.draw(ctx, matrix, relative)
         #end for
     #end draw
 
