@@ -4951,13 +4951,13 @@ class Path :
             #end while
         #end pieces
 
-        def to_elements(self, relative = False) :
+        def to_elements(self, relative = False, origin = None) :
             "yields a sequence of Path.Element objects that will draw the path segment."
             pts = []
             prevpt = None
             for p in self.points :
-                if relative and prevpt != None :
-                    p = Path.Point(p.pt - prevpt, p.off)
+                if relative and origin != None :
+                    p = Path.Point(p.pt - origin, p.off)
                 #end if
                 pts.append(p.pt)
                 if p.off :
@@ -4985,11 +4985,12 @@ class Path :
                             "Cairo cannot handle higher-order Béziers than cubic"
                           )
                     #end if
-                    if prevpt != None :
-                        prevpt += pts[-1]
+                    if origin != None :
+                        origin += pts[-1]
                     else :
-                        prevpt = pts[-1]
+                        origin = pts[-1]
                     #end if
+                    prevpt = origin
                     pts = []
                 #end if
             #end for
@@ -4999,13 +5000,13 @@ class Path :
             #end if
         #end to_elements
 
-        def draw(self, ctx, matrix = None, relative = False) :
+        def draw(self, ctx, matrix = None, relative = False, origin = None) :
             "draws the path segment into the Context, optionally transformed by" \
             " the Matrix."
             if not isinstance(ctx, Context) :
                 raise TypeError("ctx must be a Context")
             #end if
-            for elt in self.to_elements(relative) :
+            for elt in self.to_elements(relative, origin) :
                 elt.draw(ctx, matrix)
             #end for
         #end draw
@@ -5338,10 +5339,14 @@ class Path :
 
     def to_elements(self, relative = False) :
         "yields a sequence of Path.Element objects that will draw the path."
+        origin = None
         for seg in self.segments :
-            for elt in seg.to_elements(relative) :
+            for elt in seg.to_elements(relative, origin) :
                 yield elt
             #end for
+            if relative and len(seg.points) != 0 :
+                origin = seg.points[-1].pt
+            #end if
         #end for
     #end to_elements
 
