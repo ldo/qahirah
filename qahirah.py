@@ -455,8 +455,9 @@ class CAIRO :
 
 class HAS :
     "functionality queries. These are implemented by checking for the presence" \
-    " of particular Cairo functions."
-    pass # filled in below
+    " of particular library functions."
+    ISCLOSE = hasattr(math, "isclose") # introduced in Python 3.5
+    # rest filled in below
 #end HAS
 for \
     symname, funcname \
@@ -483,6 +484,12 @@ in \
       )
 #end for
 del symname, funcname
+
+if HAS.ISCLOSE :
+    # copy same defaults as math.isclose
+    default_rel_tol = 1.0e-9
+    default_abs_tol = 0
+#end if
 
 def def_struct_class(name, ctname) :
     # defines a class with attributes that are a straightforward mapping
@@ -1200,6 +1207,20 @@ class Vector :
             )
     #end __eq__
 
+    if HAS.ISCLOSE :
+
+        def iscloseto(v1, v2, rel_tol = default_rel_tol, abs_tol = default_abs_tol) :
+            "approximate equality of two Vectors to within the specified tolerances."
+            return \
+                (
+                    math.isclose(v1.x, v2.x, rel_tol = rel_tol, abs_tol = abs_tol)
+                and
+                    math.isclose(v1.y, v2.y, rel_tol = rel_tol, abs_tol = abs_tol)
+                )
+        #end iscloseto
+
+    #end if
+
     def __add__(v1, v2) :
         "offset one Vector by another."
         return \
@@ -1396,6 +1417,28 @@ class Matrix :
         "returns an identity matrix."
         return celf(1, 0, 0, 1, 0, 0)
     #end identity
+
+    if HAS.ISCLOSE :
+
+        def iscloseto(m1, m2, rel_tol = default_rel_tol, abs_tol = default_abs_tol) :
+            "approximate equality of two Matrices to within the specified tolerances."
+            return \
+                (
+                    math.isclose(m1.xx, m2.xx, rel_tol = rel_tol, abs_tol = abs_tol)
+                and
+                    math.isclose(m1.yx, m2.yx, rel_tol = rel_tol, abs_tol = abs_tol)
+                and
+                    math.isclose(m1.xy, m2.xy, rel_tol = rel_tol, abs_tol = abs_tol)
+                and
+                    math.isclose(m1.yy, m2.yy, rel_tol = rel_tol, abs_tol = abs_tol)
+                and
+                    math.isclose(m1.x0, m2.x0, rel_tol = rel_tol, abs_tol = abs_tol)
+                and
+                    math.isclose(m1.y0, m2.y0, rel_tol = rel_tol, abs_tol = abs_tol)
+                )
+        #end iscloseto
+
+    #end if
 
     def __mul__(m1, m2) :
         "returns concatenation with another Matrix, or mapping of a Vector."
@@ -1641,6 +1684,24 @@ class Rect :
         return \
             celf(0, 0, pt.x, pt.y)
     #end from_dimensions
+
+    if HAS.ISCLOSE :
+
+        def iscloseto(r1, r2, rel_tol = default_rel_tol, abs_tol = default_abs_tol) :
+            "approximate equality of two Rects to within the specified tolerances."
+            return \
+                (
+                    math.isclose(r1.left, r2.left, rel_tol = rel_tol, abs_tol = abs_tol)
+                and
+                    math.isclose(r1.top, r2.top, rel_tol = rel_tol, abs_tol = abs_tol)
+                and
+                    math.isclose(r1.width, r2.width, rel_tol = rel_tol, abs_tol = abs_tol)
+                and
+                    math.isclose(r1.height, r2.height, rel_tol = rel_tol, abs_tol = abs_tol)
+                )
+        #end iscloseto
+
+    #end if
 
     @classmethod
     def from_cairo(celf, r) :
