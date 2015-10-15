@@ -1412,12 +1412,6 @@ class Matrix :
             CAIRO.matrix_t(m.xx, m.yx, m.xy, m.yy, m.x0, m.y0)
     #end to_cairo
 
-    @classmethod
-    def identity(celf) :
-        "returns an identity matrix."
-        return celf(1, 0, 0, 1, 0, 0)
-    #end identity
-
     if HAS.ISCLOSE :
 
         def iscloseto(m1, m2, rel_tol = default_rel_tol, abs_tol = default_abs_tol) :
@@ -1632,6 +1626,8 @@ class Matrix :
     #end __repr__
 
 #end Matrix
+Matrix.identity = \
+    Matrix(1, 0, 0, 1, 0, 0)
 
 def interp(fract, p1, p2) :
     "returns the point along p1 to p2 at relative position fract."
