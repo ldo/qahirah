@@ -1626,8 +1626,7 @@ class Matrix :
     #end __repr__
 
 #end Matrix
-Matrix.identity = \
-    Matrix(1, 0, 0, 1, 0, 0)
+Matrix.identity = Matrix(1, 0, 0, 1, 0, 0)
 
 def interp(fract, p1, p2) :
     "returns the point along p1 to p2 at relative position fract."
