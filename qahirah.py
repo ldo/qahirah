@@ -1130,6 +1130,8 @@ circle = 2 * math.pi
   # Alternatively, you can work in units of full circles. E.g.
   # 0.25 * circle is equivalent to 90°
 
+base_dpi = 72 # for scaling things to different relative resolutions
+
 def int_fits_bits(val, bits) :
     "is val a signed integer that fits within the specified number of bits."
     limit = (1 << bits - 1) - 1
