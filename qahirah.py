@@ -1403,6 +1403,12 @@ class Matrix :
         # self.w = 1
     #end __init__
 
+    def __getitem__(self, i) :
+        "being able to access elements by index allows a Matrix to be cast to a tuple or list."
+        return \
+            getattr(self, ("xx", "yx", "xy", "yy", "x0", "y0")[i])
+    #end __getitem__
+
     @classmethod
     def from_cairo(celf, m) :
         return \
