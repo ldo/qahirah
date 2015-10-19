@@ -4043,6 +4043,24 @@ class Colour :
             "%s%s" % (self.__class__.__name__, repr(tuple(self)))
     #end __repr__
 
+    if HAS.ISCLOSE :
+
+        def iscloseto(c1, c2, rel_tol = default_rel_tol, abs_tol = default_abs_tol) :
+            "approximate equality of two Colours to within the specified tolerances."
+            return \
+                (
+                    math.isclose(c1.r, c2.r, rel_tol = rel_tol, abs_tol = abs_tol)
+                and
+                    math.isclose(c1.g, c2.g, rel_tol = rel_tol, abs_tol = abs_tol)
+                and
+                    math.isclose(c1.b, c2.b, rel_tol = rel_tol, abs_tol = abs_tol)
+                and
+                    math.isclose(c1.a, c2.a, rel_tol = rel_tol, abs_tol = abs_tol)
+                )
+        #end iscloseto
+
+    #end if
+
     @classmethod
     def _alpha_tuple(celf, c, norm_hue = False) :
         # ensures that c is a tuple of 4 elements, appending a default alpha if omitted
