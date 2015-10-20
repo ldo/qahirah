@@ -4234,37 +4234,120 @@ class Colour :
 
         colours_filename = "/usr/share/X11/rgb.txt"
 
+        class NamedColour :
+            "stores the colour with its name in the original case, while allowing" \
+            " case-insensitive dictionary lookup."
+
+            __slots__ = ("name", "colour")
+
+            def __init__(self, name, colour) :
+                self.name = name
+                self.colour = colour
+            #end __init__
+
+            @property
+            def contents(self) :
+                return \
+                    (self.name, self.colour)
+            #end contents
+
+        #end NamedColour
+
         def __init__(self) :
             self._colours = None
         #end __init__
 
+        class DictView :
+            "behaves like a dictionary view object. The point of doing this is so" \
+            " the caller can find colours with case-insensitive names, while seeing" \
+            " the original case in the names when enumerating colours."
+
+            def __init__(self, parent, view_method, repr_name, attr_name) :
+                # _parent is the underlying dict;
+                # view_method is the method to call on _parent;
+                # repr_name is the type name to use in the repr string
+                # (follow same names used by dict);
+                # attr_name is name of attribute of NamedColour objects to retrieve
+                self._parent = parent
+                self.view_method = view_method
+                self.repr_name = repr_name
+                self.attr_name = attr_name
+            #end __init
+
+            def __len__(self) :
+                return \
+                    len(self._parent)
+            #end __len_-
+
+            def __iter__(self) :
+                for item in self._parent.values() :
+                    yield getattr(item, self.attr_name)
+                #end for
+            #end __iter_-
+
+            def __contains__(self, item) :
+                return \
+                    item in getattr(self._parent, self.view_method)()
+            #end __contains__
+
+            def __repr__(self) :
+                return \
+                    (
+                            "%(name)s(%(items)s)"
+                        %
+                            {
+                                "name" : self.repr_name,
+                                "items" : "[%s]" % ", ".join
+                                  (
+                                    repr(getattr(item, self.attr_name))
+                                    for item in self._parent.values()
+                                  ),
+                            }
+                    )
+            #end __repr__
+
+        #end DictView
+
         def _load(self) :
-            # loads the colours on demand, if this has not already been done.
+            # one-shot method which loads the colours on demand.
             # Every user-accessible method has to call this.
-            if self._colours == None :
-                colours = {}
-                try :
-                    for line in open(self.colours_filename, "r") :
-                        if not line.startswith("!") :
-                            line = line.strip()
-                            for junk in ("\t", "  ") :
-                                while True :
-                                    line2 = line.replace(junk, " ")
-                                    if line2 == line :
-                                        break
-                                    line = line2
-                                #end while
-                            #end for
-                            r, g, b, name = line.split(" ", 3)
-                            r, g, b = int(r), int(g), int(b)
-                            colours[name.lower()] = Colour.from_rgba((r / 255, g / 255, b / 255))
+            colours = {}
+            seen = set() # so I prefer unconverted names in case of duplicate entries
+              # (not that there actually are any duplicate entries)
+            NamedColour = self.__class__.NamedColour
+            try :
+                for line in open(self.colours_filename, "r") :
+                    if not line.startswith("!") :
+                        line = line.strip()
+                        for junk in ("\t", "  ") :
+                            while True :
+                                line2 = line.replace(junk, " ")
+                                if line2 == line :
+                                    break
+                                line = line2
+                            #end while
+                        #end for
+                        r, g, b, name = line.split(" ", 3)
+                        r, g, b = int(r), int(g), int(b)
+                        lc_name = name.lower()
+                        if name == lc_name or lc_name not in seen :
+                            colours[lc_name] = NamedColour \
+                              (
+                                name = name,
+                                colour = Colour.from_rgba((r / 255, g / 255, b / 255))
+                              )
+                            seen.add(lc_name)
                         #end if
-                    #end for
-                except IOError :
-                    pass
-                #end try
-                self._colours = colours
-            #end if
+                    #end if
+                #end for
+            except IOError :
+                pass
+            #end try
+            self._colours = colours
+            # easier reference to inner class names
+            self.NamedColour = NamedColour
+            self.DictView = self.__class__.DictView
+            self._load = lambda : None # you don’t need me any more
         #end _load
 
         # add whatever dict-like methods are useful below
@@ -4272,7 +4355,7 @@ class Colour :
         def __getitem__(self, name) :
             self._load()
             return \
-                self._colours[name]
+                self._colours[name.lower()].colour
         #end __getitem__
 
         def __len__(self) :
@@ -4284,31 +4367,55 @@ class Colour :
         def __iter__(self) :
             self._load()
             return \
-                iter(self._colours)
+                iter(self.keys())
         #end __iter__
 
         def __contains__(self, name) :
             self._load()
             return \
-                name in self._colours
+                name.lower() in self._colours
         #end __contains__
 
         def keys(self) :
             self._load()
             return \
-                self._colours.keys()
+                self.DictView \
+                  (
+                    parent = self._colours,
+                    view_method = "keys",
+                    repr_name = "dict_keys",
+                    attr_name = "name"
+                  )
         #end keys
 
         def values(self) :
             self._load()
             return \
-                self._colours.values()
+                self.DictView \
+                  (
+                    parent = self._colours,
+                    view_method = "values",
+                    repr_name = "dict_values",
+                    attr_name = "colour"
+                  )
         #end values
+
+        def items(self) :
+            self._load()
+            return \
+                self.DictView \
+                  (
+                    parent = self._colours,
+                    view_method = "items",
+                    repr_name = "dict_items",
+                    attr_name = "contents"
+                  )
+        #end items
 
         def __repr__(self) :
             self._load()
             return \
-                repr(self._colours)
+                repr(self.items())
         #end __repr__
 
     #end X11_Colours
