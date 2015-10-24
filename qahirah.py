@@ -4347,7 +4347,7 @@ class Colour :
             # easier reference to inner class names
             self.NamedColour = NamedColour
             self.DictView = self.__class__.DictView
-            self._load = lambda : None # you don’t need me any more
+            self.__class__._load = lambda self : None # you don’t need me any more
         #end _load
 
         # add whatever dict-like methods are useful below
