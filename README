@@ -266,6 +266,7 @@ Examples of Qahirah in action are available in the following
 repositories:
 
 * [qahirah_examples](https://github.com/ldo/qahirah_examples)
+* [qahirah_notebooks](https://github.com/ldo/qahirah_notebooks)
 * [python_pixman_examples](https://github.com/ldo/python_pixman_examples)
 * [python_freetype_examples](https://github.com/ldo/python_freetype_examples)
 * [hersheypy](https://github.com/ldo/hersheypy)
@@ -274,4 +275,4 @@ repositories:
 * [grainypy](https://github.com/ldo/grainypy)
 
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
-2015 November 18
+2015 November 26
