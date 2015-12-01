@@ -2857,9 +2857,15 @@ class Context :
     #end translate
 
     def scale(self, s) :
-        "scale(Vector) or scale((x, y))\n" \
+        "scale(Vector) or scale((x, y)) or scale(Number)\n" \
         "applies a scaling to the current coordinate system."
-        sx, sy = Vector.from_tuple(s)
+        if isinstance(s, Number) :
+            sx = sy = s
+        elif isinstance(s, Vector) or isinstance(s, tuple) :
+            sx, sy = tuple(s)
+        else :
+            raise TypeError("s must be a number or a Vector")
+        #end if
         cairo.cairo_scale(self._cairobj, sx, sy)
         return \
             self
