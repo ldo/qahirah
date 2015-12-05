@@ -5081,14 +5081,21 @@ class Path :
     class Segment :
         "represents a continuous segment of a Path, consisting of a sequence" \
         " of Points, and an indication of whether the path is closed or not." \
-        " The segment must start and end with on-curve points."
+        " The segment must start (and end, if not closed) with on-curve points."
 
         __slots__ = ("points", "closed")
 
         def __init__(self, points, closed) :
             self.points = tuple(Path.Point(p.pt, p.off) for p in points)
             self.closed = bool(closed)
-            assert len(self.points) == 0 or not (self.points[0].off or self.points[-1].off)
+            assert \
+                (
+                    len(self.points) == 0
+                or
+                      not self.points[0].off
+                  and
+                    (closed or not self.points[-1].off)
+                )
         #end __init__
 
         def __repr__(self) :
@@ -5150,7 +5157,11 @@ class Path :
             "yields a sequence of Path.Element objects that will draw the path segment."
             pts = []
             prevpt = None
-            for p in self.points :
+            points = self.points
+            if self.closed and len(points) != 0 and points[-1].off :
+                points += (points[0],)
+            #end if
+            for p in points :
                 if relative and origin != None :
                     p = Path.Point(p.pt - origin, p.off)
                 #end if
