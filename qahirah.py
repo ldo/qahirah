@@ -5092,9 +5092,9 @@ class Path :
                 (
                     len(self.points) == 0
                 or
-                      not self.points[0].off
-                  and
-                    (closed or not self.points[-1].off)
+                        not self.points[0].off
+                    and
+                        (closed or not self.points[-1].off)
                 )
         #end __init__
 
