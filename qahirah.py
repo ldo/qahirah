@@ -15,6 +15,8 @@ that may be read and written.
 #-
 
 import math
+from types import \
+    FunctionType
 from numbers import \
     Number
 from collections import \
@@ -4165,7 +4167,11 @@ class Colour :
         return \
             construct \
               (
-                c2[j] if c2[j] != None else c1[j]
+                (
+                    lambda : c1[j],
+                    lambda : c2[j],
+                    lambda : c2[j](c1[j]),
+                )[isinstance(c2[j], FunctionType) + (c2[j] != None)]()
                 for c1 in (old_components,)
                 for c2 in (new_components,)
                 for j in range(4)
@@ -4173,25 +4179,33 @@ class Colour :
     #end _replace_components
 
     def replace_rgba(self, r = None, g = None, b = None, a = None) :
-        "returns a new Colour with the specified (r, g, b, a) components replaced with new values."
+        "returns a new Colour with the specified (r, g, b, a) components replaced with new" \
+        " values. Each arg can be a real number, or a function of a single real argument" \
+        " that, given the old component value, returns the new component value."
         return \
             Colour._replace_components(Colour.from_rgba, self.to_rgba(), (r, g, b, a))
     #end replace_rgba
 
     def replace_hsva(self, h = None, s = None, v = None, a = None) :
-        "returns a new Colour with the specified (h, s, v, a) components replaced with new values."
+        "returns a new Colour with the specified (h, s, v, a) components replaced with new" \
+        " values. Each arg can be a real number, or a function of a single real argument" \
+        " that, given the old component value, returns the new component value."
         return \
             Colour._replace_components(Colour.from_hsva, self.to_hsva(), (h, s, v, a))
     #end replace_hsva
 
     def replace_hlsa(self, h = None, l = None, s = None, a = None) :
-        "returns a new Colour with the specified (h, l, s, a) components replaced with new values."
+        "returns a new Colour with the specified (h, l, s, a) components replaced with new" \
+        " values. Each arg can be a real number, or a function of a single real argument" \
+        " that, given the old component value, returns the new component value."
         return \
             Colour._replace_components(Colour.from_hlsa, self.to_hlsa(), (h, l, s, a))
     #end replace_hlsa
 
     def replace_yiqa(self, y = None, i = None, q = None, a = None) :
-        "returns a new Colour with the specified (y, i, q, a) components replaced with new values."
+        "returns a new Colour with the specified (y, i, q, a) components replaced with new" \
+        " values. Each arg can be a real number, or a function of a single real argument" \
+        " that, given the old component value, returns the new component value."
         return \
             Colour._replace_components(Colour.from_yiqa, self.to_yiqa(), (y, i, q, a))
     #end replace_yiqa
