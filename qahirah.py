@@ -4157,52 +4157,43 @@ class Colour :
             self.__class__._convert_space(self, colorsys.rgb_to_yiq, self.YIQA)
     #end to_yiqa
 
+    @staticmethod
+    def _replace_components(construct, old_components, new_components) :
+        # replaces components in 4-tuple old_components with corresponding values
+        # from new_components where latter are not None, and passes resulting
+        # tuple to construct, returning the result.
+        return \
+            construct \
+              (
+                c2[j] if c2[j] != None else c1[j]
+                for c1 in (old_components,)
+                for c2 in (new_components,)
+                for j in range(4)
+              )
+    #end _replace_components
+
     def replace_rgba(self, r = None, g = None, b = None, a = None) :
         "returns a new Colour with the specified (r, g, b, a) components replaced with new values."
         return \
-            Colour.from_rgba \
-              (
-                c2[j] if c2[j] != None else c1[j]
-                for c1 in (self.to_rgba(),)
-                for c2 in ((r, g, b, a),)
-                for j in range(4)
-              )
+            Colour._replace_components(Colour.from_rgba, self.to_rgba(), (r, g, b, a))
     #end replace_rgba
 
     def replace_hsva(self, h = None, s = None, v = None, a = None) :
         "returns a new Colour with the specified (h, s, v, a) components replaced with new values."
         return \
-            Colour.from_hsva \
-              (
-                c2[j] if c2[j] != None else c1[j]
-                for c1 in (self.to_hsva(),)
-                for c2 in ((h, s, v, a),)
-                for j in range(4)
-              )
+            Colour._replace_components(Colour.from_hsva, self.to_hsva(), (h, s, v, a))
     #end replace_hsva
 
     def replace_hlsa(self, h = None, l = None, s = None, a = None) :
         "returns a new Colour with the specified (h, l, s, a) components replaced with new values."
         return \
-            Colour.from_hlsa \
-              (
-                c2[j] if c2[j] != None else c1[j]
-                for c1 in (self.to_hlsa(),)
-                for c2 in ((h, l, s, a),)
-                for j in range(4)
-              )
+            Colour._replace_components(Colour.from_hlsa, self.to_hlsa(), (h, l, s, a))
     #end replace_hlsa
 
     def replace_yiqa(self, y = None, i = None, q = None, a = None) :
         "returns a new Colour with the specified (y, i, q, a) components replaced with new values."
         return \
-            Colour.from_yiqa \
-              (
-                c2[j] if c2[j] != None else c1[j]
-                for c1 in (self.to_yiqa(),)
-                for c2 in ((y, i, q, a),)
-                for j in range(4)
-              )
+            Colour._replace_components(Colour.from_yiqa, self.to_yiqa(), (y, i, q, a))
     #end replace_yiqa
 
     def combine(self, other, rgb_func, alpha_func) :
