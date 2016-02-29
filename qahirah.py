@@ -5538,14 +5538,16 @@ class Path :
     #end from_ft_outline
 
     @staticmethod
-    def create_arc(centre, radius, angle1, angle2, negative) :
+    def create_arc(centre, radius, angle1, angle2, negative, closed = False) :
         "creates a Path consisting of a segment of a circular arc as constructed" \
         " by Context.arc."
+        g = Context.create_for_dummy()
+        g.arc(centre, radius, angle1, angle2, negative)
+        if closed :
+            g.close_path()
+        #end if
         return \
-            (Context.create_for_dummy()
-                .arc(centre, radius, angle1, angle2, negative)
-                .copy_path()
-            )
+                g.copy_path()
     #end create_arc
 
     def to_elements(self, relative = False) :
