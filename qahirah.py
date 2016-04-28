@@ -2103,7 +2103,7 @@ default_tolerance = 0.1 # for flattening paths
 #-
 
 class Context :
-    "a Cairo drawing context. Do not instantiate directly; use the create method." \
+    "a Cairo drawing context. Do not instantiate directly; use the create methods." \
     " Many methods return the context to allow method chaining."
     # <http://cairographics.org/manual/cairo-cairo-t.html>
 
@@ -2747,7 +2747,7 @@ class Context :
         " direction (if not negative) or the positive-y-to-positive-x direction" \
         " (if negative). centre can be a Vector or a tuple of 2 coord values."
         centre = Vector.from_tuple(centre)
-        getattr(cairo, ("cairo_arc", "cairo_arc_negative")[negative])\
+        getattr(cairo, ("cairo_arc", "cairo_arc_negative")[negative]) \
             (self._cairobj, centre.x, centre.y, radius, angle1, angle2)
         return \
             self
