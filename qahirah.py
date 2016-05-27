@@ -10,7 +10,7 @@ and Context.set_line_width() calls, there is a Context.line_width property
 that may be read and written.
 """
 #+
-# Copyright 2015 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
+# Copyright 2015, 2016 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 # Licensed under the GNU Lesser General Public License v2.1 or later.
 #-
 
@@ -676,6 +676,8 @@ cairo.cairo_in_stroke.restype = ct.c_bool
 cairo.cairo_in_stroke.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
 cairo.cairo_copy_page.argtypes = (ct.c_void_p,)
 cairo.cairo_show_page.argtypes = (ct.c_void_p,)
+cairo.cairo_get_reference_count.restype = ct.c_uint
+cairo.cairo_get_reference_count.argtypes = (ct.c_void_p,)
 
 cairo.cairo_path_destroy.argtypes = (ct.c_void_p,)
 
@@ -689,9 +691,13 @@ cairo.cairo_get_font_options.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_set_font_face.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_get_font_face.restype = ct.c_void_p
 cairo.cairo_get_font_face.argtypes = (ct.c_void_p,)
+cairo.cairo_font_face_get_reference_count.restype = ct.c_uint
+cairo.cairo_font_face_get_reference_count.argtypes = (ct.c_void_p,)
 cairo.cairo_set_scaled_font.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_get_scaled_font.restype = ct.c_void_p
 cairo.cairo_get_scaled_font.argtypes = (ct.c_void_p,)
+cairo.cairo_scaled_font_get_reference_count.restype = ct.c_uint
+cairo.cairo_scaled_font_get_reference_count.argtypes = (ct.c_void_p,)
 
 cairo.cairo_user_font_face_create.restype = ct.c_void_p
 cairo.cairo_user_font_face_set_init_func.argtypes = (ct.c_void_p, ct.c_void_p)
@@ -717,6 +723,8 @@ cairo.cairo_glyph_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_v
 cairo.cairo_device_reference.restype = ct.c_void_p
 cairo.cairo_device_reference.argtypes = (ct.c_void_p,)
 cairo.cairo_device_destroy.argtypes = (ct.c_void_p,)
+cairo.cairo_device_get_reference_count.restype = ct.c_uint
+cairo.cairo_device_get_reference_count.argtypes = (ct.c_void_p,)
 
 cairo.cairo_surface_status.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_get_type.argtypes = (ct.c_void_p,)
@@ -749,6 +757,8 @@ cairo.cairo_surface_copy_page.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_show_page.argtypes = (ct.c_void_p,)
 cairo.cairo_surface_has_show_text_glyphs.restype = ct.c_bool
 cairo.cairo_surface_has_show_text_glyphs.argtypes = (ct.c_void_p,)
+cairo.cairo_surface_get_reference_count.restype = ct.c_uint
+cairo.cairo_surface_get_reference_count.argtypes = (ct.c_void_p,)
 
 cairo.cairo_format_stride_for_width.argtypes = (ct.c_int, ct.c_int)
 cairo.cairo_image_surface_create.restype = ct.c_void_p
@@ -848,6 +858,8 @@ cairo.cairo_pattern_get_surface.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_pattern_get_matrix.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_pattern_set_matrix.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_pattern_create_mesh.restype = ct.c_void_p
+cairo.cairo_pattern_get_reference_count.restype = ct.c_uint
+cairo.cairo_pattern_get_reference_count.argtypes = (ct.c_void_p,)
 cairo.cairo_mesh_pattern_begin_patch.argtypes = (ct.c_void_p,)
 cairo.cairo_mesh_pattern_end_patch.argtypes = (ct.c_void_p,)
 cairo.cairo_mesh_pattern_move_to.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
@@ -891,6 +903,7 @@ cairo.cairo_region_union.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_region_union_rectangle.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_region_xor.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_region_xor_rectangle.argtypes = (ct.c_void_p, ct.c_void_p)
+# no cairo.cairo_region_get_reference_count!
 
 cairo.cairo_font_options_status.argtypes = (ct.c_void_p,)
 cairo.cairo_font_options_create.restype = ct.c_void_p
@@ -2124,6 +2137,9 @@ class Context :
             self._check()
             self._user_data = {}
             celf._instances[_cairobj] = self
+        else :
+            cairo.cairo_destroy(self._cairobj)
+              # lose extra reference created by caller
         #end if
         return \
             self
@@ -3202,6 +3218,9 @@ class Surface :
             self._check()
             self._user_data = {}
             celf._instances[_cairobj] = self
+        else :
+            cairo.cairo_surface_destroy(self._cairobj)
+              # lose extra reference created by caller
         #end if
         return \
             self
@@ -4456,6 +4475,9 @@ class Pattern :
             self._check()
             self._user_data = {}
             celf._instances[_cairobj] = self
+        else :
+            cairo.cairo_pattern_destroy(self._cairobj)
+              # lose extra reference created by caller
         #end if
         return \
             self
@@ -4864,6 +4886,9 @@ class Region :
             self._check()
             # self._user_data = {} # not defined for regions
             celf._instances[_cairobj] = self
+        else :
+            cairo.cairo_region_destroy(self._cairobj)
+              # lose extra reference created by caller
         #end if
         return \
             self
@@ -5792,6 +5817,9 @@ class FontFace :
             self._check()
             self._user_data = {}
             celf._instances[_cairobj] = self
+        else :
+            cairo.cairo_font_face_destroy(self._cairobj)
+              # lose extra reference created by caller
         #end if
         return \
             self
@@ -6018,6 +6046,9 @@ class ScaledFont :
             self._check()
             self._user_data = {}
             celf._instances[_cairobj] = self
+        else :
+            cairo.cairo_scaled_font_destroy(self._cairobj)
+              # lose extra reference created by caller
         #end if
         return \
             self
