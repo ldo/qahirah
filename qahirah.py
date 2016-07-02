@@ -1703,6 +1703,13 @@ class Rect :
             celf(0, 0, pt.x, pt.y)
     #end from_dimensions
 
+    @classmethod
+    def from_text_extents(celf, te) :
+        "a Rect with top left at (te.x_bearing, te.y_bearing) and dimensions" \
+        " given by (te.width, te.height)."
+        return \
+            celf(te.x_bearing, te.y_bearing, te.width, te.height)
+    #end from_text_extents
     if HAS.ISCLOSE :
 
         def iscloseto(r1, r2, rel_tol = default_rel_tol, abs_tol = default_abs_tol) :
