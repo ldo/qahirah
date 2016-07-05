@@ -493,9 +493,10 @@ if HAS.ISCLOSE :
     default_abs_tol = 0
 #end if
 
-def def_struct_class(name, ctname) :
+def def_struct_class(name, ctname, extra = None) :
     # defines a class with attributes that are a straightforward mapping
-    # of a ctypes struct.
+    # of a ctypes struct. Optionally includes extra members from extra
+    # if specified.
 
     ctstruct = getattr(CAIRO, ctname)
 
@@ -561,6 +562,13 @@ def def_struct_class(name, ctname) :
                 ", ".join(f[0] for f in ctstruct._fields_),
             )
         )
+    if extra != None :
+        for attr in dir(extra) :
+            if not attr.startswith("__") :
+                setattr(result_class, attr, getattr(extra, attr))
+            #end if
+        #end for
+    #end if
     return \
         result_class
 #end def_struct_class
@@ -1703,13 +1711,7 @@ class Rect :
             celf(0, 0, pt.x, pt.y)
     #end from_dimensions
 
-    @classmethod
-    def from_text_extents(celf, te) :
-        "a Rect with top left at (te.x_bearing, te.y_bearing) and dimensions" \
-        " given by (te.width, te.height)."
         return \
-            celf(te.x_bearing, te.y_bearing, te.width, te.height)
-    #end from_text_extents
     if HAS.ISCLOSE :
 
         def iscloseto(r1, r2, rel_tol = default_rel_tol, abs_tol = default_abs_tol) :
@@ -6574,10 +6576,30 @@ FontExtents = def_struct_class \
     name = "FontExtents",
     ctname = "font_extents_t"
   )
+class TextExtentsExtra :
+    # extra members for TextExtents class.
+
+    @property
+    def bounds(self) :
+        "returns the bounds of the text_extents as a Rect."
+        return \
+            Rect(self.x_bearing, self.y_bearing, self.width, self.height)
+    #end bounds
+
+    @property
+    def advance(self) :
+        "returns the x- and y-advance of the text_extents as a Vector."
+        return \
+            Vector(self.x_advance, self.y_advance)
+    #end advance
+
+#end TextExtentsExtra
 TextExtents = def_struct_class \
   (
     name = "TextExtents",
-    ctname = "text_extents_t"
+    ctname = "text_extents_t",
+    extra = TextExtentsExtra
   )
+del TextExtentsExtra
 
 del def_struct_class # my work is done
