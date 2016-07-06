@@ -1498,7 +1498,7 @@ class Matrix :
                 m = m.inv()
                 p = -p
             #end if
-            result = m.__class__.identity()
+            result = m.__class__.identity
             # O(N) exponentiation algorithm should be good enough for small
             # powers, not expecting large ones
             for i in range(p) :
