@@ -1210,7 +1210,7 @@ class Vector :
             %
                 {"fmt" : ("g", "d")[self.isint()]}
             %
-                (self.__class__.__name__, self.x, self.y)
+                (type(self).__name__, self.x, self.y)
             )
     #end __repr__
 
@@ -1251,13 +1251,13 @@ class Vector :
         return \
             (
                 lambda : NotImplemented,
-                lambda : v1.__class__(v1.x + v2.x, v1.y + v2.y)
+                lambda : type(v1)(v1.x + v2.x, v1.y + v2.y)
             )[isinstance(v2, Vector)]()
     #end __add__
 
     def __neg__(self) :
         "reflect across origin."
-        return self.__class__ \
+        return type(self) \
           (
             x = - self.x,
             y = - self.y
@@ -1269,16 +1269,16 @@ class Vector :
         return \
             (
                 lambda : NotImplemented,
-                lambda : v1.__class__(v1.x - v2.x, v1.y - v2.y)
+                lambda : type(v1)(v1.x - v2.x, v1.y - v2.y)
             )[isinstance(v2, Vector)]()
     #end __sub__
 
     def __mul__(v, f) :
         "scale a Vector uniformly by a number or non-uniformly by another Vector."
         if isinstance(f, Vector) :
-            result = v.__class__(v.x * f.x, v.y * f.y)
+            result = type(v)(v.x * f.x, v.y * f.y)
         elif isinstance(f, Number) :
-            result = v.__class__(v.x * f, v.y * f)
+            result = type(v)(v.x * f, v.y * f)
         else :
             result = NotImplemented
         #end if
@@ -1290,9 +1290,9 @@ class Vector :
     def __truediv__(v, f) :
         "inverse-scale a Vector uniformly by a number or non-uniformly by another Vector."
         if isinstance(f, Vector) :
-            result = v.__class__(v.x / f.x, v.y / f.y)
+            result = type(v)(v.x / f.x, v.y / f.y)
         elif isinstance(f, Number) :
-            result = v.__class__(v.x / f, v.y / f)
+            result = type(v)(v.x / f, v.y / f)
         else :
             result = NotImplemented
         #end if
@@ -1306,9 +1306,9 @@ class Vector :
         v.assert_isint()
         if isinstance(f, Vector) :
             f.assert_isint()
-            result = v.__class__(v.x // f.x, v.y // f.y)
+            result = type(v)(v.x // f.x, v.y // f.y)
         elif isinstance(f, int) :
-            result = v.__class__(v.x // f, v.y // f)
+            result = type(v)(v.x // f, v.y // f)
         else :
             result = NotImplemented
         #end if
@@ -1319,9 +1319,9 @@ class Vector :
     def __mod__(v, f) :
         "remainder on division of one Vector by another."
         if isinstance(f, Vector) :
-            result = v.__class__(v.x % f.x, v.y % f.y)
+            result = type(v)(v.x % f.x, v.y % f.y)
         elif isinstance(f, Number) :
-            result = v.__class__(v.x % f, v.y % f)
+            result = type(v)(v.x % f, v.y % f)
         else :
             result = NotImplemented
         #end if
@@ -1332,19 +1332,19 @@ class Vector :
     def __round__(self) :
         "returns the Vector with all coordinates rounded to integers."
         return \
-            self.__class__(round(self.x), round(self.y))
+            type(self)(round(self.x), round(self.y))
     #end __round__
 
     def __floor__(self) :
         "returns the Vector with all coordinates rounded down to integers."
         return \
-            self.__class__(math.floor(self.x), math.floor(self.y))
+            type(self)(math.floor(self.x), math.floor(self.y))
     #end __floor__
 
     def __ceil__(self) :
         "returns the Vector with all coordinates rounded up to integers."
         return \
-            self.__class__(math.ceil(self.x), math.ceil(self.y))
+            type(self)(math.ceil(self.x), math.ceil(self.y))
     #end __ceil__
 
     @classmethod
@@ -1372,7 +1372,7 @@ class Vector :
         cos = math.cos(angle)
         sin = math.sin(angle)
         return \
-            self.__class__(self.x * cos - self.y * sin, self.x * sin + self.y * cos)
+            type(self)(self.x * cos - self.y * sin, self.x * sin + self.y * cos)
     #end rotate
 
     def __abs__(self) :
@@ -1390,7 +1390,7 @@ class Vector :
     def norm(self) :
         "returns the unit Vector in the same direction as this one."
         return \
-            self.__class__.unit(self.angle())
+            type(self).unit(self.angle())
     #end norm
 
     @classmethod
@@ -1468,7 +1468,7 @@ class Matrix :
     def __mul__(m1, m2) :
         "returns concatenation with another Matrix, or mapping of a Vector."
         if isinstance(m2, Matrix) :
-            result = m1.__class__ \
+            result = type(m1) \
               (
                 xx = m1.xx * m2.xx + m1.xy * m2.yx,
                 yx = m1.yx * m2.xx + m1.yy * m2.yx,
@@ -1478,7 +1478,7 @@ class Matrix :
                 y0 = m1.yx * m2.x0 + m1.yy * m2.y0 + m1.y0,
               )
         elif isinstance(m2, Vector) :
-            result = m2.__class__ \
+            result = type(m2) \
               (
                 x = m2.x * m1.xx + m2.y * m1.xy + m1.x0,
                 y = m2.x * m1.yx + m2.y * m1.yy + m1.y0
@@ -1498,7 +1498,7 @@ class Matrix :
                 m = m.inv()
                 p = -p
             #end if
-            result = m.__class__.identity
+            result = type(m).identity
             # O(N) exponentiation algorithm should be good enough for small
             # powers, not expecting large ones
             for i in range(p) :
@@ -1577,7 +1577,7 @@ class Matrix :
 
     def adj(self) :
         "matrix adjoint."
-        return self.__class__ \
+        return type(self) \
           (
             xx = self.yy,
             yx = - self.yx,
@@ -1593,7 +1593,7 @@ class Matrix :
         # computed using minors <http://mathworld.wolfram.com/MatrixInverse.html>
         adj = self.adj()
         det = self.det()
-        return self.__class__ \
+        return type(self) \
           (
             xx = adj.xx / det,
             yx = adj.yx / det,
@@ -1608,7 +1608,7 @@ class Matrix :
     def map(self, pt) :
         "maps a Vector through the Matrix."
         pt = Vector.from_tuple(pt)
-        return pt.__class__ \
+        return type(pt) \
           (
             x = pt.x * self.xx + pt.y * self.xy + self.x0,
             y = pt.x * self.yx + pt.y * self.yy + self.y0
@@ -1618,7 +1618,7 @@ class Matrix :
     def mapdelta(self, pt) :
         "maps a Vector through the Matrix, ignoring the translation part."
         pt = Vector.from_tuple(pt)
-        return pt.__class__ \
+        return type(pt) \
           (
             x = pt.x * self.xx + pt.y * self.xy,
             y = pt.x * self.yx + pt.y * self.yy
@@ -1648,7 +1648,7 @@ class Matrix :
                 "%s(%g, %g, %g, %g, %g, %g)"
             %
                 (
-                    self.__class__.__name__,
+                    type(self).__name__,
                     self.xx, self.yx,
                     self.xy, self.yy,
                     self.x0, self.y0,
@@ -1794,13 +1794,13 @@ class Rect :
     def __round__(self) :
         "returns the Rect with all corner coordinates rounded to integers."
         return \
-            self.__class__.from_corners(round(self.topleft), round(self.botright))
+            type(self).from_corners(round(self.topleft), round(self.botright))
     #end __round__
 
     def __add__(self, v) :
         "add a Rect to a Vector to return the Rect offset by the Vector."
         if isinstance(v, Vector) :
-            result = self.__class__(self.left + v.x, self.top + v.y, self.width, self.height)
+            result = type(self)(self.left + v.x, self.top + v.y, self.width, self.height)
         else :
             result = NotImplemented
         #end if
@@ -1812,7 +1812,7 @@ class Rect :
         "subtract a Vector from a Rect to return the Rect offset in the" \
         " opposite direction to the Vector."
         if isinstance(v, Vector) :
-            result = self.__class__(self.left - v.x, self.top - v.y, self.width, self.height)
+            result = type(self)(self.left - v.x, self.top - v.y, self.width, self.height)
         else :
             result = NotImplemented
         #end if
@@ -1823,9 +1823,9 @@ class Rect :
     def __mul__(self, f) :
         "scale a Rect uniformly by a number or non-uniformly by a Vector."
         if isinstance(f, Vector) :
-            result = self.__class__(self.left * f.x, self.top * f.y, self.width * f.x, self.height * f.y)
+            result = type(self)(self.left * f.x, self.top * f.y, self.width * f.x, self.height * f.y)
         elif isinstance(f, Number) :
-            result = self.__class__(self.left * f, self.top * f, self.width * f, self.height * f)
+            result = type(self)(self.left * f, self.top * f, self.width * f, self.height * f)
         else :
             result = NotImplemented
         #end if
@@ -1837,9 +1837,9 @@ class Rect :
     def __div__(self, f) :
         "invserse-scale a Rect uniformly by a number or non-uniformly by a Vector."
         if isinstance(f, Vector) :
-            result = self.__class__(self.left / f.x, self.top / f.y, self.width / f.x, self.height / f.y)
+            result = type(self)(self.left / f.x, self.top / f.y, self.width / f.x, self.height / f.y)
         elif isinstance(f, Number) :
-            result = self.__class__(self.left / f, self.top / f, self.width / f, self.height / f)
+            result = type(self)(self.left / f, self.top / f, self.width / f, self.height / f)
         else :
             result = NotImplemented
         #end if
@@ -1891,7 +1891,7 @@ class Rect :
                 botleft.x == topleft.x
             )
         return \
-            self.__class__.from_corners(topleft, botright)
+            type(self).from_corners(topleft, botright)
     #end transform
 
     def union(r1, r2) :
@@ -1903,7 +1903,7 @@ class Rect :
         else :
             vmin = Vector(min(r1.left, r2.left), min(r1.top, r2.top))
             vmax = Vector(max(r1.left + r1.width, r2.left + r2.width), max(r1.top + r1.height, r2.top + r2.height))
-            result = r1.__class__.from_corners(vmin, vmax)
+            result = type(r1).from_corners(vmin, vmax)
         #end if
         return \
             result
@@ -1920,7 +1920,7 @@ class Rect :
         else :
             vmin = Vector(max(r1.left, r2.left), max(r1.top, r2.top))
             vmax = Vector(min(r1.right, r2.right), min(r1.bottom, r2.bottom))
-            result = r1.__class__.from_corners(vmin, vmax)
+            result = type(r1).from_corners(vmin, vmax)
         #end if
         return \
             result
@@ -1968,7 +1968,7 @@ class Rect :
             %
                 {"fmt" : ("g", "d") [self.isint()]}
             %
-                (self.__class__.__name__, self.left, self.top, self.width, self.height)
+                (type(self).__name__, self.left, self.top, self.width, self.height)
             )
     #end __repr__
 
@@ -1997,7 +1997,7 @@ class Rect :
         " (use negative values to outset)."
         dx, dy = Vector.from_tuple(v)
         return \
-            self.__class__(self.left + dx, self.top + dy, self.width - 2 * dx, self.height - 2 * dy)
+            type(self)(self.left + dx, self.top + dy, self.width - 2 * dx, self.height - 2 * dy)
     #end inset
 
     def position(self, relpt, halign = None, valign = None) :
@@ -2016,7 +2016,7 @@ class Rect :
         if valign != None :
             top = relpt.y - interp(valign, 0, self.height)
         #end if
-        return self.__class__(left = left, top = top, width = self.width, height = self.height)
+        return type(self)(left = left, top = top, width = self.width, height = self.height)
     #end position
 
     def align(self, within, halign = None, valign = None) :
@@ -2035,7 +2035,7 @@ class Rect :
         if valign != None :
             top = interp(valign, within.top, within.top + within.height - self.height)
         #end if
-        return self.__class__(left = left, top = top, width = self.width, height = self.height)
+        return type(self)(left = left, top = top, width = self.width, height = self.height)
     #end align
 
     def transform_to(src, dst) :
@@ -4075,7 +4075,7 @@ class Colour :
 
     def __repr__(self) :
         return \
-            "%s%s" % (self.__class__.__name__, repr(tuple(self)))
+            "%s%s" % (type(self).__name__, repr(tuple(self)))
     #end __repr__
 
     if HAS.ISCLOSE :
@@ -4171,19 +4171,19 @@ class Colour :
     def to_hsva(self) :
         "returns an (h, s, v, a) namedtuple."
         return \
-            self.__class__._convert_space(self, colorsys.rgb_to_hsv, self.HSVA)
+            type(self)._convert_space(self, colorsys.rgb_to_hsv, self.HSVA)
     #end to_hsva
 
     def to_hlsa(self) :
         "returns an (h, l, s, a) namedtuple."
         return \
-            self.__class__._convert_space(self, colorsys.rgb_to_hls, self.HLSA)
+            type(self)._convert_space(self, colorsys.rgb_to_hls, self.HLSA)
     #end to_hlsa
 
     def to_yiqa(self) :
         "returns a (y, i, q, a) namedtuple."
         return \
-            self.__class__._convert_space(self, colorsys.rgb_to_yiq, self.YIQA)
+            type(self)._convert_space(self, colorsys.rgb_to_yiq, self.YIQA)
     #end to_yiqa
 
     @staticmethod
@@ -4245,7 +4245,7 @@ class Colour :
         " colour component. alpha_func takes two arguments (aa, ba), being the alpha" \
         " values, and returns the new alpha."
         return \
-            self.__class__ \
+            type(self) \
               (
                 r = rgb_func(self.r, self.a, other.r, other.a),
                 g = rgb_func(self.g, self.a, other.g, other.a),
@@ -4352,7 +4352,7 @@ class Colour :
             colours = {}
             seen = set() # so I prefer unconverted names in case of duplicate entries
               # (not that there actually are any duplicate entries)
-            NamedColour = self.__class__.NamedColour
+            NamedColour = type(self).NamedColour
             try :
                 for line in open(self.colours_filename, "r") :
                     if not line.startswith("!") :
@@ -4384,8 +4384,8 @@ class Colour :
             self._colours = colours
             # easier reference to inner class names
             self.NamedColour = NamedColour
-            self.DictView = self.__class__.DictView
-            self.__class__._load = lambda self : None # you don’t need me any more
+            self.DictView = type(self).DictView
+            type(self)._load = lambda self : None # you don’t need me any more
         #end _load
 
         # add whatever dict-like methods are useful below
@@ -5341,7 +5341,7 @@ class Path :
 
         def __repr__(self) :
             return \
-                "%s(%s)" % (self.__class__.__name__, ", ".join(repr(tuple(p)) for p in self.points))
+                "%s(%s)" % (type(self).__name__, ", ".join(repr(tuple(p)) for p in self.points))
         #end __repr__
 
     #end Element
