@@ -1711,7 +1711,6 @@ class Rect :
             celf(0, 0, pt.x, pt.y)
     #end from_dimensions
 
-        return \
     if HAS.ISCLOSE :
 
         def iscloseto(r1, r2, rel_tol = default_rel_tol, abs_tol = default_abs_tol) :
