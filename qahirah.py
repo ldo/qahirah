@@ -1711,6 +1711,31 @@ class Rect :
             celf(0, 0, pt.x, pt.y)
     #end from_dimensions
 
+    def flip(self, flip_x = True, flip_y = True) :
+        "returns a Rect describing the same bounds, but with the sign" \
+        " of the width or height flipped, and topleft transposed" \
+        " accordingly."
+        return \
+            type(self) \
+              (
+                (self.left, self.right)[flip_x],
+                (self.top, self.bottom)[flip_y],
+                (self.width, - self.width)[flip_x],
+                (self.height, - self.height)[flip_y],
+              )
+    #end flip
+
+    def abs(self, flip_x = True, flip_y = True) :
+        "returns a Rect describing the same bounds, ensuring that the" \
+        " width or height (or both) are non-negative."
+        return \
+            self.flip \
+              (
+                flip_x = flip_x and self.width < 0,
+                flip_y = flip_y and self.height < 0
+              )
+    #end abs
+
     if HAS.ISCLOSE :
 
         def iscloseto(r1, r2, rel_tol = default_rel_tol, abs_tol = default_abs_tol) :
