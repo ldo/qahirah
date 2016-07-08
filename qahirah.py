@@ -1822,6 +1822,22 @@ class Rect :
             type(self).from_corners(round(self.topleft), round(self.botright))
     #end __round__
 
+    def __floor__(self) :
+        "returns the Rect with the top-left rounded up and the bottom-right" \
+        " rounded down to integers. This gives the largest Rect with integer" \
+        " coordinates that fits within the original."
+        return \
+            type(self).from_corners(math.ceil(self.topleft), math.floor(self.botright))
+    #end __floor__
+
+    def __ceil__(self) :
+        "returns the Rect with the top-left rounded down and the bottom-right" \
+        " rounded up to integers. This gives the smallest Rect with integer" \
+        " coordinates that encloses the original."
+        return \
+            type(self).from_corners(math.floor(self.topleft), math.ceil(self.botright))
+    #end __ceil__
+
     def __add__(self, v) :
         "add a Rect to a Vector to return the Rect offset by the Vector."
         if isinstance(v, Vector) :
