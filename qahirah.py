@@ -3523,6 +3523,8 @@ class ImageSurface(Surface) :
 
     __slots__ = ("_arr",) # to forestall typos
 
+    max_dimensions = Vector(32767, 32767) # largest image Cairo will let me create
+
     @staticmethod
     def create(format, dimensions) :
         "creates a new ImageSurface with dynamically-allocated memory for the pixels." \
