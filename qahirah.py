@@ -2856,7 +2856,7 @@ class Context :
 
     def glyph_path(self, glyphs) :
         "glyphs is a sequence of Glyph objects; appends the glyph outlines to" \
-        " the current path."
+        " the current path at the specified positions."
         buf, nr_glyphs = glyphs_to_cairo(glyphs)
         cairo.cairo_glyph_path(self._cairobj, ct.byref(buf), nr_glyphs)
         return \
@@ -3151,7 +3151,7 @@ class Context :
 
     def show_glyphs(self, glyphs) :
         "glyphs must be a sequence of Glyph objects, to be rendered starting" \
-        " at the current point."
+        " at the specified positions."
         buf, nr_glyphs = glyphs_to_cairo(glyphs)
         cairo.cairo_show_glyphs(self._cairobj, ct.byref(buf), nr_glyphs)
         return \
