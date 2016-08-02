@@ -21,6 +21,8 @@ from numbers import \
     Number
 from collections import \
     namedtuple
+from io import \
+    BytesIO
 import colorsys
 import array
 import ctypes as ct
@@ -3483,7 +3485,7 @@ class Surface :
             self
     #end write_to_png
 
-    def write_to_png_stream(self, write_func, closure) :
+    def _write_to_png_stream(self, write_func, closure) :
         "direct low-level interface to cairo_image_surface_write_to_png_stream." \
         " write_func must match signature of CAIRO.write_func_t, while closure is a" \
         " ctypes.c_void_p."
@@ -3491,28 +3493,23 @@ class Surface :
         check(cairo.cairo_surface_write_to_png_stream(self._cairobj, c_write_func, closure))
         return \
             self
+    #end _write_to_png_stream
+
+    def write_to_png_stream(self, s):
+        "writes the contents of the Surface as PNG to the file like object s."
+        def w(_, data_p, size):
+            data = ct.string_at(data_p, size)
+            s.write(data)
+            return CAIRO.STATUS_SUCCESS
+        return self._write_to_png_stream(w, None)
     #end write_to_png_stream
 
     def to_png_bytes(self) :
         "converts the contents of the Surface to a sequence of PNG bytes which" \
         " is returned."
-
-        offset = 0
-
-        def write_data(_, data, length) :
-            nonlocal offset
-            result.extend(length * (0,))
-            libc.memcpy(result.buffer_info()[0] + offset, data, length)
-            offset += length
-            return \
-                CAIRO.STATUS_SUCCESS
-        #end write_data
-
-    #begin to_png_bytes
-        result = array.array("B")
-        self.write_to_png_stream(write_data, None)
-        return \
-            result.tobytes()
+        b = BytesIO()
+        self.write_to_png_stream(b)
+        return b.getvalue()
     #end to_png_bytes
 
 #end Surface
