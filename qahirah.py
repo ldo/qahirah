@@ -21,6 +21,7 @@ from numbers import \
     Number
 from collections import \
     namedtuple
+import io
 import colorsys
 import array
 import ctypes as ct
@@ -3490,26 +3491,39 @@ class Surface :
             self
     #end write_to_png_stream
 
+    def write_to_png_file(self, outfile) :
+        "converts the contents of the Surface to a sequence of PNG bytes which" \
+        " is written to the specified file-like object. For io.IOBase and subclasses," \
+        " this should be faster than using write_to_png_stream."
+
+        def write_data(_, data, length) :
+            s = ct.string_at(data, length)
+            outfile.write(s)
+            return \
+                CAIRO.STATUS_SUCCESS
+        #end write_data
+
+    #begin write_to_png_file
+        self.write_to_png_stream(write_data, None)
+    #end write_to_png_file
+
     def to_png_bytes(self) :
         "converts the contents of the Surface to a sequence of PNG bytes which" \
         " is returned."
 
-        offset = 0
+        buf = None
 
         def write_data(_, data, length) :
-            nonlocal offset
-            result.extend(length * (0,))
-            ct.memmove(result.buffer_info()[0] + offset, data, length)
-            offset += length
+            s = ct.string_at(data, length)
             return \
                 CAIRO.STATUS_SUCCESS
         #end write_data
 
     #begin to_png_bytes
-        result = array.array("B")
+        buf = io.BytesIO()
         self.write_to_png_stream(write_data, None)
         return \
-            result.tobytes()
+            buf.getvalue()
     #end to_png_bytes
 
 #end Surface
@@ -3556,7 +3570,7 @@ class ImageSurface(Surface) :
 
     @classmethod
     def create_from_png_bytes(celf, data) :
-        "creates an ImageSurface from a PNG format data sequence. This can be" \
+        "creates an ImageSurface from a PNG-format data sequence. This can be" \
         " of the bytes or bytearray types, or an array.array with \"B\" type code."
 
         offset = 0
