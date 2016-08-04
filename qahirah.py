@@ -514,10 +514,10 @@ def def_struct_class(name, ctname, extra = None) :
                 result
         #end to_cairo
 
-        @staticmethod
-        def from_cairo(r) :
+        @classmethod
+        def from_cairo(celf, r) :
             "decodes the Cairo representation of the structure."
-            result = result_class()
+            result = celf()
             for name, cttype in ctstruct._fields_ :
                 setattr(result, name, getattr(r, name))
             #end for
@@ -2194,22 +2194,22 @@ class Context :
             self
     #end __new__
 
-    @staticmethod
-    def create(surface) :
+    @classmethod
+    def create(celf, surface) :
         "creates a new Context that draws into the specified Surface."
         if not isinstance(surface, Surface) :
             raise TypeError("surface must be a Surface")
         #end if
         return \
-            Context(cairo.cairo_create(surface._cairobj))
+            celf(cairo.cairo_create(surface._cairobj))
     #end create
 
-    @staticmethod
-    def create_for_dummy() :
+    @classmethod
+    def create_for_dummy(celf) :
         "creates a new Context that draws into a 0×0-pixel ImageSurface." \
         " This is useful for doing path/text calculations without drawing."
         return \
-            Context.create \
+            celf.create \
               (
                 ImageSurface.create
                   (
@@ -3294,7 +3294,7 @@ class Surface :
         " compatible as possible with this one. content is a CAIRO.CONTENT_xxx value."
         dimensions = round(Vector.from_tuple(dimensions))
         return \
-            Surface(cairo.cairo_surface_create_similar(self._cairobj, content, dimensions.x, dimensions.y))
+            type(self)(cairo.cairo_surface_create_similar(self._cairobj, content, dimensions.x, dimensions.y))
             # fixme: need to choose right Surface subclass based on result surface type
     #end create_similar
 
@@ -3525,40 +3525,40 @@ class ImageSurface(Surface) :
 
     max_dimensions = Vector(32767, 32767) # largest image Cairo will let me create
 
-    @staticmethod
-    def create(format, dimensions) :
+    @classmethod
+    def create(celf, format, dimensions) :
         "creates a new ImageSurface with dynamically-allocated memory for the pixels." \
         " dimensions can be a Vector or a (width, height) tuple."
         dimensions = Vector.from_tuple(dimensions).assert_isint()
         return \
-            ImageSurface(cairo.cairo_image_surface_create(format, dimensions.x, dimensions.y))
+            celf(cairo.cairo_image_surface_create(format, dimensions.x, dimensions.y))
     #end create
 
     def create_like(self) :
         "convenience method which creates an ImageSurface with the same format and" \
         " dimensions as this one."
         return \
-            ImageSurface.create(self.format, self.dimensions)
+            type(self).create(self.format, self.dimensions)
     #end create_like
 
-    @staticmethod
-    def create_from_png(filename) :
+    @classmethod
+    def create_from_png(celf, filename) :
         "loads an image from a PNG file and creates an ImageSurface for it."
         return \
-            ImageSurface(cairo.cairo_image_surface_create_from_png(filename.encode("utf-8")))
+            celf(cairo.cairo_image_surface_create_from_png(filename.encode("utf-8")))
     #end create_from_png
 
-    @staticmethod
-    def create_from_png_stream(read_func, closure) :
+    @classmethod
+    def create_from_png_stream(celf, read_func, closure) :
         "direct low-level interface to cairo_image_surface_create_from_png_stream." \
         " read_func must match signature CAIRO.read_func_t, while closure is a ctypes.c_void_p."
         c_read_func = CAIRO.read_func_t(read_func)
         return \
-            ImageSurface(cairo.cairo_image_surface_create_from_png_stream(c_read_func, closure))
+            celf(cairo.cairo_image_surface_create_from_png_stream(c_read_func, closure))
     #end create_from_png_stream
 
-    @staticmethod
-    def create_from_png_bytes(data) :
+    @classmethod
+    def create_from_png_bytes(celf, data) :
         "creates an ImageSurface from a PNG format data sequence. This can be" \
         " of the bytes or bytearray types, or an array.array with \"B\" type code."
 
@@ -3585,29 +3585,29 @@ class ImageSurface(Surface) :
         #end if
         baseadr = data.buffer_info()[0]
         return \
-            ImageSurface.create_from_png_stream(read_data, None)
+            celf.create_from_png_stream(read_data, None)
     #end create_from_png_bytes
 
-    @staticmethod
-    def create_for_array(arr, format, dimensions, stride) :
+    @classmethod
+    def create_for_array(celf, arr, format, dimensions, stride) :
         "calls cairo_image_surface_create_for_data on arr, which must be" \
         " a Python array.array object."
         width, height = Vector.from_tuple(dimensions)
         address, length = arr.buffer_info()
         assert height * stride <= length * arr.itemsize
-        result = ImageSurface(cairo.cairo_image_surface_create_for_data(ct.c_void_p(address), format, width, height, stride))
+        result = celf(cairo.cairo_image_surface_create_for_data(ct.c_void_p(address), format, width, height, stride))
         result._arr = arr # to ensure it doesn't go away prematurely
         return \
             result
     #end create_for_array
 
-    @staticmethod
-    def create_for_data(data, format, dimensions, stride) :
+    @classmethod
+    def create_for_data(celf, data, format, dimensions, stride) :
         "LOW-LEVEL: calls cairo_image_surface_create_for_data with an arbitrary" \
         " data address."
         width, height = Vector.from_tuple(dimensions)
         return \
-            ImageSurface(cairo.cairo_image_surface_create_for_data(data, format, width, height, stride))
+            celf(cairo.cairo_image_surface_create_for_data(data, format, width, height, stride))
     #end create_for_data
 
     @property
@@ -3676,24 +3676,24 @@ class PDFSurface(Surface) :
 
     __slots__ = () # to forestall typos
 
-    @staticmethod
-    def create(filename, dimensions_in_points) :
+    @classmethod
+    def create(celf, filename, dimensions_in_points) :
         "creates a PDF surface that outputs to the specified file, with the dimensions" \
         " of each page given by the Vector dimensions_in_points."
         dimensions_in_points = Vector.from_tuple(dimensions_in_points)
         return \
-            PDFSurface(cairo.cairo_pdf_surface_create(filename.encode("utf-8"), dimensions_in_points.x, dimensions_in_points.y))
+            celf(cairo.cairo_pdf_surface_create(filename.encode("utf-8"), dimensions_in_points.x, dimensions_in_points.y))
     #end create
 
-    @staticmethod
-    def create_for_stream(write_func, closure, dimensions_in_points) :
+    @classmethod
+    def create_for_stream(celf, write_func, closure, dimensions_in_points) :
         "direct low-level interface to cairo_pdf_surface_create_for_stream." \
         " write_func must match signature of CAIRO.write_func_t, while closure is a" \
         " ctypes.c_void_p."
         dimensions_in_points = Vector.from_tuple(dimensions_in_points)
         c_write_func = CAIRO.write_func_t(write_func)
         return \
-            PDFSurface(cairo.cairo_pdf_surface_create_for_stream(c_write_func, closure, dimensions_in_points.x, dimensions_in_points.y))
+            celf(cairo.cairo_pdf_surface_create_for_stream(c_write_func, closure, dimensions_in_points.x, dimensions_in_points.y))
     #end create_for_stream
 
     def restrict_to_version(self, version) :
@@ -3747,24 +3747,24 @@ class PSSurface(Surface) :
 
     __slots__ = () # to forestall typos
 
-    @staticmethod
-    def create(filename, dimensions_in_points) :
+    @classmethod
+    def create(celf, filename, dimensions_in_points) :
         "creates a PostScript surface that outputs to the specified file, with the dimensions" \
         " of each page given by the Vector dimensions_in_points."
         dimensions_in_points = Vector.from_tuple(dimensions_in_points)
         return \
-            PSSurface(cairo.cairo_ps_surface_create(filename.encode("utf-8"), dimensions_in_points.x, dimensions_in_points.y))
+            celf(cairo.cairo_ps_surface_create(filename.encode("utf-8"), dimensions_in_points.x, dimensions_in_points.y))
     #end create
 
-    @staticmethod
-    def create_for_stream(write_func, closure, dimensions_in_points) :
+    @classmethod
+    def create_for_stream(celf, write_func, closure, dimensions_in_points) :
         "direct low-level interface to cairo_ps_surface_create_for_stream." \
         " write_func must match signature of CAIRO.write_func_t, while closure is a" \
         " ctypes.c_void_p."
         dimensions_in_points = Vector.from_tuple(dimensions_in_points)
         c_write_func = CAIRO.write_func_t(write_func)
         return \
-            PSSurface(cairo.cairo_ps_surface_create_for_stream(c_write_func, closure, dimensions_in_points.x, dimensions_in_points.y))
+            celf(cairo.cairo_ps_surface_create_for_stream(c_write_func, closure, dimensions_in_points.x, dimensions_in_points.y))
     #end create_for_stream
 
     def restrict_to_level(self, level) :
@@ -3865,8 +3865,8 @@ class RecordingSurface(Surface) :
 
     __slots__ = () # to forestall typos
 
-    @staticmethod
-    def create(content, extents = None) :
+    @classmethod
+    def create(celf, content, extents = None) :
         "content is a CAIRO.CONTENT_xxx value, and extents is an optional" \
         " Rect defining the drawing extents. If omitted, the extents are unbounded."
         if extents != None :
@@ -3876,7 +3876,7 @@ class RecordingSurface(Surface) :
             extentsarg = None
         #end if
         return \
-            RecordingSurface(cairo.cairo_recording_surface_create(content, extentsarg))
+            celf(cairo.cairo_recording_surface_create(content, extentsarg))
     #end create
 
     @property
@@ -3912,24 +3912,24 @@ class SVGSurface(Surface) :
 
     __slots__ = () # to forestall typos
 
-    @staticmethod
-    def create(filename, dimensions_in_points) :
+    @classmethod
+    def create(celf, filename, dimensions_in_points) :
         "creates an SVG surface that outputs to the specified file, with the dimensions" \
         " of each page given by the Vector dimensions_in_points."
         dimensions_in_points = Vector.from_tuple(dimensions_in_points)
         return \
-            SVGSurface(cairo.cairo_svg_surface_create(filename.encode("utf-8"), dimensions_in_points.x, dimensions_in_points.y))
+            celf(cairo.cairo_svg_surface_create(filename.encode("utf-8"), dimensions_in_points.x, dimensions_in_points.y))
     #end create
 
-    @staticmethod
-    def create_for_stream(write_func, closure, dimensions_in_points) :
+    @classmethod
+    def create_for_stream(celf, write_func, closure, dimensions_in_points) :
         "direct low-level interface to cairo_svg_surface_create_for_stream." \
         " write_func must match signature of CAIRO.write_func_t, while closure is a" \
         " ctypes.c_void_p."
         dimensions_in_points = Vector.from_tuple(dimensions_in_points)
         c_write_func = CAIRO.write_func_t(write_func)
         return \
-            SVGSurface(cairo.cairo_svg_surface_create_for_stream(c_write_func, closure, dimensions_in_points.x, dimensions_in_points.y))
+            celf(cairo.cairo_svg_surface_create_for_stream(c_write_func, closure, dimensions_in_points.x, dimensions_in_points.y))
     #end create_for_stream
 
     def restrict_to_version(self, version) :
@@ -4018,21 +4018,21 @@ class ScriptDevice(Device) :
 
     __slots__ = () # to forestall typos
 
-    @staticmethod
-    def create(filename) :
+    @classmethod
+    def create(celf, filename) :
         "creates a ScriptDevice that outputs to the specified file."
         return \
-            ScriptDevice(cairo.cairo_script_create(filename.encode("utf-8")))
+            celf(cairo.cairo_script_create(filename.encode("utf-8")))
     #end create
 
-    @staticmethod
-    def create_for_stream(write_func, closure) :
+    @classmethod
+    def create_for_stream(celf, write_func, closure) :
         "direct low-level interface to cairo_script_create_for_stream." \
         " write_func must match signature of CAIRO.write_func_t, while closure is a" \
         " ctypes.c_void_p."
         c_write_func = CAIRO.write_func_t(write_func)
         return \
-            ScriptDevice(cairo.cairo_script_create_for_stream(c_write_func, closure))
+            celf(cairo.cairo_script_create_for_stream(c_write_func, closure))
     #end create_for_stream
 
     def from_recording_surface(self, recording_surface) :
@@ -4253,7 +4253,7 @@ class Colour :
         " values. Each arg can be a real number, or a function of a single real argument" \
         " that, given the old component value, returns the new component value."
         return \
-            Colour._replace_components(Colour.from_rgba, self.to_rgba(), (r, g, b, a))
+            type(self)._replace_components(type(self).from_rgba, self.to_rgba(), (r, g, b, a))
     #end replace_rgba
 
     def replace_hsva(self, h = None, s = None, v = None, a = None) :
@@ -4261,7 +4261,7 @@ class Colour :
         " values. Each arg can be a real number, or a function of a single real argument" \
         " that, given the old component value, returns the new component value."
         return \
-            Colour._replace_components(Colour.from_hsva, self.to_hsva(), (h, s, v, a))
+            type(self)._replace_components(type(self).from_hsva, self.to_hsva(), (h, s, v, a))
     #end replace_hsva
 
     def replace_hlsa(self, h = None, l = None, s = None, a = None) :
@@ -4269,7 +4269,7 @@ class Colour :
         " values. Each arg can be a real number, or a function of a single real argument" \
         " that, given the old component value, returns the new component value."
         return \
-            Colour._replace_components(Colour.from_hlsa, self.to_hlsa(), (h, l, s, a))
+            type(self)._replace_components(type(self).from_hlsa, self.to_hlsa(), (h, l, s, a))
     #end replace_hlsa
 
     def replace_yiqa(self, y = None, i = None, q = None, a = None) :
@@ -4277,7 +4277,7 @@ class Colour :
         " values. Each arg can be a real number, or a function of a single real argument" \
         " that, given the old component value, returns the new component value."
         return \
-            Colour._replace_components(Colour.from_yiqa, self.to_yiqa(), (y, i, q, a))
+            type(self)._replace_components(type(self).from_yiqa, self.to_yiqa(), (y, i, q, a))
     #end replace_yiqa
 
     def combine(self, other, rgb_func, alpha_func) :
@@ -4582,11 +4582,11 @@ class Pattern :
             tuple(result)
     #end colour_stops
 
-    @staticmethod
-    def create_colour(c) :
+    @classmethod
+    def create_colour(celf, c) :
         "creates a Pattern that paints the destination with the specified Colour."
         return \
-            Pattern(cairo.cairo_pattern_create_rgba(*Colour.from_rgba(c).to_rgba()))
+            celf(cairo.cairo_pattern_create_rgba(*Colour.from_rgba(c).to_rgba()))
     #end create_rgb
 
     @property
@@ -4601,13 +4601,13 @@ class Pattern :
             Colour(r.value, g.value, b.value, a.value)
     #end colour
 
-    @staticmethod
-    def create_for_surface(surface) :
+    @classmethod
+    def create_for_surface(celf, surface) :
         "creates a Pattern that takes its image from the specified Surface."
         if not isinstance(surface, Surface) :
             raise TypeError("surface is not a Surface")
         #end if
-        result = Pattern(cairo.cairo_pattern_create_for_surface(surface._cairobj))
+        result = celf(cairo.cairo_pattern_create_for_surface(surface._cairobj))
         result._surface = surface # to ensure any storage attached to it doesn't go away prematurely
         return \
             result
@@ -4622,14 +4622,14 @@ class Pattern :
             Surface(cairo.cairo_surface_reference(surf.value))
     #end surface
 
-    @staticmethod
-    def create_linear(p0, p1, colour_stops = None) :
+    @classmethod
+    def create_linear(celf, p0, p1, colour_stops = None) :
         "creates a linear gradient Pattern that varies between the specified Vector" \
         " points in pattern space. colour_stops is an optional tuple of (offset, Colour)" \
         " to define the colour stops."
         p0 = Vector.from_tuple(p0)
         p1 = Vector.from_tuple(p1)
-        result = Pattern(cairo.cairo_pattern_create_linear(p0.x, p0.y, p1.x, p1.y))
+        result = celf(cairo.cairo_pattern_create_linear(p0.x, p0.y, p1.x, p1.y))
         if colour_stops != None :
             result.add_colour_stops(colour_stops)
         #end if
@@ -4657,14 +4657,14 @@ class Pattern :
             Vector(x.value, y.value)
     #end linear_p1
 
-    @staticmethod
-    def create_radial(c0, r0, c1, r1, colour_stops = None) :
+    @classmethod
+    def create_radial(celf, c0, r0, c1, r1, colour_stops = None) :
         "creates a radial gradient Pattern varying between the circle centred at Vector c0," \
         " radius r0 and the one centred at Vector c1, radius r1. colour_stops is an optional" \
         " tuple of (offset, Colour) to define the colour stops."
         c0 = Vector.from_tuple(c0)
         c1 = Vector.from_tuple(c1)
-        result = Pattern(cairo.cairo_pattern_create_radial(c0.x, c0.y, r0, c1.x, c1.y, r1))
+        result = celf(cairo.cairo_pattern_create_radial(c0.x, c0.y, r0, c1.x, c1.y, r1))
         if colour_stops != None :
             result.add_colour_stops(colour_stops)
         #end if
@@ -4796,11 +4796,11 @@ class MeshPattern(Pattern) :
 
     __slots__ = () # to forestall typos
 
-    @staticmethod
-    def create() :
+    @classmethod
+    def create(celf) :
         "creates a new, empty MeshPattern."
         return \
-            MeshPattern(cairo.cairo_pattern_create_mesh())
+            celf(cairo.cairo_pattern_create_mesh())
     #end create
 
     def begin_patch(self) :
@@ -4952,8 +4952,8 @@ class Region :
         #end if
     #end __del__
 
-    @staticmethod
-    def create(initial = None) :
+    @classmethod
+    def create(celf, initial = None) :
         "creates a new Region. If initial is not None, it must be a Rect or a tuple or" \
         " list of Rects specifying the initial extent of the Region. Otherwise, the" \
         " Region will be initially empty."
@@ -4975,13 +4975,13 @@ class Region :
             result = cairo.cairo_region_create()
         #end if
         return \
-            Region(result)
+            celf(result)
     #end create
 
     def copy(self) :
         "returns a new Region which is a copy of this one."
         return \
-            Region(cairo.cairo_region_copy(self._cairobj))
+            type(self)(cairo.cairo_region_copy(self._cairobj))
     #end copy
 
     @property
@@ -5742,15 +5742,15 @@ class FontOptions :
         #end if
     #end __del__
 
-    @staticmethod
-    def create(**kwargs) :
+    @classmethod
+    def create(celf, **kwargs) :
         "creates a new FontOptions object. See FontOptions.props for valid arg keywords."
         leftover = set(kwargs.keys()) - set(FontOptions.props)
         if len(leftover) != 0 :
             raise TypeError("unexpected arguments %s" % ", ".join(leftover))
         #end if
-        result = FontOptions()
-        for k in FontOptions.props :
+        result = celf()
+        for k in celf.props :
             if k in kwargs :
                 setattr(result, k, kwargs[k])
             #end if
@@ -5763,7 +5763,7 @@ class FontOptions :
     def copy(self) :
         "returns a copy of this FontOptions in a new object."
         return \
-            FontOptions(cairo.cairo_font_options_copy(self._cairobj))
+            type(self)(cairo.cairo_font_options_copy(self._cairobj))
     #end copy
 
     def merge(self, other) :
@@ -5892,14 +5892,14 @@ class FontFace :
 
     if freetype2 != None :
 
-        @staticmethod
-        def create_for_ft_face(face, load_flags = 0) :
+        @classmethod
+        def create_for_ft_face(celf, face, load_flags = 0) :
             "creates a FontFace from a freetype2.Face."
             if not isinstance(face, freetype2.Face) :
                 raise TypeError("face must be a freetype2.Face")
             #end if
             cairo_face = cairo.cairo_ft_font_face_create_for_ft_face(face._ftobj, load_flags)
-            result = FontFace(cairo_face)
+            result = celf(cairo_face)
             if cairo.cairo_font_face_get_user_data(cairo_face, ct.byref(_ft_destroy_key)) == None :
                 check(cairo.cairo_font_face_set_user_data
                   (
@@ -5917,25 +5917,25 @@ class FontFace :
                 result
         #end create_for_ft_face
 
-        @staticmethod
-        def create_for_file(filename, face_index = 0, load_flags = 0) :
+        @classmethod
+        def create_for_file(celf, filename, face_index = 0, load_flags = 0) :
             "uses FreeType to load a font from the specified filename, and returns" \
             " a new FontFace for it."
             _ensure_ft()
             return \
-                FontFace.create_for_ft_face(ft_lib.new_face(filename, face_index), load_flags)
+                celf.create_for_ft_face(ft_lib.new_face(filename, face_index), load_flags)
         #end create_for_file
 
     else :
 
-        @staticmethod
-        def create_for_ft_face(face) :
+        @classmethod
+        def create_for_ft_face(celf, face) :
             "not implemented (requires python_freetype)."
             raise NotImplementedError("requires python_freetype")
         #end create_for_ft_face
 
-        @staticmethod
-        def create_for_file(filename, face_index = 0, load_flags = 0) :
+        @classmethod
+        def create_for_file(celf, filename, face_index = 0, load_flags = 0) :
             "uses FreeType to load a font from the specified filename, and returns" \
             " a new FontFace for it."
             _ensure_ft()
@@ -5946,7 +5946,7 @@ class FontFace :
             #end if
             try :
                 cairo_face = cairo.cairo_ft_font_face_create_for_ft_face(ft_face.value, load_flags)
-                result = FontFace(cairo_face)
+                result = celf(cairo_face)
                 check(cairo.cairo_font_face_set_user_data
                   (
                     cairo_face,
@@ -5966,8 +5966,8 @@ class FontFace :
 
     #end if freetype2 != None
 
-    @staticmethod
-    def create_for_pattern(pattern, options = None) :
+    @classmethod
+    def create_for_pattern(celf, pattern, options = None) :
         "uses Fontconfig to find a font matching the specified pattern string," \
         " uses FreeType to load the font, and returns a new FontFace for it." \
         " options, if present, must be a FontOptions object."
@@ -5996,7 +5996,7 @@ class FontFace :
             cairo_face = cairo.cairo_ft_font_face_create_for_pattern(found_pattern)
         #end with
         return \
-            FontFace(cairo_face)
+            celf(cairo_face)
     #end create_for_pattern
 
     @property
@@ -6039,11 +6039,11 @@ class FontFace :
 
     # toy font face functions from <http://cairographics.org/manual/cairo-text.html>
 
-    @staticmethod
-    def toy_create(family, slant, weight) :
+    @classmethod
+    def toy_create(celf, family, slant, weight) :
         "creates a “toy” FontFace."
         return \
-            FontFace(cairo.cairo_toy_font_face_create(family.encode("utf-8"), slant, weight))
+            celf(cairo.cairo_toy_font_face_create(family.encode("utf-8"), slant, weight))
     #end toy_create
 
     @property
@@ -6112,8 +6112,8 @@ class ScaledFont :
         #end if
     #end __del__
 
-    @staticmethod
-    def create(font_face, font_matrix, ctm, options) :
+    @classmethod
+    def create(celf, font_face, font_matrix, ctm, options) :
         "creates a ScaledFont from the specified FontFace, Matrix font_matrix" \
         " and ctm, and FontOptions options."
         # Q: Are any of these optional?
@@ -6130,7 +6130,7 @@ class ScaledFont :
         font_matrix = font_matrix.to_cairo()
         ctm = ctm.to_cairo()
         return \
-            ScaledFont(cairo.cairo_scaled_font_create(font_face._cairobj, ct.byref(font_matrix), ct.byref(ctm), options._cairobj))
+            celf(cairo.cairo_scaled_font_create(font_face._cairobj, ct.byref(font_matrix), ct.byref(ctm), options._cairobj))
     #end create
 
     @property
@@ -6315,9 +6315,10 @@ class UserFontFace(FontFace) :
             "_wrap_unicode_to_glyph_func",
         ) # to forestall typos
 
-    @staticmethod
+    @classmethod
     def create \
       (
+        celf,
         init_func = None,
         render_glyph_func = None,
         text_to_glyphs_func = None,
@@ -6325,7 +6326,7 @@ class UserFontFace(FontFace) :
       ) :
         "creates a new UserFontFace. You can specify callbacks here, or later, via assignment" \
         " to the properties or using the set_xxx methods."
-        result = UserFontFace(cairo.cairo_user_font_face_create())
+        result = celf(cairo.cairo_user_font_face_create())
         result._init_func = None
         result._render_glyph_func = None
         result._text_to_glyphs_func = None
