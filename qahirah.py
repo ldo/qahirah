@@ -34,7 +34,6 @@ except ImportError :
 #end try
 
 cairo = ct.cdll.LoadLibrary("libcairo.so.2")
-libc = ct.cdll.LoadLibrary("libc.so.6")
 if freetype2 == None :
     _ft = ct.cdll.LoadLibrary("libfreetype.so.6")
 #end if
@@ -975,8 +974,6 @@ cairo.cairo_scaled_font_get_font_matrix.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_scaled_font_get_ctm.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_scaled_font_get_scale_matrix.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_scaled_font_get_type.argtypes = (ct.c_void_p,)
-
-libc.memcpy.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_size_t)
 
 _ft_destroy_key = ct.c_int() # dummy address
 
@@ -3234,7 +3231,7 @@ def file_write_func(fileobj) :
 
     def write_data(_, data, length) :
         buf = array.array("B", (0,) * length)
-        libc.memcpy(buf.buffer_info()[0], data, length)
+        ct.memmove(buf.buffer_info()[0], data, length)
         fileobj.write(buf.tobytes())
         return \
             CAIRO.STATUS_SUCCESS
@@ -3502,7 +3499,7 @@ class Surface :
         def write_data(_, data, length) :
             nonlocal offset
             result.extend(length * (0,))
-            libc.memcpy(result.buffer_info()[0] + offset, data, length)
+            ct.memmove(result.buffer_info()[0] + offset, data, length)
             offset += length
             return \
                 CAIRO.STATUS_SUCCESS
@@ -3567,7 +3564,7 @@ class ImageSurface(Surface) :
         def read_data(_, data, length) :
             nonlocal offset
             if offset + length <= len(data) :
-                libc.memcpy(data, baseadr + offset, length)
+                ct.memmove(data, baseadr + offset, length)
                 offset += length
                 status = CAIRO.STATUS_SUCCESS
             else :
