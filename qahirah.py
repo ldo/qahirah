@@ -3510,18 +3510,8 @@ class Surface :
     def to_png_bytes(self) :
         "converts the contents of the Surface to a sequence of PNG bytes which" \
         " is returned."
-
-        buf = None
-
-        def write_data(_, data, length) :
-            s = ct.string_at(data, length)
-            return \
-                CAIRO.STATUS_SUCCESS
-        #end write_data
-
-    #begin to_png_bytes
         buf = io.BytesIO()
-        self.write_to_png_stream(write_data, None)
+        self.write_to_png_file(buf)
         return \
             buf.getvalue()
     #end to_png_bytes
