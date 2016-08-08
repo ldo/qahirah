@@ -2128,6 +2128,18 @@ class Glyph :
 
 #end Glyph
 
+def offset_glyphs(glyphs, offset) :
+    "applies an offset Vector to the pos field of an iterable of Glyph" \
+    " objects."
+    # Q: Why not apply a more general Matrix?
+    # A: Because in that case, you are likely to want to apply the
+    #    transformation to the glyph shape itself, which this routine
+    #    does not (and cannot) do.
+    for glyph in glyphs :
+        yield Glyph(glyph.index, glyph.pos + offset)
+    #end for
+#end offset_glyphs
+
 def glyphs_to_cairo(glyphs) :
     "converts a sequence of Glyph objects to Cairo form."
     nr_glyphs = len(glyphs)
