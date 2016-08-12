@@ -3576,11 +3576,12 @@ class ImageSurface(Surface) :
         " of the bytes or bytearray types, or an array.array with \"B\" type code."
 
         offset = 0
+        baseadr = None
 
-        def read_data(_, data, length) :
+        def read_data(_, buf, length) :
             nonlocal offset
             if offset + length <= len(data) :
-                ct.memmove(data, baseadr + offset, length)
+                ct.memmove(buf, baseadr + offset, length)
                 offset += length
                 status = CAIRO.STATUS_SUCCESS
             else :
@@ -3591,12 +3592,15 @@ class ImageSurface(Surface) :
         #end read_data
 
     #begin create_from_png_bytes
-        if isinstance(data, bytes) or isinstance(data, bytearray) :
-            data = array.array("B", data)
-        elif not isinstance(data, array.array) or data.typecode != "B" :
-            raise TypeError("data is not bytes, bytearray or array of bytes")
+        if isinstance(data, bytes) :
+            baseadr = ct.cast(data, ct.c_void_p).value
+        elif isinstance(data, bytearray) :
+            baseadr = ct.addressof((ct.c_char * len(data)).from_buffer(data))
+        elif isinstance(data, array.array) and data.typecode == "B" :
+            baseadr = data.buffer_info()[0]
+        else :
+            raise TypeError("data is not bytes, bytearray or array.array of bytes")
         #end if
-        baseadr = data.buffer_info()[0]
         return \
             celf.create_from_png_stream(read_data, None)
     #end create_from_png_bytes
