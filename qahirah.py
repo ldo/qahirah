@@ -465,8 +465,8 @@ for \
     symname, funcname \
 in \
     (
-        ("FC_FONT", "ft_font_face_create_for_ft_face"),
         ("FT_FONT", "ft_font_face_create_for_pattern"),
+        ("FC_FONT", "ft_font_face_create_for_ft_face"),
         ("IMAGE_SURFACE", "image_surface_create"),
         # TODO: MIME_SURFACE, OBSERVER_SURFACE?
         ("PDF_SURFACE", "pdf_surface_create"),
