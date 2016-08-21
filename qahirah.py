@@ -475,7 +475,7 @@ in \
         ("RECORDING_SURFACE", "recording_surface_create"),
         ("SCRIPT_SURFACE", "script_create"),
         ("SVG_SURFACE", "svg_surface_create"),
-        {"USER_FONT", "user_font_face_create"},
+        ("USER_FONT", "user_font_face_create"),
     ) \
 :
     setattr \
