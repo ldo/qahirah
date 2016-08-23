@@ -5643,6 +5643,60 @@ class Path :
                 g.copy_path()
     #end create_arc
 
+    @staticmethod
+    def create_round_rect(bounds, radius) :
+        "creates a Path representing a rounded-corner rectangle. bounds is a" \
+        " Rect defining the bounds of the rectangle, and radius is either a number" \
+        " or a Vector defining the horizontal and vertical corner radii."
+        if isinstance(radius, Number) :
+            radius = Vector(1, 1) * radius
+        elif isinstance(radius, tuple) :
+            radius = Vector.from_tuple(radius)
+        elif not isinstance(radius, Vector) :
+            raise TypeError("radius must be a number or a Vector")
+        #end if
+        g = Context.create_for_dummy()
+        corner1 = bounds.topleft
+        for side in range(4) :
+            angle = side / 4 * circle
+            step = Vector(1, 0).rotate(angle)
+            corner2 = corner1 + step * bounds.dimensions
+            g.line_to(corner1 + step * radius)
+            g.rel_line_to(step * (bounds.dimensions - 2 * radius))
+            for elt in \
+                (Path.create_arc
+                  (
+                    centre = (0, 0),
+                    radius = 1,
+                    angle1 = angle - 90 * deg,
+                    angle2 = angle,
+                    negative = False
+                  )
+                    .transform
+                      (
+                            Matrix.translate
+                              (
+                                    corner2
+                                +
+                                    Vector(1, 1).rotate(angle + 90 * deg) * radius
+                              )
+                        *
+                            Matrix.scale(radius)
+                      )
+                    .to_elements()
+                ) \
+            :
+                if elt.type != CAIRO.PATH_MOVE_TO :
+                    elt.draw(g)
+                #end if
+            #end for
+            corner1 = corner2
+        #end for
+        g.close_path()
+        return \
+            g.copy_path()
+    #end create_round_rect
+
     def to_elements(self, relative = False) :
         "yields a sequence of Path.Element objects that will draw the path."
         origin = None
