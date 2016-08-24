@@ -18,7 +18,7 @@ import math
 from types import \
     FunctionType
 from numbers import \
-    Number
+    Real
 from collections import \
     namedtuple
 import io
@@ -1275,7 +1275,7 @@ class Vector :
         "scale a Vector uniformly by a number or non-uniformly by another Vector."
         if isinstance(f, Vector) :
             result = type(v)(v.x * f.x, v.y * f.y)
-        elif isinstance(f, Number) :
+        elif isinstance(f, Real) :
             result = type(v)(v.x * f, v.y * f)
         else :
             result = NotImplemented
@@ -1289,7 +1289,7 @@ class Vector :
         "inverse-scale a Vector uniformly by a number or non-uniformly by another Vector."
         if isinstance(f, Vector) :
             result = type(v)(v.x / f.x, v.y / f.y)
-        elif isinstance(f, Number) :
+        elif isinstance(f, Real) :
             result = type(v)(v.x / f, v.y / f)
         else :
             result = NotImplemented
@@ -1318,7 +1318,7 @@ class Vector :
         "remainder on division of one Vector by another."
         if isinstance(f, Vector) :
             result = type(v)(v.x % f.x, v.y % f.y)
-        elif isinstance(f, Number) :
+        elif isinstance(f, Real) :
             result = type(v)(v.x % f, v.y % f)
         else :
             result = NotImplemented
@@ -1520,7 +1520,7 @@ class Matrix :
     def scale(celf, factor, centre = None) :
         "returns a Matrix that scales by the specified scalar or Vector factors" \
         " about Vector centre, or the origin if not specified."
-        if isinstance(factor, Number) :
+        if isinstance(factor, Real) :
             result = celf(factor, 0, 0, factor, 0, 0)
         elif isinstance(factor, Vector) :
             result = celf(factor.x, 0, 0, factor.y, 0, 0)
@@ -1863,7 +1863,7 @@ class Rect :
         "scale a Rect uniformly by a number or non-uniformly by a Vector."
         if isinstance(f, Vector) :
             result = type(self)(self.left * f.x, self.top * f.y, self.width * f.x, self.height * f.y)
-        elif isinstance(f, Number) :
+        elif isinstance(f, Real) :
             result = type(self)(self.left * f, self.top * f, self.width * f, self.height * f)
         else :
             result = NotImplemented
@@ -1877,7 +1877,7 @@ class Rect :
         "invserse-scale a Rect uniformly by a number or non-uniformly by a Vector."
         if isinstance(f, Vector) :
             result = type(self)(self.left / f.x, self.top / f.y, self.width / f.x, self.height / f.y)
-        elif isinstance(f, Number) :
+        elif isinstance(f, Real) :
             result = type(self)(self.left / f, self.top / f, self.width / f, self.height / f)
         else :
             result = NotImplemented
@@ -2934,9 +2934,9 @@ class Context :
     #end translate
 
     def scale(self, s) :
-        "scale(Vector) or scale((x, y)) or scale(Number)\n" \
+        "scale(Vector) or scale((x, y)) or scale(Real)\n" \
         "applies a scaling to the current coordinate system."
-        if isinstance(s, Number) :
+        if isinstance(s, Real) :
             sx = sy = s
         elif isinstance(s, Vector) or isinstance(s, tuple) :
             sx, sy = tuple(s)
@@ -5648,7 +5648,7 @@ class Path :
         "creates a Path representing a rounded-corner rectangle. bounds is a" \
         " Rect defining the bounds of the rectangle, and radius is either a number" \
         " or a Vector defining the horizontal and vertical corner radii."
-        if isinstance(radius, Number) :
+        if isinstance(radius, Real) :
             radius = Vector(1, 1) * radius
         elif isinstance(radius, tuple) :
             radius = Vector.from_tuple(radius)
