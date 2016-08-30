@@ -4375,13 +4375,13 @@ class Colour :
             def __len__(self) :
                 return \
                     len(self._parent)
-            #end __len_-
+            #end __len__
 
             def __iter__(self) :
                 for item in self._parent.values() :
                     yield getattr(item, self.attr_name)
                 #end for
-            #end __iter_-
+            #end __iter__
 
             def __contains__(self, item) :
                 return \
