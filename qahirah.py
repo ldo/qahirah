@@ -3691,7 +3691,7 @@ class PDFSurface(Surface) :
     "A Cairo surface that outputs its renderings to a PDF file. Do not instantiate" \
     " directly; use one of the create methods."
 
-    __slots__ = () # to forestall typos
+    __slots__ = ("_write_func",) # to forestall typos
 
     @classmethod
     def create(celf, filename, dimensions_in_points) :
@@ -3709,9 +3709,38 @@ class PDFSurface(Surface) :
         " ctypes.c_void_p."
         dimensions_in_points = Vector.from_tuple(dimensions_in_points)
         c_write_func = CAIRO.write_func_t(write_func)
+        result = celf \
+          (
+            cairo.cairo_pdf_surface_create_for_stream
+              (
+                c_write_func,
+                closure,
+                dimensions_in_points.x,
+                dimensions_in_points.y
+              )
+          )
+        result._write_func = c_write_func
+          # to ensure it doesn’t disappear unexpectedly
         return \
-            celf(cairo.cairo_pdf_surface_create_for_stream(c_write_func, closure, dimensions_in_points.x, dimensions_in_points.y))
+            result
     #end create_for_stream
+
+    @classmethod
+    def create_for_file(celf, outfile, dimensions_in_points) :
+        "creates a PDF surface that outputs to the specified file-like object." \
+        " For io.IOBase and subclasses, this should be faster than using create_for_stream."
+
+        def write_data(_, data, length) :
+            s = ct.string_at(data, length)
+            outfile.write(s)
+            return \
+                CAIRO.STATUS_SUCCESS
+        #end write_data
+
+    #begin create_for_file
+        return \
+            celf.create_for_stream(write_data, None, dimensions_in_points)
+    #end create_for_file
 
     def restrict_to_version(self, version) :
         "restricts the version of PDF file created. If used, should" \
@@ -3762,7 +3791,7 @@ class PSSurface(Surface) :
     "a Cairo surface which translates drawing actions into PostScript program sequences." \
     " Do not instantiate directly; use one of the create methods."
 
-    __slots__ = () # to forestall typos
+    __slots__ = ("_write_func",) # to forestall typos
 
     @classmethod
     def create(celf, filename, dimensions_in_points) :
@@ -3780,9 +3809,38 @@ class PSSurface(Surface) :
         " ctypes.c_void_p."
         dimensions_in_points = Vector.from_tuple(dimensions_in_points)
         c_write_func = CAIRO.write_func_t(write_func)
+        result = celf \
+          (
+            cairo.cairo_ps_surface_create_for_stream
+              (
+                c_write_func,
+                closure,
+                dimensions_in_points.x,
+                dimensions_in_points.y
+              )
+          )
+        result._write_func = c_write_func
+          # to ensure it doesn’t disappear unexpectedly
         return \
-            celf(cairo.cairo_ps_surface_create_for_stream(c_write_func, closure, dimensions_in_points.x, dimensions_in_points.y))
+            result
     #end create_for_stream
+
+    @classmethod
+    def create_for_file(celf, outfile, dimensions_in_points) :
+        "creates a PostScript surface that outputs to the specified file-like object." \
+        " For io.IOBase and subclasses, this should be faster than using create_for_stream."
+
+        def write_data(_, data, length) :
+            s = ct.string_at(data, length)
+            outfile.write(s)
+            return \
+                CAIRO.STATUS_SUCCESS
+        #end write_data
+
+    #begin create_for_file
+        return \
+            celf.create_for_stream(write_data, None, dimensions_in_points)
+    #end create_for_file
 
     def restrict_to_level(self, level) :
         "restricts the language level of PostScript created, one of the CAIRO.PS_LEVEL_xxx" \
@@ -3927,7 +3985,7 @@ class SVGSurface(Surface) :
     "Surface that writes its contents to an SVG file. Do not instantiate directly;" \
     " use one of the create methods."
 
-    __slots__ = () # to forestall typos
+    __slots__ = ("_write_func",) # to forestall typos
 
     @classmethod
     def create(celf, filename, dimensions_in_points) :
@@ -3945,9 +4003,38 @@ class SVGSurface(Surface) :
         " ctypes.c_void_p."
         dimensions_in_points = Vector.from_tuple(dimensions_in_points)
         c_write_func = CAIRO.write_func_t(write_func)
+        result = celf \
+          (
+            cairo.cairo_svg_surface_create_for_stream
+              (
+                c_write_func,
+                closure,
+                dimensions_in_points.x,
+                dimensions_in_points.y
+              )
+          )
+        result._write_func = c_write_func
+          # to ensure it doesn’t disappear unexpectedly
         return \
-            celf(cairo.cairo_svg_surface_create_for_stream(c_write_func, closure, dimensions_in_points.x, dimensions_in_points.y))
+            result
     #end create_for_stream
+
+    @classmethod
+    def create_for_file(celf, outfile, dimensions_in_points) :
+        "creates an SVG surface that outputs to the specified file-like object." \
+        " For io.IOBase and subclasses, this should be faster than using create_for_stream."
+
+        def write_data(_, data, length) :
+            s = ct.string_at(data, length)
+            outfile.write(s)
+            return \
+                CAIRO.STATUS_SUCCESS
+        #end write_data
+
+    #begin create_for_file
+        return \
+            celf.create_for_stream(write_data, None, dimensions_in_points)
+    #end create_for_file
 
     def restrict_to_version(self, version) :
         "restricts the version of SVG file created. If used, must" \
@@ -4033,7 +4120,7 @@ class ScriptDevice(Device) :
     "for rendering to replayable Cairo scripts."
     # <http://cairographics.org/manual/cairo-Script-Surfaces.html>
 
-    __slots__ = () # to forestall typos
+    __slots__ = ("_write_func",) # to forestall typos
 
     @classmethod
     def create(celf, filename) :
@@ -4048,9 +4135,29 @@ class ScriptDevice(Device) :
         " write_func must match signature of CAIRO.write_func_t, while closure is a" \
         " ctypes.c_void_p."
         c_write_func = CAIRO.write_func_t(write_func)
+        result = celf(cairo.cairo_script_create_for_stream(c_write_func, closure))
+        result._write_func = c_write_func
+          # to ensure it doesn’t disappear unexpectedly
         return \
-            celf(cairo.cairo_script_create_for_stream(c_write_func, closure))
+            result
     #end create_for_stream
+
+    @classmethod
+    def create_for_file(celf, outfile) :
+        "creates a recording surface that outputs to the specified file-like object." \
+        " For io.IOBase and subclasses, this should be faster than using create_for_stream."
+
+        def write_data(_, data, length) :
+            s = ct.string_at(data, length)
+            outfile.write(s)
+            return \
+                CAIRO.STATUS_SUCCESS
+        #end write_data
+
+    #begin create_for_file
+        return \
+            celf.create_for_stream(write_data, None)
+    #end create_for_file
 
     def from_recording_surface(self, recording_surface) :
         "converts the recorded operations in recording_surface (a RecordingSurface)" \
