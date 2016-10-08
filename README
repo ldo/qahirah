@@ -269,10 +269,11 @@ repositories:
 * [qahirah_notebooks](https://github.com/ldo/qahirah_notebooks)
 * [python_pixman_examples](https://github.com/ldo/python_pixman_examples)
 * [python_freetype_examples](https://github.com/ldo/python_freetype_examples)
+* [harfpy_examples](https://github.com/ldo/harfpy_examples)
 * [hersheypy](https://github.com/ldo/hersheypy)
 * [anim_framework_examples](https://github.com/ldo/anim_framework_examples)
 * [curve](https://github.com/ldo/curve)
 * [grainypy](https://github.com/ldo/grainypy)
 
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
-2015 November 26
+2016 October 8
