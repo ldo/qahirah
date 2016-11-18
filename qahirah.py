@@ -585,6 +585,7 @@ cairo.cairo_create.argtypes = (ct.c_void_p,)
 cairo.cairo_create.restype = ct.c_void_p
 cairo.cairo_reference.restype = ct.c_void_p
 cairo.cairo_reference.argtypes = (ct.c_void_p,)
+cairo.cairo_destroy.argtypes = (ct.c_void_p,)
 cairo.cairo_destroy.restype = ct.c_void_p
 cairo.cairo_save.argtypes = (ct.c_void_p,)
 cairo.cairo_restore.argtypes = (ct.c_void_p,)
