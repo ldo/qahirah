@@ -1033,6 +1033,8 @@ if _fc != None :
     _fc.FcConfigSubstitute.restype = ct.c_bool
     _fc.FcDefaultSubstitute.argtypes = (ct.c_void_p,)
     _fc.FcDefaultSubstitute.restype = None
+    _fc.FcFontMatch.restype = ct.c_void_p
+    _fc.FcFontMatch.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p)
     _fc.FcPatternDestroy.argtypes = (ct.c_void_p,)
     _fc.FcPatternDestroy.restype = None
 
