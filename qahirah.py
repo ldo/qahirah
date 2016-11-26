@@ -983,21 +983,14 @@ _ft_destroy_key = ct.c_int() # dummy address
 
 if freetype2 != None :
 
-    ft_lib = None
-
     def _ensure_ft() :
-        # ensures FreeType is usable.
-        global ft_lib
-        if ft_lib == None :
-            ft_lib = freetype2.Library()
-        #end if
+        pass
     #end _ensure_ft
 
     def get_ft_lib() :
         "returns the freetype2.Library object that I use."
-        _ensure_ft()
         return \
-            ft_lib
+            freetype2.get_default_lib()
     #end get_ft_lib
 
 else :
@@ -6104,9 +6097,8 @@ class FontFace :
         def create_for_file(celf, filename, face_index = 0, load_flags = 0) :
             "uses FreeType to load a font from the specified filename, and returns" \
             " a new FontFace for it."
-            _ensure_ft()
             return \
-                celf.create_for_ft_face(ft_lib.new_face(filename, face_index), load_flags)
+                celf.create_for_ft_face(get_ft_lib().new_face(filename, face_index), load_flags)
         #end create_for_file
 
     else :
