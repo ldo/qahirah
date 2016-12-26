@@ -660,6 +660,7 @@ cairo.cairo_get_miter_limit.restype = ct.c_double
 cairo.cairo_set_miter_limit.argtypes = (ct.c_void_p, ct.c_double)
 cairo.cairo_get_operator.argtypes = (ct.c_void_p,)
 cairo.cairo_set_operator.argtypes = (ct.c_void_p, ct.c_int)
+cairo.cairo_get_tolerance.argtypes = (ct.c_void_p,)
 cairo.cairo_get_tolerance.restype = ct.c_double
 cairo.cairo_set_tolerance.argtypes = (ct.c_void_p, ct.c_double)
 cairo.cairo_clip.argtypes = (ct.c_void_p,)
@@ -2539,7 +2540,7 @@ class Context :
 
     @tolerance.setter
     def tolerance(self, tolerance) :
-        self.set_tolerance(self._cairobj, tolerance)
+        self.set_tolerance(tolerance)
     #end tolerance
 
     def set_tolerance(self, tolerance) :
