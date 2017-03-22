@@ -4184,7 +4184,8 @@ class ScriptDevice(Device) :
     #end mode
 
     def surface_create(self, content, dimensions) :
-        "creates a new Surface that will emit its rendering through this ScriptDevice."
+        "creates a new Surface that will emit its rendering through this" \
+        " ScriptDevice. content is a CAIRO.CONTENT_xxx value."
         dimensions = Vector.from_tuple(dimensions)
         return \
             Surface(cairo.cairo_script_surface_create(self._cairobj, content, dimensions.x, dimensions.y))
