@@ -4078,18 +4078,30 @@ class Device :
     " or ScriptDevice.create."
     # <http://cairographics.org/manual/cairo-cairo-device-t.html>
 
-    __slots__ = ("_cairobj", "_user_data") # to forestall typos
+    __slots__ = ("_cairobj", "_user_data", "__weakref__") # to forestall typos
+
+    _instances = WeakValueDictionary()
 
     def _check(self) :
         # check for error from last operation on this Surface.
         check(cairo.cairo_device_status(self._cairobj))
     #end _check
 
-    def __init__(self, _cairobj) :
-        self._cairobj = _cairobj
-        self._check()
-        self._user_data = {}
-    #end __init__
+    def __new__(celf, _cairobj) :
+        self = celf._instances.get(_cairobj)
+        if self == None :
+            self = super().__new__(celf)
+            self._cairobj = _cairobj
+            self._check()
+            self._user_data = {}
+            celf._instances[_cairobj] = self
+        else :
+            cairo.cairo_device_destroy(self._cairobj)
+              # lose extra reference created by caller
+        #end if
+        return \
+            self
+    #end __new__
 
     def __del__(self) :
         if self._cairobj != None :
