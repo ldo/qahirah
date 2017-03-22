@@ -10,7 +10,7 @@ and Context.set_line_width() calls, there is a Context.line_width property
 that may be read and written.
 """
 #+
-# Copyright 2015, 2016 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
+# Copyright 2015-2017 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 # Licensed under the GNU Lesser General Public License v2.1 or later.
 #-
 
@@ -2168,13 +2168,18 @@ default_tolerance = 0.1 # for flattening paths
 # again, it is nice if the caller gets back the same Qahirah wrapper object.
 # I do this by maintaining a WeakValueDictionary in each of the relevant
 # (base) classes, which is updated by the constructors.
-#
-# Fixme: there is still a hole in this, in the situation where the caller
-# loses all references to the Qahirah object, so I create a new one when
-# retrieving the Cairo object. This will cause loss of the user_data dict.
-# So if they kept a reference to that, they will see it is now different.
-# Should I worry?
 #-
+
+class UserDataDict(dict) :
+    "a subclass of dict that allows weakrefs."
+
+    __slots__ = ("__weakref__",)
+
+    def __init__(self, *args, **kwargs) :
+        super().__init__(*args, **kwargs)
+    #end __init__
+
+#end UserDataDict
 
 class Context :
     "a Cairo drawing context. Do not instantiate directly; use the create methods." \
@@ -2184,6 +2189,7 @@ class Context :
     __slots__ = ("_cairobj", "_user_data", "__weakref__") # to forestall typos
 
     _instances = WeakValueDictionary()
+    _ud_refs = WeakValueDictionary()
 
     def _check(self) :
         # check for error from last operation on this Context.
@@ -2196,7 +2202,12 @@ class Context :
             self = super().__new__(celf)
             self._cairobj = _cairobj
             self._check()
-            self._user_data = {}
+            user_data = celf._ud_refs.get(_cairobj)
+            if user_data == None :
+                user_data = UserDataDict()
+                celf._ud_refs[_cairobj] = user_data
+            #end if
+            self._user_data = user_data
             celf._instances[_cairobj] = self
         else :
             cairo.cairo_destroy(self._cairobj)
@@ -3265,6 +3276,7 @@ class Surface :
     __slots__ = ("_cairobj", "_user_data", "__weakref__") # to forestall typos
 
     _instances = WeakValueDictionary()
+    _ud_refs = WeakValueDictionary()
 
     def _check(self) :
         # check for error from last operation on this Surface.
@@ -3277,7 +3289,12 @@ class Surface :
             self = super().__new__(celf)
             self._cairobj = _cairobj
             self._check()
-            self._user_data = {}
+            user_data = celf._ud_refs.get(_cairobj)
+            if user_data == None :
+                user_data = UserDataDict()
+                celf._ud_refs[_cairobj] = user_data
+            #end if
+            self._user_data = user_data
             celf._instances[_cairobj] = self
         else :
             cairo.cairo_surface_destroy(self._cairobj)
@@ -4081,6 +4098,7 @@ class Device :
     __slots__ = ("_cairobj", "_user_data", "__weakref__") # to forestall typos
 
     _instances = WeakValueDictionary()
+    _ud_refs = WeakValueDictionary()
 
     def _check(self) :
         # check for error from last operation on this Surface.
@@ -4093,7 +4111,12 @@ class Device :
             self = super().__new__(celf)
             self._cairobj = _cairobj
             self._check()
-            self._user_data = {}
+            user_data = celf._ud_refs.get(_cairobj)
+            if user_data == None :
+                user_data = UserDataDict()
+                celf._ud_refs[_cairobj] = user_data
+            #end if
+            self._user_data = user_data
             celf._instances[_cairobj] = self
         else :
             cairo.cairo_device_destroy(self._cairobj)
@@ -4651,6 +4674,7 @@ class Pattern :
     __slots__ = ("_cairobj", "_user_data", "_surface", "__weakref__") # to forestall typos
 
     _instances = WeakValueDictionary()
+    _ud_refs = WeakValueDictionary()
 
     def _check(self) :
         # check for error from last operation on this Pattern.
@@ -4663,7 +4687,12 @@ class Pattern :
             self = super().__new__(celf)
             self._cairobj = _cairobj
             self._check()
-            self._user_data = {}
+            user_data = celf._ud_refs.get(_cairobj)
+            if user_data == None :
+                user_data = UserDataDict()
+                celf._ud_refs[_cairobj] = user_data
+            #end if
+            self._user_data = user_data
             celf._instances[_cairobj] = self
         else :
             cairo.cairo_pattern_destroy(self._cairobj)
@@ -6047,6 +6076,7 @@ class FontFace :
     __slots__ = ("_cairobj", "_user_data", "ft_face", "__weakref__") # to forestall typos
 
     _instances = WeakValueDictionary()
+    _ud_refs = WeakValueDictionary()
 
     def _check(self) :
         # check for error from last operation on this FontFace.
@@ -6059,7 +6089,12 @@ class FontFace :
             self = super().__new__(celf)
             self._cairobj = _cairobj
             self._check()
-            self._user_data = {}
+            user_data = celf._ud_refs.get(_cairobj)
+            if user_data == None :
+                user_data = UserDataDict()
+                celf._ud_refs[_cairobj] = user_data
+            #end if
+            self._user_data = user_data
             celf._instances[_cairobj] = self
         else :
             cairo.cairo_font_face_destroy(self._cairobj)
@@ -6275,6 +6310,7 @@ class ScaledFont :
     __slots__ = ("_cairobj", "_user_data", "__weakref__") # to forestall typos
 
     _instances = WeakValueDictionary()
+    _ud_refs = WeakValueDictionary()
 
     def _check(self) :
         # check for error from last operation on this ScaledFont.
@@ -6287,7 +6323,12 @@ class ScaledFont :
             self = super().__new__(celf)
             self._cairobj = _cairobj
             self._check()
-            self._user_data = {}
+            user_data = celf._ud_refs.get(_cairobj)
+            if user_data == None :
+                user_data = UserDataDict()
+                celf._ud_refs[_cairobj] = user_data
+            #end if
+            self._user_data = user_data
             celf._instances[_cairobj] = self
         else :
             cairo.cairo_scaled_font_destroy(self._cairobj)
