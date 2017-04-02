@@ -237,7 +237,8 @@ FreeType Fonts
 Qahirah gives access to Cairo’s support for FreeType fonts. It has
 a built-in minimal FreeType wrapper, but it can also take advantage
 of the more extensive freetype2 Python module, available from
-<https://github.com/ldo/python_freetype>.
+[GitLab](https://gitlab.com/ldo/python_freetype>) or
+[GitHub](https://github.com/ldo/python_freetype>).
 
 For example, with this module installed, the Path.from_ft_outline
 method becomes available, for converting a freetype2.Outline to a
@@ -265,15 +266,21 @@ Examples
 Examples of Qahirah in action are available in the following
 repositories:
 
-* [qahirah_examples](https://github.com/ldo/qahirah_examples)
-* [qahirah_notebooks](https://github.com/ldo/qahirah_notebooks)
-* [python_pixman_examples](https://github.com/ldo/python_pixman_examples)
-* [python_freetype_examples](https://github.com/ldo/python_freetype_examples)
-* [harfpy_examples](https://github.com/ldo/harfpy_examples)
-* [hersheypy](https://github.com/ldo/hersheypy)
-* [anim_framework_examples](https://github.com/ldo/anim_framework_examples)
-* [curve](https://github.com/ldo/curve)
-* [grainypy](https://github.com/ldo/grainypy)
+* qahirah_examples: [GitLab](https://gitlab.com/ldo/qahirah_examples),
+  [GitHub](https://github.com/ldo/qahirah_examples)
+* qahirah_notebooks: [GitLab](https://gitlab.com/ldo/qahirah_notebooks),
+  [GitHub](https://github.com/ldo/qahirah_notebooks)
+* python_pixman_examples: [GitLab](https://gitlab.com/ldo/python_pixman_examples),
+  [GitHub](https://github.com/ldo/python_pixman_examples)
+* python_freetype_examples: [GitLab](https://gitlab.com/ldo/python_freetype_examples),
+  [GitHub](https://github.com/ldo/python_freetype_examples)
+* harfpy_examples: [GitLab](https://gitlab.com/ldo/harfpy_examples),
+  [GitHub](https://github.com/ldo/harfpy_examples)
+* HersheyPy: [GitLab](https://gitlab.com/ldo/hersheypy), [GitHub](https://github.com/ldo/hersheypy)
+* anim_framework_examples: [GitLab](https://gitlab.com/ldo/anim_framework_examples),
+  [GitHub](https://github.com/ldo/anim_framework_examples)
+* curve: [GitLab](https://gitlab.com/ldo/curve), [GitHub](https://github.com/ldo/curve)
+* GrainyPy: [GitLab](https://gitlab.com/ldo/grainypy), [GitHub](https://github.com/ldo/grainypy)
 
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
-2016 October 8
+2017 April 2
