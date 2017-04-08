@@ -27,6 +27,7 @@ import array
 import ctypes as ct
 from weakref import \
     WeakValueDictionary
+import atexit
 try :
     import freetype2
       # my FreeType wrapper, get from <https://github.com/ldo/python_freetype>
@@ -6884,5 +6885,14 @@ TextExtents = def_struct_class \
     extra = TextExtentsExtra
   )
 del TextExtentsExtra
+
+def _atexit() :
+    # disable all __del__ methods at process termination to avoid segfaults
+    for cls in Context, Surface, Device, Pattern, Region, FontOptions, FontFace, ScaledFont :
+        delattr(cls, "__del__")
+    #end for
+#end _atexit
+atexit.register(_atexit)
+del _atexit
 
 del def_struct_class # my work is done
