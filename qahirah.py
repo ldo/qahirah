@@ -1401,7 +1401,7 @@ class Vector :
             celf(length * math.cos(angle), length * math.sin(angle))
     #end from_polar
 
-    def axis_swap(self, swap) :
+    def axis_swap(self, swap = True) :
         "returns the Vector with the x- and y-axis coordinates swapped" \
         " or not, depending on swap."
         return \
