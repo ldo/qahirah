@@ -6062,6 +6062,9 @@ class FontOptions :
         cairo.cairo_font_options_set_hint_metrics(self._cairobj, hint)
     #end hint_metrics
 
+    # TODO: FreeType support
+    # <https://www.cairographics.org/manual/cairo-FreeType-Fonts.html#cairo-ft-font-options-substitute>
+
     def __repr__(self) :
         return \
             (
@@ -6532,6 +6535,9 @@ class ScaledFont :
     #end user_data
 
     # Cairo user_data not exposed to caller, probably not useful
+
+    # TODO: FreeType lock/unlock support
+    # <https://www.cairographics.org/manual/cairo-FreeType-Fonts.html>
 
 #end ScaledFont
 
