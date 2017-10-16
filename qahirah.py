@@ -960,6 +960,10 @@ cairo.cairo_ft_font_face_get_synthesize.restype = ct.c_uint
 cairo.cairo_ft_font_face_get_synthesize.argtypes = (ct.c_void_p,)
 cairo.cairo_ft_font_face_set_synthesize.argtypes = (ct.c_void_p, ct.c_uint)
 cairo.cairo_ft_font_face_unset_synthesize.argtypes = (ct.c_void_p, ct.c_uint)
+cairo.cairo_ft_scaled_font_lock_face.restype = ct.c_void_p
+cairo.cairo_ft_scaled_font_lock_face.argtypes = (ct.c_void_p,)
+cairo.cairo_ft_scaled_font_unlock_face.restype = None
+cairo.cairo_ft_scaled_font_unlock_face.argtypes = (ct.c_void_p,)
 
 cairo.cairo_glyph_allocate.restype = ct.c_void_p
 cairo.cairo_glyph_free.argtypes = (ct.c_void_p,)
@@ -6062,7 +6066,7 @@ class FontOptions :
         cairo.cairo_font_options_set_hint_metrics(self._cairobj, hint)
     #end hint_metrics
 
-    # TODO: FreeType support
+    # TODO: Fontconfig/FreeType support
     # <https://www.cairographics.org/manual/cairo-FreeType-Fonts.html#cairo-ft-font-options-substitute>
 
     def __repr__(self) :
@@ -6536,8 +6540,23 @@ class ScaledFont :
 
     # Cairo user_data not exposed to caller, probably not useful
 
-    # TODO: FreeType lock/unlock support
-    # <https://www.cairographics.org/manual/cairo-FreeType-Fonts.html>
+    if freetype2 != None :
+
+        # <https://www.cairographics.org/manual/cairo-FreeType-Fonts.html>
+
+        def lock_face(self) :
+            ft_face = cairo.cairo_ft_scaled_font_lock_face(self._cairobj)
+            self._check()
+            return \
+                freetype2.Face(lib = get_ft_lib(), face = ft_face, filename = None)
+        #end lock_face
+
+        def unlock_face(self) :
+            cairo.cairo_ft_scaled_font_unlock_face(self._cairobj)
+            self._check()
+        #end unlock_face
+
+    #end if
 
 #end ScaledFont
 
