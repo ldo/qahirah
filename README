@@ -256,8 +256,8 @@ features that Pycairo does not:
 * Script surfaces
 * ScaledFont.text_to_glyphs
 
-while it does not handle the GUI-specific surface types that Pycairo
-does: Win32, XCB and XLib surfaces.
+while it does not handle most of the GUI-specific surface types that
+Pycairo does: Win32 and XLib surfaces.
 
 
 Examples
@@ -283,4 +283,4 @@ repositories:
 * GrainyPy: [GitLab](https://gitlab.com/ldo/grainypy), [GitHub](https://github.com/ldo/grainypy)
 
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
-2017 April 2
+2017 October 26

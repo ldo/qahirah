@@ -464,6 +464,104 @@ class CAIRO :
 
 #end CAIRO
 
+class XCB :
+    "minimal needed XCB-related definitions."
+
+    # from xproto.h:
+
+    window_t = ct.c_uint
+    pixmap_t = ct.c_uint
+    visualid_t = ct.c_uint
+    drawable_t = ct.c_uint
+    colormap_t = ct.c_uint
+
+    visual_class_t = ct.c_uint
+    # values for visual_class_t:
+    VISUAL_CLASS_STATIC_GRAY = 0
+    VISUAL_CLASS_GRAY_SCALE = 1
+    VISUAL_CLASS_STATIC_COLOR = 2
+    VISUAL_CLASS_PSEUDO_COLOR = 3
+    VISUAL_CLASS_TRUE_COLOR = 4
+    VISUAL_CLASS_DIRECT_COLOR = 5
+
+    class visualtype_t(ct.Structure) :
+        pass
+    visualtype_t._fields_ = \
+        [
+            ("visual_id", visualid_t),
+            ("_class", ct.c_ubyte),
+            ("bits_per_rgb_value", ct.c_ubyte),
+            ("colormap_entries", ct.c_ushort),
+            ("red_mask", ct.c_uint),
+            ("green_mask", ct.c_uint),
+            ("blue_mask", ct.c_uint),
+            ("pad0", ct.c_ubyte * 4),
+        ]
+    #end visualtype_t
+    visualtype_ptr_t = ct.POINTER(visualtype_t)
+
+    class screen_t(ct.Structure) :
+        pass
+    screen_t._fields_ = \
+        [
+            ("root", window_t),
+            ("default_colormap", colormap_t),
+            ("white_pixel", ct.c_uint),
+            ("black_pixel", ct.c_uint),
+            ("current_input_masks", ct.c_uint),
+            ("width_in_pixels", ct.c_ushort),
+            ("height_in_pixels", ct.c_ushort),
+            ("width_in_millimeters", ct.c_ushort),
+            ("height_in_millimeters", ct.c_ushort),
+            ("min_installed_maps", ct.c_ushort),
+            ("max_installed_maps", ct.c_ushort),
+            ("root_visual", visualid_t),
+            ("backing_stores", ct.c_ubyte),
+            ("save_unders", ct.c_ubyte),
+            ("root_depth", ct.c_ubyte),
+            ("allowed_depths_len", ct.c_ubyte),
+        ]
+    #end screen_t
+    screen_ptr_t = ct.POINTER(screen_t)
+
+    # from xrender.h:
+
+    render_pictformat_t = ct.c_uint
+
+    class render_directformat_t(ct.Structure) :
+        _fields_ = \
+            [
+                ("red_shift", ct.c_short),
+                ("red_mask", ct.c_short),
+                ("green_shift", ct.c_short),
+                ("green_mask", ct.c_short),
+                ("blue_shift", ct.c_short),
+                ("blue_mask", ct.c_short),
+                ("alpha_shift", ct.c_short),
+                ("alpha_mask", ct.c_short),
+            ]
+    #end render_directformat_t
+
+    # values for render_pictforminfo_t.type
+    RENDER_PICT_TYPE_INDEXED = 0
+    RENDER_PICT_TYPE_DIRECT = 1
+
+    class render_pictforminfo_t(ct.Structure) :
+        pass
+    render_pictforminfo_t._fields_ = \
+        [
+            ("id", render_pictformat_t),
+            ("type", ct.c_ubyte),
+            ("depth", ct.c_ubyte),
+            ("pad0", ct.c_ubyte * 2),
+            ("direct", render_directformat_t),
+            ("colormap", colormap_t),
+        ]
+    #end render_pictforminfo_t
+    render_pictforminfo_ptr_t = ct.POINTER(render_pictforminfo_t)
+
+#end XCB
+
 class HAS :
     "functionality queries. These are implemented by checking for the presence" \
     " of particular library functions."
@@ -485,6 +583,8 @@ in \
         ("SCRIPT_SURFACE", "script_create"),
         ("SVG_SURFACE", "svg_surface_create"),
         ("USER_FONT", "user_font_face_create"),
+        ("XCB_SURFACE", "xcb_surface_create"),
+        ("XCB_SHM_FUNCTIONS", "xcb_device_debug_cap_xshm_version"),
     ) \
 :
     setattr \
@@ -995,6 +1095,37 @@ cairo.cairo_scaled_font_get_font_matrix.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_scaled_font_get_ctm.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_scaled_font_get_scale_matrix.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_scaled_font_get_type.argtypes = (ct.c_void_p,)
+
+if HAS.XCB_SURFACE :
+
+    cairo.cairo_xcb_surface_create.restype = ct.c_void_p
+    cairo.cairo_xcb_surface_create.argtypes = (ct.c_void_p, XCB.drawable_t, XCB.visualtype_ptr_t, ct.c_int, ct.c_int)
+    cairo.cairo_xcb_surface_create_for_bitmap.restype = ct.c_void_p
+    cairo.cairo_xcb_surface_create_for_bitmap.argtypes = (ct.c_void_p, XCB.screen_ptr_t, XCB.pixmap_t, ct.c_int, ct.c_int)
+    cairo.cairo_xcb_surface_create_with_xrender_format.restype = ct.c_void_p
+    cairo.cairo_xcb_surface_create_with_xrender_format.argtypes = (ct.c_void_p, XCB.screen_ptr_t, ct.c_uint, XCB.render_pictforminfo_ptr_t, ct.c_int, ct.c_int)
+    cairo.cairo_xcb_surface_set_size.restype = None
+    cairo.cairo_xcb_surface_set_size.argtypes = (ct.c_void_p, ct.c_int, ct.c_int)
+    cairo.cairo_xcb_surface_set_drawable.restype = None
+    cairo.cairo_xcb_surface_set_drawable.argtypes = (ct.c_void_p, ct.c_uint, ct.c_int, ct.c_int)
+    cairo.cairo_xcb_device_get_connection.restype = ct.c_void_p
+    cairo.cairo_xcb_device_get_connection.argtypes = (ct.c_void_p,)
+
+    if HAS.XCB_SHM_FUNCTIONS :
+        cairo.cairo_xcb_device_debug_cap_xshm_version.restype = None
+        cairo.cairo_xcb_device_debug_cap_xshm_version.argtypes = (ct.c_void_p, ct.c_int, ct.c_int)
+    #end if
+
+    cairo.cairo_xcb_device_debug_cap_xrender_version.restype = None
+    cairo.cairo_xcb_device_debug_cap_xrender_version.argtypes = (ct.c_void_p, ct.c_int, ct.c_int)
+
+    cairo.cairo_xcb_device_debug_set_precision.restype = None
+    cairo.cairo_xcb_device_debug_set_precision.argtypes = (ct.c_void_p, ct.c_int)
+    cairo.cairo_xcb_device_debug_get_precision.restype = ct.c_int
+    cairo.cairo_xcb_device_debug_get_precision.argtypes = (ct.c_void_p,)
+
+#end if
+
 
 _ft_destroy_key = ct.c_int() # dummy address
 
@@ -4175,6 +4306,60 @@ class Device :
 
     # Cairo user_data not exposed to caller, probably not useful
 
+    if HAS.XCB_SURFACE :
+        # debug interface
+
+        if HAS.XCB_SHM_FUNCTIONS :
+
+            def xcb_debug_cap_xshm_version(self, major_version, minor_version) :
+                cairo.cairo_xcb_device_debug_cap_xshm_version \
+                  (
+                    self._cairobj,
+                    major_version,
+                    minor_version
+                  )
+                self._check()
+            #end xcb_debug_cap_xshm_version
+
+        #end if
+
+        def xcb_debug_cap_xrender_version(self, major_version, minor_version) :
+            cairo.cairo_xcb_device_debug_cap_xrender_version \
+              (
+                self._cairobj,
+                major_version,
+                minor_version
+              )
+            self._check()
+        #end xcb_debug_cap_xrender_version
+
+        @property
+        def xcb_debug_precision(self) :
+            "-1 to choose value based on antialiasing mode, else set corresponding" \
+            " PolyMode."
+            result = cairo.cairo_xcb_device_debug_get_precision(self._cairobj)
+            self._check()
+            return \
+                result
+        #end xcb_debug_precision
+
+        @xcb_debug_precision.setter
+        def xcb_debug_precision(self, precision) :
+            cairo.cairo_xcb_device_debug_set_precision(self._cairobj, precision)
+            self._check()
+        #end xcb_debug_precision
+
+        @property
+        def xcb_connection(self) :
+            "note this returns a raw ctypes.c_void_p value."
+            result = cairo.cairo_xcb_device_get_connection(self._cairobj)
+            self._check()
+            return \
+                result
+        #end xcb_connection
+
+    #end if
+
 #end Device
 
 class ScriptDevice(Device) :
@@ -6977,6 +7162,201 @@ TextExtents = def_struct_class \
     extra = TextExtentsExtra
   )
 del TextExtentsExtra
+
+#+
+# XCB
+#-
+
+if HAS.XCB_SURFACE :
+
+    def def_xcb_class(name, ctname, substructs = None, ignore = None) :
+
+        ctstruct = getattr(XCB, ctname)
+
+        class result_class :
+
+            __slots__ = tuple(field[0] for field in ctstruct._fields_) # to forestall typos
+            # for use by subclasses:
+            _ignore = ignore
+            _ctname = ctname
+            _ctstruct = ctstruct
+
+            def __init__(self, **fields) :
+                unused = set(fields.keys())
+                for name, cttype in ctstruct._fields_ :
+                    if ignore == None or name not in ignore :
+                        setattr(self, name, fields[name])
+                        unused.remove(name)
+                    #end if
+                #end for
+                if len(unused) != 0 :
+                    raise TypeError("unrecognized fields: %s" % ", ".join(sorted(unused)))
+                #end if
+            #end __init__
+
+            def to_cairo(self) :
+                "returns a Cairo representation of the structure."
+                result = ctstruct()
+                for name, cttype in ctstruct._fields_ :
+                    if ignore == None or name not in ignore :
+                        field = getattr(self, name)
+                        if substructs != None and name in substructs :
+                            field = field.to_cairo()
+                        #end if
+                        setattr(result, name, field)
+                    #end if
+                #end for
+                return \
+                    result
+            #end to_cairo
+
+            def __getitem__(self, i) :
+                "allows the object to be coerced to a tuple."
+                return \
+                    getattr(self, ctstruct._fields_[i][0])
+            #end __getitem__
+
+            def __repr__(self) :
+                return \
+                    (
+                        "%s(%s)"
+                    %
+                        (
+                            name,
+                            ", ".join
+                              (
+                                "%s = %s" % (field[0], getattr(self, field[0]))
+                                for field in ctstruct._fields_
+                                if ignore == None or field[0] not in ignore
+                              ),
+                        )
+                    )
+            #end __repr__
+
+        #end result_class
+
+    #begin def_xcb_class
+        result_class.__name__ = name
+        result_class.__doc__ = \
+            (
+                "representation of an XCB %s structure. Fields are %s."
+                "\nCreate by passing all field values by name to the constructor;"
+                " convert an instance to Cairo form with  the to_cairo method."
+            %
+                (
+                    ctname,
+                    ", ".join
+                      (
+                        f[0] for f in ctstruct._fields_ if ignore == None or f[0] not in ignore
+                      ),
+                )
+            )
+        return \
+            result_class
+    #end def_xcb_class
+
+    XCBVisualType = def_xcb_class \
+      (
+        name = "XCBVisualType",
+        ctname = "visualtype_t",
+        ignore = {"pad0"}
+      )
+    XCBRenderDirectFormat = def_xcb_class \
+      (
+        name = "XCBRenderDirectFormat",
+        ctname = "render_directformat_t"
+      )
+    XCBScreen = def_xcb_class \
+      (
+        name = "XCBScreen",
+        ctname = "screen_t"
+      )
+    XCBRenderPictFormInfo = def_xcb_class \
+      (
+        name = "XCBRenderPictFormInfo",
+        ctname = "render_pictforminfo_t",
+        substructs = {"direct"},
+        ignore = {"pad0"}
+      )
+
+    del def_xcb_class # my work is done
+
+    class XCBSurface(Surface) :
+        "Surface that draws to an on-screen window via XCB. Do not instantiate" \
+        " directly; use one of the create methods. Note that all of these take a" \
+        " low-level address (e.g. ctypes.c_void_p) for the connection argument," \
+        " and equally low-level ctypes structures for other arguments; it will be" \
+        " up to the particular XCB binding to provide appropriate translations to" \
+        " these types from its connection and other objects."
+
+        __slots__ = () # to forestall typos
+
+        @classmethod
+        def create(celf, connection, drawable, visual, width, height) :
+            c_visual = visual.to_cairo()
+            c_result = cairo.cairo_xcb_surface_create \
+              (
+                connection,
+                drawable,
+                ct.byref(c_visual),
+                width,
+                height
+              )
+            return \
+                celf(c_result)
+        #end create
+
+        @classmethod
+        def create_for_bitmap(celf, connection, screen, bitmap, width, height) :
+            c_screen = screen.to_cairo()
+            c_result = cairo.cairo_xcb_surface_create_for_bitmap \
+              (
+                connection,
+                ct.byref(c_screen),
+                bitmap,
+                width,
+                height
+              )
+            return \
+                celf(c_result)
+        #end create_for_bitmap
+
+        @classmethod
+        def create_with_xrender_format(celf, connection, screen, drawable, format, width, height) :
+            c_screen = screen.to_cairo()
+            c_format = format.to_cairo()
+            c_result = cairo.cairo_xcb_surface_create_with_xrender_format \
+              (
+                connection,
+                ct.byref(c_screen),
+                drawable,
+                ct.byref(c_format),
+                width,
+                height
+              )
+            return \
+                celf(c_result)
+        #end create_with_xrender_format
+
+        def set_size(self, dims) :
+            dims = Vector.from_tuple(dims)
+            cairo.cairo_xcb_surface_set_size(self._cairobj, dims.x, dims.y)
+            self._check()
+        #end set_size
+
+        def set_drawable(self, drawable, dims) :
+            dims = Vector.from_tuple(dims)
+            cairo.cairo_xcb_surface_set_drawable(self._cairobj, drawable, dims.x, dims.y)
+            self._check()
+        #end set_drawable
+
+    #end XCBSurface
+
+#end if
+
+#+
+# Overall
+#-
 
 def _atexit() :
     # disable all __del__ methods at process termination to avoid segfaults
