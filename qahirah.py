@@ -6886,12 +6886,6 @@ class UserFontFace(FontFace) :
         self.set_init_func(init)
     #end init_func
 
-    # fixme: callbacks defined below refer to names defined in parent
-    # function scopes which include references to the objects (“self”)
-    # they are attached to. This is a reference circularity which
-    # means the UserFontFace objects can only be disposed by garbage
-    # collection, not by their references going to zero.
-
     def set_init_func(self, init) :
         "sets a new value for the init_func. Useful for method chaining; otherwise just" \
         " assign to the init_func property."
