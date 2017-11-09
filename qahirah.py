@@ -5511,6 +5511,16 @@ class Path :
             self.off = bool(off)
         #end __init__
 
+        @classmethod
+        def from_tuple(celf, p) :
+            "allows specifying a Point as e.g. ((x, y), off) tuple."
+            if not isinstance(p, celf) :
+                p = celf(*p)
+            #end if
+            return \
+                p
+        #end from_tuple
+
         def transform(self, matrix) :
             "returns the Point transformed through the Matrix."
             return \
@@ -5543,7 +5553,7 @@ class Path :
         __slots__ = ("points", "closed")
 
         def __init__(self, points, closed) :
-            self.points = tuple(Path.Point(p.pt, p.off) for p in points)
+            self.points = tuple(Path.Point.from_tuple(p) for p in points)
             self.closed = bool(closed)
             assert \
                 (
