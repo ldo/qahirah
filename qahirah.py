@@ -28,6 +28,7 @@ import ctypes as ct
 from weakref import \
     WeakValueDictionary
 import atexit
+import sys
 try :
     import fontconfig
       # my Fontconfig wrapper, get from <https://github.com/ldo/python_fontconfig>
@@ -41,13 +42,28 @@ except ImportError :
     freetype2 = None
 #end try
 
-cairo = ct.cdll.LoadLibrary("libcairo.so.2")
+if sys.platform == 'win32':
+    cairo = ct.cdll.LoadLibrary('libcairo-2.dll')
+elif sys.platform == 'darwin':
+    cairo = ct.cdll.LoadLibrary('libcairo.2.dylib')
+else:
+    cairo = ct.cdll.LoadLibrary("libcairo.so.2")
+
 if freetype2 == None :
-    _ft = ct.cdll.LoadLibrary("libfreetype.so.6")
-#end if
+    if sys.platform == 'win32':
+        _ft = ct.cdll.LoadLibrary('freetype6.dll')
+    elif sys.platform == 'darwin':
+        _ft = ct.cdll.LoadLibrary('libfreetype.6.dylib')
+    else:
+        _ft = ct.cdll.LoadLibrary("libfreetype.so.6")
 if fontconfig == None :
     try :
-        _fc = ct.cdll.LoadLibrary("libfontconfig.so.1")
+        if sys.platform == 'win32':
+            _fc = ct.cdll.LoadLibrary('libfontconfig-1.dll')
+        elif sys.platform == 'darwin':
+            _fc = ct.cdll.LoadLibrary('libfontconfig.1.dylib')
+        else:
+            _fc = ct.cdll.LoadLibrary("libfontconfig.so.1")
     except OSError as fail :
         if True : # if fail.errno == 2 : # ENOENT
           # no point checking, because it is None! (Bug?)
