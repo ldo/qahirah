@@ -680,12 +680,6 @@ def def_struct_class(name, ctname, extra = None) :
         result_class
 #end def_struct_class
 
-def is_callable(f) :
-    "is f a callable object."
-    return \
-        hasattr(f, "__call__")
-#end is_callable
-
 #+
 # Routine arg/result types
 #-
@@ -4615,7 +4609,7 @@ class Colour :
                     lambda : c1[j],
                     lambda : c2[j],
                     lambda : c2[j](c1[j]),
-                )[is_callable(c2[j]) + (c2[j] != None)]()
+                )[callable(c2[j]) + (c2[j] != None)]()
                 for c1 in (old_components,)
                 for c2 in (new_components,)
                 for j in range(4)
