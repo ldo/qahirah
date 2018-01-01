@@ -2993,6 +2993,14 @@ class Context :
             self
     #end arc
 
+    def circle(self, centre, radius) :
+        "extremely common case of arc forming a full circle."
+        centre = Vector.from_tuple(centre)
+        cairo.cairo_arc(self._cairobj, centre.x, centre.y, radius, 0, circle)
+        return \
+            self
+    #end circle
+
     def curve_to(self, p1, p2, p3) :
         "curve_to(p1, p2, p3) or curve_to((x1, y1), (x2, y2), (x3, y3)) -- draws a cubic" \
         " Bézier curve from the current point through the specified control points." \
