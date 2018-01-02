@@ -2997,6 +2997,7 @@ class Context :
         "extremely common case of arc forming a full circle."
         centre = Vector.from_tuple(centre)
         cairo.cairo_arc(self._cairobj, centre.x, centre.y, radius, 0, circle)
+        cairo.cairo_close_path(self._cairobj)
         return \
             self
     #end circle
@@ -6017,6 +6018,13 @@ class Path :
         return \
                 g.copy_path()
     #end create_arc
+
+    @staticmethod
+    def create_circle(centre, radius) :
+        "extremely common case of arc forming a full circle."
+        return \
+            Path.create_arc(centre, radius, 0, circle, False, True)
+    #end create_circle
 
     @staticmethod
     def create_round_rect(bounds, radius) :
