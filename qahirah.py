@@ -14,6 +14,7 @@ that may be read and written.
 # Licensed under the GNU Lesser General Public License v2.1 or later.
 #-
 
+import sys
 import math
 from numbers import \
     Real
@@ -39,13 +40,29 @@ except ImportError :
     freetype2 = None
 #end try
 
-cairo = ct.cdll.LoadLibrary("libcairo.so.2")
+LIBNAME = \
+    {
+        "linux" :
+            {
+                "cairo" : "libcairo.so.2",
+                "freetype" : "libfreetype.so.6",
+                "fontconfig" : "libfontconfig.so.1",
+            },
+        "openbsd6" :
+            {
+                "cairo" : "libcairo.so.12",
+                "freetype" : "libfreetype.so.28",
+                "fontconfig" : "libfontconfig.so.11",
+            },
+    }[sys.platform]
+
+cairo = ct.cdll.LoadLibrary(LIBNAME["cairo"])
 if freetype2 == None :
-    _ft = ct.cdll.LoadLibrary("libfreetype.so.6")
+    _ft = ct.cdll.LoadLibrary(LIBNAME["freetype"])
 #end if
 if fontconfig == None :
     try :
-        _fc = ct.cdll.LoadLibrary("libfontconfig.so.1")
+        _fc = ct.cdll.LoadLibrary(LIBNAME["fontconfig"])
     except OSError as fail :
         if True : # if fail.errno == 2 : # ENOENT
           # no point checking, because it is None! (Bug?)
