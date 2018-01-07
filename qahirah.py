@@ -3788,12 +3788,20 @@ class ImageSurface(Surface) :
     @classmethod
     def create_for_array(celf, arr, format, dimensions, stride) :
         "calls cairo_image_surface_create_for_data on arr, which must be" \
-        " a Python array.array object."
+        " a Python array.array object.\n" \
+        "\n" \
+        "WARNING: you must keep a reference to the array object for as long" \
+        " as this Cairo surface exists. Otherwise, Cairo could cause segfaults" \
+        " trying to access the array memory after it has gone away."
+        # Actually, keeping a reference to this ImageSurface object would be
+        # sufficient (see below).
         width, height = Vector.from_tuple(dimensions)
         address, length = arr.buffer_info()
         assert height * stride <= length * arr.itemsize
         result = celf(cairo.cairo_image_surface_create_for_data(ct.c_void_p(address), format, width, height, stride))
-        result._arr = arr # to ensure it doesn't go away prematurely
+        result._arr = arr
+          # try to ensure it doesn't go away prematurely, as long as this
+          # ImageSurface object exists.
         return \
             result
     #end create_for_array
