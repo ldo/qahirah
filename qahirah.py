@@ -1012,6 +1012,37 @@ cairo.cairo_mesh_pattern_get_path.argtypes = (ct.c_void_p, ct.c_uint)
 cairo.cairo_mesh_pattern_get_control_point.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint, ct.c_void_p, ct.c_void_p)
 cairo.cairo_mesh_pattern_get_corner_color_rgba.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 
+# Cairo matrix functions are here in case you want to make direct
+# calls to them. The Python Matrix class implements its own calculations,
+# because this is faster than converting to/from CAIRO.matrix_t structures
+# just to use the Cairo calls. But if you have a case where you can directly
+# use the Cairo type without conversion, then calling the Cairo routines
+# might be faster.
+cairo.cairo_matrix_init.restype = None
+cairo.cairo_matrix_init.argtypes = (ct.POINTER(CAIRO.matrix_t), ct.c_double, ct.c_double, ct.c_double, ct.c_double)
+cairo.cairo_matrix_init_identity.restype = None
+cairo.cairo_matrix_init_identity.argtypes = (ct.POINTER(CAIRO.matrix_t),)
+cairo.cairo_matrix_init_translate.restype = None
+cairo.cairo_matrix_init_translate.argtypes = (ct.POINTER(CAIRO.matrix_t), ct.c_double, ct.c_double)
+cairo.cairo_matrix_init_scale.restype = None
+cairo.cairo_matrix_init_scale.argtypes = (ct.POINTER(CAIRO.matrix_t), ct.c_double, ct.c_double)
+cairo.cairo_matrix_init_rotate.restype = None
+cairo.cairo_matrix_init_rotate.argtypes = (ct.POINTER(CAIRO.matrix_t), ct.c_double)
+cairo.cairo_matrix_translate.restype = None
+cairo.cairo_matrix_translate.argtypes = (ct.POINTER(CAIRO.matrix_t), ct.c_double, ct.c_double)
+cairo.cairo_matrix_scale.restype = None
+cairo.cairo_matrix_scale.argtypes = (ct.POINTER(CAIRO.matrix_t), ct.c_double, ct.c_double)
+cairo.cairo_matrix_rotate.restype = None
+cairo.cairo_matrix_rotate.argtypes = (ct.POINTER(CAIRO.matrix_t), ct.c_double)
+cairo.cairo_matrix_invert.restype = CAIRO.status_t
+cairo.cairo_matrix_invert.argtypes = (ct.POINTER(CAIRO.matrix_t),)
+cairo.cairo_matrix_multiply.restype = None
+cairo.cairo_matrix_multiply.argtypes = (ct.POINTER(CAIRO.matrix_t), ct.POINTER(CAIRO.matrix_t), ct.POINTER(CAIRO.matrix_t))
+cairo.cairo_matrix_transform_distance.restype = None
+cairo.cairo_matrix_transform_distance.argtypes = (ct.POINTER(CAIRO.matrix_t), ct.POINTER(ct.c_double), ct.POINTER(ct.c_double))
+cairo.cairo_matrix_transform_point.restype = None
+cairo.cairo_matrix_transform_point.argtypes = (ct.POINTER(CAIRO.matrix_t), ct.POINTER(ct.c_double), ct.POINTER(ct.c_double))
+
 cairo.cairo_region_status.argtypes = (ct.c_void_p,)
 cairo.cairo_region_destroy.argtypes = (ct.c_void_p,)
 cairo.cairo_region_create.restype = ct.c_void_p
