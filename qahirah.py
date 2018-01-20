@@ -3044,8 +3044,10 @@ class Context :
     def circle(self, centre, radius) :
         "extremely common case of arc forming a full circle."
         centre = Vector.from_tuple(centre)
+        cairo.cairo_new_sub_path(self._cairobj)
         cairo.cairo_arc(self._cairobj, centre.x, centre.y, radius, 0, circle)
         cairo.cairo_close_path(self._cairobj)
+        cairo.cairo_new_sub_path(self._cairobj)
         return \
             self
     #end circle
