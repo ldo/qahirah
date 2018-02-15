@@ -3099,7 +3099,8 @@ class Context :
 
     def text_path(self, text) :
         "adds text outlines to the current path."
-        cairo.cairo_text_path(self._cairobj, text.encode("utf-8"))
+        c_text = text.encode()
+        cairo.cairo_text_path(self._cairobj, c_text)
         return \
             self
     #end text_path
@@ -3267,7 +3268,8 @@ class Context :
 
     def select_font_face(self, family, slant, weight) :
         "toy selection of a font face."
-        cairo.cairo_select_font_face(self._cairobj, family.encode("utf-8"), slant, weight)
+        c_family = family.encode()
+        cairo.cairo_select_font_face(self._cairobj, c_family, slant, weight)
         return \
             self
     #end select_font_face
@@ -3378,7 +3380,8 @@ class Context :
 
     def show_text(self, text) :
         "renders the specified text starting at the current point."
-        cairo.cairo_show_text(self._cairobj, text.encode("utf-8"))
+        c_text = text.encode()
+        cairo.cairo_show_text(self._cairobj, c_text)
         return \
             self
     #end show_text
@@ -3411,7 +3414,7 @@ class Context :
                 next_pos = pos + c[0]
                 e_clusters.append \
                   (
-                    (len(text[pos:next_pos].encode("utf-8")), c[1])
+                    (len(text[pos:next_pos].encode()), c[1])
                   )
                 pos = next_pos
             #end for
@@ -3442,7 +3445,8 @@ class Context :
         "returns a TextExtents object giving information about drawing the" \
         " specified text at the current font settings."
         result = CAIRO.text_extents_t()
-        cairo.cairo_text_extents(self._cairobj, text.encode("utf-8"), ct.byref(result))
+        c_text = text.encode()
+        cairo.cairo_text_extents(self._cairobj, c_text, ct.byref(result))
         return \
             TextExtents.from_cairo(result)
     #end text_extents
@@ -3718,7 +3722,8 @@ class Surface :
     #end show_page
 
     def write_to_png(self, filename) :
-        check(cairo.cairo_surface_write_to_png(self._cairobj, filename.encode("utf-8")))
+        c_filename = filename.encode()
+        check(cairo.cairo_surface_write_to_png(self._cairobj, c_filename))
         return \
             self
     #end write_to_png
@@ -3787,8 +3792,9 @@ class ImageSurface(Surface) :
     @classmethod
     def create_from_png(celf, filename) :
         "loads an image from a PNG file and creates an ImageSurface for it."
+        c_filename = filename.encode()
         return \
-            celf(cairo.cairo_image_surface_create_from_png(filename.encode("utf-8")))
+            celf(cairo.cairo_image_surface_create_from_png(c_filename))
     #end create_from_png
 
     @classmethod
@@ -3936,8 +3942,9 @@ class PDFSurface(Surface) :
         "creates a PDF surface that outputs to the specified file, with the dimensions" \
         " of each page given by the Vector dimensions_in_points."
         dimensions_in_points = Vector.from_tuple(dimensions_in_points)
+        c_filename = filename.encode()
         return \
-            celf(cairo.cairo_pdf_surface_create(filename.encode("utf-8"), dimensions_in_points.x, dimensions_in_points.y))
+            celf(cairo.cairo_pdf_surface_create(c_filename, dimensions_in_points.x, dimensions_in_points.y))
     #end create
 
     @classmethod
@@ -4036,8 +4043,9 @@ class PSSurface(Surface) :
         "creates a PostScript surface that outputs to the specified file, with the dimensions" \
         " of each page given by the Vector dimensions_in_points."
         dimensions_in_points = Vector.from_tuple(dimensions_in_points)
+        c_filename = filename.encode()
         return \
-            celf(cairo.cairo_ps_surface_create(filename.encode("utf-8"), dimensions_in_points.x, dimensions_in_points.y))
+            celf(cairo.cairo_ps_surface_create(c_filename, dimensions_in_points.x, dimensions_in_points.y))
     #end create
 
     @classmethod
@@ -4163,7 +4171,8 @@ class PSSurface(Surface) :
 
     def dsc_comment(self, comment) :
         "emits a DSC comment."
-        cairo.cairo_ps_surface_dsc_comment(self._cairobj, comment.encode("utf-8"))
+        c_comment = comment.encode()
+        cairo.cairo_ps_surface_dsc_comment(self._cairobj, c_comment)
         self._check()
         return \
             self
@@ -4230,8 +4239,9 @@ class SVGSurface(Surface) :
         "creates an SVG surface that outputs to the specified file, with the dimensions" \
         " of each page given by the Vector dimensions_in_points."
         dimensions_in_points = Vector.from_tuple(dimensions_in_points)
+        c_filename = filename.encode()
         return \
-            celf(cairo.cairo_svg_surface_create(filename.encode("utf-8"), dimensions_in_points.x, dimensions_in_points.y))
+            celf(cairo.cairo_svg_surface_create(c_filename, dimensions_in_points.x, dimensions_in_points.y))
     #end create
 
     @classmethod
@@ -4435,8 +4445,9 @@ class ScriptDevice(Device) :
     @classmethod
     def create(celf, filename) :
         "creates a ScriptDevice that outputs to the specified file."
+        c_filename = filename.encode()
         return \
-            celf(cairo.cairo_script_create(filename.encode("utf-8")))
+            celf(cairo.cairo_script_create(c_filename))
     #end create
 
     @classmethod
@@ -6469,7 +6480,8 @@ class FontFace :
             " a new FontFace for it."
             _ensure_ft()
             ft_face = ct.c_void_p()
-            status = _ft.FT_New_Face(ct.c_void_p(_ft_lib), filename.encode("utf-8"), face_index, ct.byref(ft_face))
+            c_filename = filename.encode()
+            status = _ft.FT_New_Face(ct.c_void_p(_ft_lib), c_filename, face_index, ct.byref(ft_face))
             if status != 0 :
                 raise RuntimeError("Error %d loading FreeType font" % status)
             #end if
@@ -6550,7 +6562,8 @@ class FontFace :
                 raise TypeError("options must be a FontOptions")
             #end if
             with _FcPatternManager() as patterns :
-                search_pattern = patterns.collect(_fc.FcNameParse(pattern.encode("utf-8")))
+                c_pattern = pattern.encode()
+                search_pattern = patterns.collect(_fc.FcNameParse(c_pattern))
                 if search_pattern == None :
                     raise RuntimeError("cannot parse Fontconfig name pattern")
                 #end if
@@ -6617,8 +6630,9 @@ class FontFace :
     @classmethod
     def toy_create(celf, family, slant, weight) :
         "creates a “toy” FontFace."
+        c_family = family.encode()
         return \
-            celf(cairo.cairo_toy_font_face_create(family.encode("utf-8"), slant, weight))
+            celf(cairo.cairo_toy_font_face_create(c_family, slant, weight))
     #end toy_create
 
     @property
@@ -6727,7 +6741,8 @@ class ScaledFont :
         "returns a TextExtents object giving information about drawing the" \
         " specified text at the font settings."
         result = CAIRO.text_extents_t()
-        cairo.cairo_scaled_font_text_extents(self._cairobj, text.encode("utf-8"), ct.byref(result))
+        c_text = text.encode()
+        cairo.cairo_scaled_font_text_extents(self._cairobj, c_text, ct.byref(result))
         return \
             TextExtents.from_cairo(result)
     #end text_extents
