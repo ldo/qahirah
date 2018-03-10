@@ -1828,8 +1828,12 @@ class Matrix :
     def mapiter(self, pts) :
         "maps an iterable of Vectors through the Matrix."
         pts = iter(pts)
-        while True : # until pts raises StopIteration
-            yield self.map(next(pts))
+        while True :
+            try :
+                yield self.map(next(pts))
+            except StopIteration :
+                break
+            #end try
         #end while
     #end mapiter
 
@@ -1837,8 +1841,12 @@ class Matrix :
         "maps an iterable of Vectors through the Matrix, ignoring the" \
         " translation part."
         pts = iter(pts)
-        while True : # until pts raises StopIteration
-            yield self.mapdelta(next(pts))
+        while True :
+            try :
+                yield self.mapdelta(next(pts))
+            except StopIteration :
+                break
+            #end try
         #end while
     #end mapdeltaiter
 
@@ -5676,24 +5684,28 @@ class Path :
             "iterates over the pieces of the path, namely the sequence of Vector coordinates" \
             " of the points between two successive on-curve points."
             seg_points = iter(self.points)
-            p0 = next(seg_points)
-            assert not p0.off
-            p0 = p0.pt
-            while True :
-                pt = next(seg_points, None)
-                if pt == None :
-                    break
-                pts = [p0]
+            try :
+                p0 = next(seg_points)
+                assert not p0.off
+                p0 = p0.pt
                 while True :
-                    # piece ends at next on-curve point
-                    pts.append(pt.pt)
-                    if not pt.off :
+                    pt = next(seg_points, None)
+                    if pt == None :
                         break
-                    pt = next(seg_points)
+                    pts = [p0]
+                    while True :
+                        # piece ends at next on-curve point
+                        pts.append(pt.pt)
+                        if not pt.off :
+                            break
+                        pt = next(seg_points)
+                    #end while
+                    yield tuple(pts)
+                    p0 = pts[-1]
                 #end while
-                yield tuple(pts)
-                p0 = pts[-1]
-            #end while
+            except StopIteration :
+                return
+            #end try
         #end pieces
 
         def to_elements(self, relative = False, origin = None) :
