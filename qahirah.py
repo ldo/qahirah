@@ -10,14 +10,15 @@ and Context.set_line_width() calls, there is a Context.line_width property
 that may be read and written.
 """
 #+
-# Copyright 2015-2017 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
+# Copyright 2015-2018 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 # Licensed under the GNU Lesser General Public License v2.1 or later.
 #-
 
 import sys
 import math
 from numbers import \
-    Real
+    Real, \
+    Complex
 from collections import \
     namedtuple
 import io
@@ -1381,6 +1382,17 @@ class Vector :
             v
     #end from_tuple
 
+    @classmethod
+    def from_complex(celf, x) :
+        return \
+            celf(x.real, x.imag)
+    #end from_complex
+
+    def to_complex(self) :
+        return \
+            complex(self.x, self.y)
+    #end to_complex
+
     def isint(self) :
         "are the components signed 32-bit integers."
         return \
@@ -1472,6 +1484,8 @@ class Vector :
             result = type(v)(v.x * f.x, v.y * f.y)
         elif isinstance(f, Real) :
             result = type(v)(v.x * f, v.y * f)
+        elif isinstance(f, Complex) :
+            result = type(v).from_complex(v.to_complex() * f)
         else :
             result = NotImplemented
         #end if
@@ -1486,6 +1500,8 @@ class Vector :
             result = type(v)(v.x / f.x, v.y / f.y)
         elif isinstance(f, Real) :
             result = type(v)(v.x / f, v.y / f)
+        elif isinstance(f, Complex) :
+            result = type(v).from_complex(v.to_complex() / f)
         else :
             result = NotImplemented
         #end if
@@ -1515,6 +1531,8 @@ class Vector :
             result = type(v)(v.x % f.x, v.y % f.y)
         elif isinstance(f, Real) :
             result = type(v)(v.x % f, v.y % f)
+        elif isinstance(f, Complex) :
+            result = type(v).from_complex(v.to_complex() % f)
         else :
             result = NotImplemented
         #end if
