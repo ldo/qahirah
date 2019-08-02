@@ -133,8 +133,12 @@ class CAIRO :
     STATUS_INVALID_MESH_CONSTRUCTION = 36
     STATUS_DEVICE_FINISHED = 37
     STATUS_JBIG2_GLOBAL_MISSING = 38
+    STATUS_PNG_ERROR = 39
+    STATUS_FREETYPE_ERROR = 40
+    STATUS_WIN32_GDI_ERROR = 41
+    STATUS_TAG_ERROR = 42
 
-    STATUS_LAST_STATUS = 39
+    STATUS_LAST_STATUS = 43
 
     # codes for cairo_surface_type_t
     SURFACE_TYPE_IMAGE = 0
@@ -374,6 +378,10 @@ class CAIRO :
     REGION_OVERLAP_OUT = 1
     REGION_OVERLAP_PART = 2
 
+    # since 1.16, for tag_begin/end
+    TAG_DEST = "cairo.dest"
+    TAG_LINK = "Link"
+
     class glyph_t(ct.Structure) :
         _fields_ = \
             [
@@ -451,9 +459,27 @@ class CAIRO :
     read_func_t = ct.CFUNCTYPE(ct.c_int, ct.c_void_p, ct.c_void_p, ct.c_uint)
     write_func_t = ct.CFUNCTYPE(ct.c_int, ct.c_void_p, ct.c_void_p, ct.c_uint)
 
+    cairo_pdf_version_t = ct.c_uint
     # codes for cairo_pdf_version_t
     PDF_VERSION_1_4 = 0
     PDF_VERSION_1_5 = 1
+
+    pdf_outline_flags_t = ct.c_uint # since 1.16
+    # flags for pdf_outline_flags_t
+    PDF_OUTLINE_FLAG_OPEN = 0x1
+    PDF_OUTLINE_FLAG_BOLD = 0x2
+    PDF_OUTLINE_FLAG_ITALIC = 0x4
+
+    PDF_OUTLINE_ROOT = 0
+
+    pdf_metadata_t = ct.c_uint # since 1.16
+    PDF_METADATA_TITLE = 0
+    PDF_METADATA_AUTHOR = 1
+    PDF_METADATA_SUBJECT = 2
+    PDF_METADATA_KEYWORDS = 3
+    PDF_METADATA_CREATOR = 4
+    PDF_METADATA_CREATE_DATE = 5
+    PDF_METADATA_MOD_DATE = 6
 
     # cairo_ps_level_t
     PS_LEVEL_2 = 0
@@ -462,6 +488,19 @@ class CAIRO :
     # codes for cairo_svg_version_t
     SVG_VERSION_1_1 = 0
     SVG_VERSION_1_2 = 1
+
+    svg_unit_t = ct.c_uint # since 1.16
+    # values for svg_unit_t
+    SVG_UNIT_USER = 0
+    SVG_UNIT_EM = 1
+    SVG_UNIT_EX = 2
+    SVG_UNIT_PX = 3
+    SVG_UNIT_IN = 4
+    SVG_UNIT_CM = 5
+    SVG_UNIT_MM = 6
+    SVG_UNIT_PT = 7
+    SVG_UNIT_PC = 8
+    SVG_UNIT_PERCENT = 9
 
     # codes for cairo_device_type_t
     DEVICE_TYPE_DRM = 0
@@ -796,6 +835,12 @@ cairo.cairo_in_clip.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
 cairo.cairo_copy_clip_rectangle_list.restype = CAIRO.rectangle_list_ptr_t
 cairo.cairo_copy_clip_rectangle_list.argtypes = (ct.c_void_p,)
 cairo.cairo_rectangle_list_destroy.argtypes = (CAIRO.rectangle_list_ptr_t,)
+if hasattr(cairo, "cairo_tag_begin") : # since 1.16
+    cairo.cairo_tag_begin.restype = None
+    cairo.cairo_tag_begin.argtypes = (ct.c_void_p, ct.c_char_p, ct.c_char_p)
+    cairo.cairo_tag_end.restype = None
+    cairo.cairo_tag_end.argtypes = (ct.c_void_p, ct.c_char_p)
+#end if
 cairo.cairo_reset_clip.argtypes = (ct.c_void_p,)
 cairo.cairo_fill.argtypes = (ct.c_void_p,)
 cairo.cairo_fill_preserve.argtypes = (ct.c_void_p,)
@@ -921,6 +966,16 @@ cairo.cairo_pdf_get_versions.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_pdf_version_to_string.restype = ct.c_char_p
 cairo.cairo_pdf_version_to_string.argtypes = (ct.c_int,)
 cairo.cairo_pdf_surface_set_size.argtypes = (ct.c_void_p, ct.c_double, ct.c_double)
+if hasattr(cairo, "cairo_pdf_surface_add_outline") : # since 1.16
+    cairo.cairo_pdf_surface_add_outline.restype = ct.c_int
+    cairo.cairo_pdf_surface_add_outline.argtypes = (ct.c_void_p, ct.c_int, ct.c_char_p, ct.c_char_p, CAIRO.pdf_outline_flags_t)
+    cairo.cairo_pdf_surface_set_metadata.restype = None
+    cairo.cairo_pdf_surface_set_metadata.argtypes = (ct.c_void_p, CAIRO.pdf_metadata_t, ct.c_char_p)
+    cairo.cairo_pdf_surface_set_page_label.restype = None
+    cairo.cairo_pdf_surface_set_page_label.argtypes = (ct.c_void_p, ct.c_char_p)
+    cairo.cairo_pdf_surface_set_thumbnail_size.restype = None
+    cairo.cairo_pdf_surface_set_thumbnail_size.argtypes = (ct.c_void_p, ct.c_int, ct.c_int)
+#end if
 cairo.cairo_ps_surface_create.restype = ct.c_void_p
 cairo.cairo_ps_surface_create.argtypes = (ct.c_char_p, ct.c_double, ct.c_double)
 cairo.cairo_ps_surface_create_for_stream.restype = ct.c_void_p
@@ -944,6 +999,12 @@ cairo.cairo_svg_surface_restrict_to_version.argtypes = (ct.c_void_p, ct.c_int)
 cairo.cairo_svg_get_versions.argtypes = (ct.c_void_p, ct.c_void_p)
 cairo.cairo_svg_version_to_string.restype = ct.c_char_p
 cairo.cairo_svg_version_to_string.argtypes = (ct.c_int,)
+if hasattr(cairo, "cairo_svg_surface_set_document_unit") : # since 1.16
+    cairo.cairo_svg_surface_set_document_unit.restype = None
+    cairo.cairo_svg_surface_set_document_unit.argtypes = (ct.c_void_p, CAIRO.svg_unit_t)
+    cairo.cairo_svg_surface_get_document_unit.restype = CAIRO.svg_unit_t
+    cairo.cairo_svg_surface_get_document_unit.argtypes = (ct.c_void_p,)
+#end if
 cairo.cairo_recording_surface_create.restype = ct.c_void_p
 cairo.cairo_recording_surface_create.argtypes = (ct.c_int, ct.c_void_p)
 cairo.cairo_recording_surface_ink_extents.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
@@ -1091,6 +1152,12 @@ cairo.cairo_font_options_get_hint_style.argtypes = (ct.c_void_p,)
 cairo.cairo_font_options_set_hint_style.argtypes = (ct.c_void_p, ct.c_int)
 cairo.cairo_font_options_get_hint_metrics.argtypes = (ct.c_void_p,)
 cairo.cairo_font_options_set_hint_metrics.argtypes = (ct.c_void_p, ct.c_int)
+if hasattr(cairo, "cairo_font_options_get_variations") : # since 1.16
+    cairo.cairo_font_options_get_variations.restype = ct.c_char_p
+    cairo.cairo_font_options_get_variations.argtypes = (ct.c_void_p,)
+    cairo.cairo_font_options_set_variations.restype = None
+    cairo.cairo_font_options_set_variations.argtypes = (ct.c_void_p, ct.c_char_p)
+#end if
 
 cairo.cairo_font_face_reference.restype = ct.c_void_p
 cairo.cairo_font_face_reference.argtypes = (ct.c_void_p,)
@@ -3289,6 +3356,21 @@ class Context :
             Vector(x.value, y.value)
     #end device_to_user_distance
 
+    if hasattr(cairo, "cairo_tag_begin") : # since 1.16
+
+        def tag_begin(self, tag_name, attributes) :
+            c_tag_name = tag_name.encode()
+            c_attributes = attributes.encode()
+            cairo.cairo_tag_begin(self._cairobj, c_tag_name, c_attributes)
+        #end tag_begin
+
+        def tag_end(self, tag_name) :
+            c_tag_name = tag_name.encode()
+            cairo.cairo_tag_end(self._cairobj, c_tag_name)
+        #end tag_end
+
+    #end if
+
     # Text <http://cairographics.org/manual/cairo-text.html>
     # (except toy_font_face stuff, which goes in FontFace)
 
@@ -4056,6 +4138,39 @@ class PDFSurface(Surface) :
             self
     #end set_size
 
+    if hasattr(cairo, "cairo_pdf_surface_add_outline") : # since 1.16
+
+        def add_outline(self, parent_id, text, link_attribs, flags) :
+            c_text = text.encode()
+            c_link_attribs = link_attribs.encode()
+            return \
+                cairo.cairo_pdf_surface_add_outline \
+                  (
+                    self._cairobj,
+                    parent_id,
+                    c_text,
+                    c_link_attribs,
+                    flags
+                  )
+        #end add_outline
+
+        def set_metadata(self, metadata, text) :
+            c_text = text.encode()
+            cairo.cairo_pdf_surface_set_metadata(self._cairobj, metadata, c_text)
+        #end set_metadata
+
+        def set_page_label(self, text) :
+            c_text = text.encode()
+            cairo.cairo_pdf_surface_set_page_label(self._cairobj, c_text)
+        #end set_page_label
+
+        def set_thumbnail_size(self, dimensions) :
+            width, height = Vector.from_tuple(dimensions)
+            cairo.cairo_pdf_surface_set_thumbnail_size(self._cairobj, width, height)
+        #end set_thumbnail_size
+
+    #end if
+
 #end PDFSurface
 
 class PSSurface(Surface) :
@@ -4342,6 +4457,25 @@ class SVGSurface(Surface) :
         return \
             result
     #end version_to_string
+
+    if hasattr(cairo, "cairo_svg_surface_set_document_unit") : # since 1.16
+
+        @property
+        def document_unit(self) :
+            return \
+                cairo.cairo_svg_surface_get_document_unit(self._cairobj)
+        #end document_unit
+
+        @document_unit.setter
+        def document_unit(self, unit) :
+            self.set_document_unit(unit)
+        #end document_unit
+
+        def set_document_unit(self, unit) :
+            cairo.cairo_svg_surface_set_document_unit(self._cairobj, unit)
+        #end set_document_unit
+
+    #end if
 
 #end SVGSurface
 
@@ -6273,6 +6407,9 @@ class FontOptions :
             "hint_style",
             "hint_metrics",
         )
+    if hasattr(cairo, "cairo_font_options_get_variations") : # since 1.16
+        props += ("variations",)
+    #end if
 
     def _check(self) :
         # check for error from last operation on this FontOptions.
@@ -6385,6 +6522,36 @@ class FontOptions :
         cairo.cairo_font_options_set_hint_metrics(self._cairobj, hint)
     #end hint_metrics
 
+    if hasattr(cairo, "cairo_font_options_get_variations") : # since 1.16
+
+        @property
+        def variations(self) :
+            c_text = cairo.cairo_font_options_get_variations(self._cairobj)
+            if c_text != None :
+                result = c_text.decode()
+            else :
+                result = None
+            #end if
+            return \
+                result
+        #end variations
+
+        @variations.setter
+        def variations(self, variations) :
+            self.set_variations(variations)
+        #end variations
+
+        def set_variations(self, variations) :
+            if variations != None :
+                c_variations = variations.encode()
+            else :
+                c_variations = None
+            #end if
+            cairo.cairo_font_options_set_variations(self._cairobj, c_variations)
+        #end set_variations
+
+    #end if
+
     if fontconfig != None :
 
         # <https://www.cairographics.org/manual/cairo-FreeType-Fonts.html#cairo-ft-font-options-substitute>
@@ -6404,7 +6571,15 @@ class FontOptions :
             %
                 ", ".join
                   (
-                    "%s = %d" % (name, getattr(self, name))
+                        "%s = %s"
+                    %
+                        (
+                            name,
+                            (
+                                lambda x : "%d" % x,
+                                lambda x : "%s" % repr(x),
+                            )[name == "variations"](getattr(self, name))
+                        )
                     for name in self.props
                   )
             )
