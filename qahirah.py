@@ -1774,6 +1774,7 @@ class Matrix :
         return \
             result
     #end __mul__
+    __matmul__ = __mul__ # allow v1 @ v2 for dot product (Python 3.5 and later)
 
     def __pow__(m, p) :
         "raising of a Matrix to an integer power p is equivalent to applying" \
