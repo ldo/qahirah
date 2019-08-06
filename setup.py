@@ -34,7 +34,7 @@ class my_build(std_build) :
 distutils.core.setup \
   (
     name = "Qahirah",
-    version = "0.92",
+    version = "1.0",
     description = "language bindings for the Cairo graphics library, for Python 3.3 or later",
     author = "Lawrence D'Oliveiro",
     author_email = "ldo@geek-central.gen.nz",
