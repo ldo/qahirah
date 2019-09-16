@@ -38,7 +38,7 @@ distutils.core.setup \
     description = "language bindings for the Cairo graphics library, for Python 3.3 or later",
     author = "Lawrence D'Oliveiro",
     author_email = "ldo@geek-central.gen.nz",
-    url = "http://github.com/ldo/qahirah",
+    url = "https://github.com/ldo/qahirah",
     py_modules = ["qahirah"],
     cmdclass =
         {
