@@ -10,7 +10,7 @@ and Context.set_line_width() calls, there is a Context.line_width property
 that may be read and written.
 """
 #+
-# Copyright 2015-2018 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
+# Copyright 2015-2020 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 # Licensed under the GNU Lesser General Public License v2.1 or later.
 #-
 
@@ -2169,8 +2169,8 @@ class Rect :
     #end __mul__
     __rmul__ = __mul__
 
-    def __div__(self, f) :
-        "invserse-scale a Rect uniformly by a number or non-uniformly by a Vector."
+    def __truediv__(self, f) :
+        "inverse-scale a Rect uniformly by a number or non-uniformly by a Vector."
         if isinstance(f, Vector) :
             result = type(self)(self.left / f.x, self.top / f.y, self.width / f.x, self.height / f.y)
         elif isinstance(f, Real) :
@@ -2180,7 +2180,7 @@ class Rect :
         #end if
         return \
             result
-    #end __div__
+    #end __truediv__
 
     def __eq__(r1, r2) :
         "equality of two rectangles."
