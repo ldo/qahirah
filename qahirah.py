@@ -2182,6 +2182,22 @@ class Rect :
             result
     #end __truediv__
 
+    def __floordiv__(self, f) :
+        "inverse-scale an integer Rect uniformly by an integer or non-uniformly" \
+        " by an integer Vector."
+        self.assert_isint()
+        if isinstance(f, Vector) :
+            f.assert_isint()
+            result = type(self)(self.left // f.x, self.top // f.y, self.width // f.x, self.height // f.y)
+        elif isinstance(f, int) :
+            result = type(self)(self.left // f, self.top // f, self.width // f, self.height // f)
+        else :
+            result = NotImplemented
+        #end if
+        return \
+            result
+    #end __floordiv__
+
     def __eq__(r1, r2) :
         "equality of two rectangles."
         return \
