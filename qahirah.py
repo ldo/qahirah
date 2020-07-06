@@ -625,6 +625,20 @@ class XLIB :
     Drawable = XID
     PictFormat = XID
 
+    # values for PictFormat
+    PictFormatID = (1 << 0)
+    PictFormatType = (1 << 1)
+    PictFormatDepth = (1 << 2)
+    PictFormatRed = (1 << 3)
+    PictFormatRedMask = (1 << 4)
+    PictFormatGreen = (1 << 5)
+    PictFormatGreenMask = (1 << 6)
+    PictFormatBlue = (1 << 7)
+    PictFormatBlueMask = (1 << 8)
+    PictFormatAlpha = (1 << 9)
+    PictFormatAlphaMask = (1 << 10)
+    PictFormatColormap = (1 << 11)
+
     class XRenderDirectFormat(ct.Structure) :
         _fields_ = \
             [
