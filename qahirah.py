@@ -617,6 +617,42 @@ class XCB :
 
 #end XCB
 
+class XLIB :
+    "minimal needed Xlib-related definitions."
+
+    XID = ct.c_uint
+    Colormap = XID
+    Drawable = XID
+    PictFormat = XID
+
+    class XRenderDirectFormat(ct.Structure) :
+        _fields_ = \
+            [
+                ("red", ct.c_ushort),
+                ("redMask", ct.c_ushort),
+                ("green", ct.c_ushort),
+                ("greenMask", ct.c_ushort),
+                ("blue", ct.c_ushort),
+                ("blueMask", ct.c_ushort),
+                ("alpha", ct.c_ushort),
+                ("alphaMask", ct.c_ushort),
+            ]
+    #end XRenderDirectFormat
+
+    class XRenderPictFormat(ct.Structure) :
+        pass
+    #end XRenderPictFormat
+    XRenderPictFormat._fields_ = \
+        [
+            ("id", PictFormat),
+            ("type", ct.c_int),
+            ("depth", ct.c_int),
+            ("direct", XRenderDirectFormat),
+            ("colormap", Colormap),
+        ]
+
+#end XLIB
+
 class HAS :
     "functionality queries. These are implemented by checking for the presence" \
     " of particular library functions."
@@ -640,6 +676,8 @@ in \
         ("USER_FONT", "user_font_face_create"),
         ("XCB_SURFACE", "xcb_surface_create"),
         ("XCB_SHM_FUNCTIONS", "xcb_device_debug_cap_xshm_version"),
+        ("XLIB_SURFACE", "xlib_surface_create"),
+        ("XLIB_XRENDER", "xlib_surface_create_with_xrender_format"),
     ) \
 :
     setattr \
@@ -1237,6 +1275,49 @@ if HAS.XCB_SURFACE :
     cairo.cairo_xcb_device_debug_set_precision.argtypes = (ct.c_void_p, ct.c_int)
     cairo.cairo_xcb_device_debug_get_precision.restype = ct.c_int
     cairo.cairo_xcb_device_debug_get_precision.argtypes = (ct.c_void_p,)
+
+#end if
+
+if HAS.XLIB_SURFACE :
+
+    cairo.cairo_xlib_surface_create.restype = ct.c_void_p
+    cairo.cairo_xlib_surface_create.argtypes = (ct.c_void_p, XLIB.Drawable, ct.c_void_p, ct.c_int, ct.c_int)
+    cairo.cairo_xlib_surface_create_for_bitmap.restype = ct.c_void_p
+    cairo.cairo_xlib_surface_create_for_bitmap.argtypes = (ct.c_void_p, XLIB.Drawable, ct.c_void_p, ct.c_int, ct.c_int)
+    cairo.cairo_xlib_surface_set_size.restype = None
+    cairo.cairo_xlib_surface_set_size.argtypes = (ct.c_void_p, ct.c_int, ct.c_int)
+    cairo.cairo_xlib_surface_set_drawable.restype = None
+    cairo.cairo_xlib_surface_set_drawable.argtypes = (ct.c_void_p, XLIB.Drawable, ct.c_int, ct.c_int)
+    cairo.cairo_xlib_surface_get_display.restype = ct.c_void_p
+    cairo.cairo_xlib_surface_get_display.argtypes = (ct.c_void_p,)
+    cairo.cairo_xlib_surface_get_drawable.restype = ct.c_void_p
+    cairo.cairo_xlib_surface_get_drawable.argtypes = (ct.c_void_p,)
+    cairo.cairo_xlib_surface_get_screen.restype = ct.c_void_p
+    cairo.cairo_xlib_surface_get_screen.argtypes = (ct.c_void_p,)
+    cairo.cairo_xlib_surface_get_visual.restype = ct.c_void_p
+    cairo.cairo_xlib_surface_get_visual.argtypes = (ct.c_void_p,)
+    cairo.cairo_xlib_surface_get_depth.restype = ct.c_int
+    cairo.cairo_xlib_surface_get_depth.argtypes = (ct.c_void_p,)
+    cairo.cairo_xlib_surface_get_width.restype = ct.c_int
+    cairo.cairo_xlib_surface_get_width.argtypes = (ct.c_void_p,)
+    cairo.cairo_xlib_surface_get_height.restype = ct.c_int
+    cairo.cairo_xlib_surface_get_height.argtypes = (ct.c_void_p,)
+
+    cairo.cairo_xlib_device_debug_cap_xrender_version.restype = None
+    cairo.cairo_xlib_device_debug_cap_xrender_version.argtypes = (ct.c_void_p, ct.c_int, ct.c_int)
+    cairo.cairo_xlib_device_debug_set_precision.restype = None
+    cairo.cairo_xlib_device_debug_set_precision.argtypes = (ct.c_void_p, ct.c_int)
+    cairo.cairo_xlib_device_debug_get_precision.restype = ct.c_int
+    cairo.cairo_xlib_device_debug_get_precision.argtypes = (ct.c_void_p,)
+
+    if HAS.XLIB_XRENDER :
+
+        cairo.cairo_xlib_surface_create_with_xrender_format.restype = ct.c_void_p
+        cairo.cairo_xlib_surface_create_with_xrender_format.argtypes = (ct.c_void_p, XLIB.Drawable, ct.c_void_p, ct.POINTER(XLIB.XRenderPictFormat), ct.c_int, ct.c_int)
+        cairo.cairo_xlib_surface_get_xrender_format.restype = ct.c_void_p
+        cairo.cairo_xlib_surface_get_xrender_format.argtypes = (ct.c_void_p,)
+
+    #end if
 
 #end if
 
@@ -4611,6 +4692,30 @@ class Device :
 
     #end if
 
+    if HAS.XLIB_SURFACE :
+        # debug interface
+
+        def xlib_debug_cap_xrender_version(self, major_version, minor_version) :
+            cairo.cairo_xcb_device_debug_cap_xrender_version(self._cairobj, major_version, minor_version)
+        #end xlib_debug_cap_xrender_version
+
+        @property
+        def xlib_debug_precision(self) :
+            "-1 means choose automatically based on anti-aliasing mode."
+            result = cairo.cairo_xlib_device_debug_get_precision(self._cairobj)
+            self._check()
+            return \
+                result
+        #end xlib_debug_precision
+
+        @xlib_debug_precision.setter
+        def xlib_debug_precision(self, precision) :
+            cairo.cairo_xlib_device_debug_set_precision(self._cairobj, precision)
+            self._check()
+        #end xlib_debug_precision
+
+    #end if
+
 #end Device
 
 class ScriptDevice(Device) :
@@ -7559,7 +7664,7 @@ if HAS.XCB_SURFACE :
             (
                 "representation of an XCB %s structure. Fields are %s."
                 "\nCreate by passing all field values by name to the constructor;"
-                " convert an instance to Cairo form with  the to_cairo method."
+                " convert an instance to Cairo form with the to_cairo method."
             %
                 (
                     ctname,
@@ -7669,6 +7774,105 @@ if HAS.XCB_SURFACE :
         #end set_drawable
 
     #end XCBSurface
+
+#end if
+
+#+
+# Xlib
+#-
+
+if HAS.XLIB_SURFACE :
+
+    class XlibSurface(Surface) :
+        "Surface that draws to an on-screen window via Xlib. Do not instantiate" \
+        " directly; use the create methods. Note that these take low-level pointers" \
+        " and ctypes structures for arguments; it will be up to the particular Xlib" \
+        " binding to provide appropriate translations to these types from its own" \
+        " object wrapper types."
+
+        __slots__ = () # to forestall typos
+
+        @classmethod
+        def create(celf, dpy, drawable, visual, width, height) :
+            c_result = cairo.cairo_xlib_surface_create(dpy, drawable, visual, width, height)
+            return \
+                celf(c_result)
+        #end create
+
+        @classmethod
+        def create_for_bitmap(celf, dpy, bitmap, screen, width, height) :
+            c_result = cairo.cairo_xlib_surface_create(dpy, bitmap, visual, width, height)
+            return \
+                celf(c_result)
+        #end create_for_bitmap
+
+        @property
+        def size(self) :
+            return \
+                Vector \
+                  (
+                    cairo.cairo_xlib_surface_get_width(self._cairobj),
+                    cairo.cairo_xlib_surface_get_height(self._cairobj),
+                  )
+        #end size
+
+        @size.setter
+        def size(self, size) :
+            self.set_size(size)
+        #end size
+
+        def set_size(self, size) :
+            size = Vector.from_tuple(size)
+            cairo.cairo_xlib_surface_set_size(self._cairobj, size.x, size.y)
+            self._check()
+            return \
+                self
+        #end set_size
+
+        @property
+        def depth(self) :
+            return \
+                cairo.cairo_xlib_surface_get_depth(self._cairobj)
+        #end depth
+
+        @property
+        def width(self) :
+            return \
+                cairo.cairo_xlib_surface_get_width(self._cairobj)
+        #end width
+
+        @property
+        def height(self) :
+            return \
+                cairo.cairo_xlib_surface_get_height(self._cairobj)
+        #end height
+
+        @property
+        def display(self) :
+            return \
+                cairo.cairo_xlib_surface_get_display(self._cairobj)
+        #end display
+
+        @property
+        def drawable(self) :
+            return \
+                cairo.cairo_xlib_surface_get_drawable(self._cairobj)
+        #end drawable
+
+        @property
+        def screen(self) :
+            return \
+                cairo.cairo_xlib_surface_get_screen(self._cairobj)
+        #end screen
+
+        @property
+        def visual(self) :
+            return \
+                cairo.cairo_xlib_surface_get_visual(self._cairobj)
+        #end visual
+
+    #end XlibSurface
+    XLibSurface = XlibSurface # why not
 
 #end if
 
