@@ -1313,7 +1313,7 @@ if HAS.XLIB_SURFACE :
     if HAS.XLIB_XRENDER :
 
         cairo.cairo_xlib_surface_create_with_xrender_format.restype = ct.c_void_p
-        cairo.cairo_xlib_surface_create_with_xrender_format.argtypes = (ct.c_void_p, XLIB.Drawable, ct.c_void_p, ct.POINTER(XLIB.XRenderPictFormat), ct.c_int, ct.c_int)
+        cairo.cairo_xlib_surface_create_with_xrender_format.argtypes = (ct.c_void_p, XLIB.Drawable, ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_int)
         cairo.cairo_xlib_surface_get_xrender_format.restype = ct.c_void_p
         cairo.cairo_xlib_surface_get_xrender_format.argtypes = (ct.c_void_p,)
 
@@ -7871,8 +7871,24 @@ if HAS.XLIB_SURFACE :
                 cairo.cairo_xlib_surface_get_visual(self._cairobj)
         #end visual
 
+        if HAS.XLIB_XRENDER :
+
+            @classmethod
+            def create_with_xrender_format(celf, dpy, drawable, screen, format, width, height) :
+                c_result = cairo.cairo_xlib_surface_create_with_xrender_format(dpy, drawable, screen, format, width, height)
+                return \
+                    celf(c_result)
+            #end create_with_xrender_format
+
+            @property
+            def xrender_format(self) :
+                return \
+                    cairo.cairo_xlib_surface_get_xrender_format(self._cairobj)
+            #end xrender_format
+
+        #end if
+
     #end XlibSurface
-    XLibSurface = XlibSurface # why not
 
 #end if
 
