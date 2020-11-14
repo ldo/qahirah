@@ -2661,7 +2661,6 @@ class Context :
         if self._cairobj != None :
             cairo.cairo_destroy(self._cairobj)
             self._cairobj = None
-            _dependent_objects.pop(self, None)
         #end if
     #end __del__
 
@@ -3758,7 +3757,6 @@ class Surface :
         if self._cairobj != None :
             cairo.cairo_surface_destroy(self._cairobj)
             self._cairobj = None
-            _dependent_objects.pop(self, None)
         #end if
     #end __del__
 
@@ -5299,7 +5297,6 @@ class Pattern :
         if self._cairobj != None :
             cairo.cairo_pattern_destroy(self._cairobj)
             self._cairobj = None
-            _dependent_objects.pop(self, None)
         #end if
     #end __del__
 
