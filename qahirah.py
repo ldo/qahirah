@@ -2771,6 +2771,7 @@ class Context :
         " more convenient to assign to the source_colour property."
         cairo.cairo_set_source_rgba(*((self._cairobj,) + tuple(Colour.from_rgba(c))))
         self._check()
+        _dependent_objects[self] = None # remove dependency on any previous source
         return \
             self
     #end set_source_colour
