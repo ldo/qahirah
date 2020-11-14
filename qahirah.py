@@ -26,6 +26,7 @@ import colorsys
 import array
 import ctypes as ct
 from weakref import \
+    WeakKeyDictionary, \
     WeakValueDictionary
 import atexit
 try :
@@ -2575,6 +2576,11 @@ default_tolerance = 0.1 # for flattening paths
 # (base) classes, which is updated by the constructors.
 #-
 
+_dependent_objects = WeakKeyDictionary()
+  # for propagating dependencies on Python objects that must not go
+  # away even if caller forgets them, as long as depending object exists.
+  # Currently this is just array.array objects used to hold ImageSurface pixels.
+
 class UserDataDict(dict) :
     "a subclass of dict that allows weakrefs."
 
@@ -2628,8 +2634,12 @@ class Context :
         if not isinstance(surface, Surface) :
             raise TypeError("surface must be a Surface")
         #end if
+        result = celf(cairo.cairo_create(surface._cairobj))
+          # might raise exception on _check() call
+        _dependent_objects[result] = _dependent_objects.get(surface)
+          # to ensure any storage attached to it doesn't go away prematurely
         return \
-            celf(cairo.cairo_create(surface._cairobj))
+            result
     #end create
 
     @classmethod
@@ -2651,6 +2661,7 @@ class Context :
         if self._cairobj != None :
             cairo.cairo_destroy(self._cairobj)
             self._cairobj = None
+            _dependent_objects.pop(self, None)
         #end if
     #end __del__
 
@@ -2736,6 +2747,8 @@ class Context :
         #end if
         cairo.cairo_set_source(self._cairobj, source._cairobj)
         self._check()
+        _dependent_objects[self] = _dependent_objects.get(source)
+          # to ensure any storage attached to it doesn't go away prematurely
         return \
             self
     #end set_source
@@ -2771,6 +2784,8 @@ class Context :
         x, y = Vector.from_tuple(origin)
         cairo.cairo_set_source_surface(self._cairobj, surface._cairobj, x, y)
         self._check()
+        _dependent_objects[self] = _dependent_objects.get(surface)
+          # to ensure any storage attached to it doesn't go away prematurely
         return \
             self
     #end set_source_surface
@@ -3743,6 +3758,7 @@ class Surface :
         if self._cairobj != None :
             cairo.cairo_surface_destroy(self._cairobj)
             self._cairobj = None
+            _dependent_objects.pop(self, None)
         #end if
     #end __del__
 
@@ -3989,7 +4005,7 @@ class ImageSurface(Surface) :
     "A Cairo image surface. Do not instantiate directly; instead," \
     " call one of the create methods."
 
-    __slots__ = ("_arr",) # to forestall typos
+    __slots__ = () # to forestall typos
 
     max_dimensions = Vector(32767, 32767) # largest image Cairo will let me create
 
@@ -4064,19 +4080,13 @@ class ImageSurface(Surface) :
     @classmethod
     def create_for_array(celf, arr, format, dimensions, stride) :
         "calls cairo_image_surface_create_for_data on arr, which must be" \
-        " a Python array.array object.\n" \
-        "\n" \
-        "WARNING: you must keep a reference to the array object for as long" \
-        " as this Cairo surface exists. Otherwise, Cairo could cause segfaults" \
-        " trying to access the array memory after it has gone away."
-        # Actually, keeping a reference to this ImageSurface object would be
-        # sufficient (see below).
+        " a Python array.array object."
         width, height = Vector.from_tuple(dimensions)
         address, length = arr.buffer_info()
         assert height * stride <= length * arr.itemsize
         result = celf(cairo.cairo_image_surface_create_for_data(ct.c_void_p(address), format, width, height, stride))
-        result._arr = arr
-          # try to ensure it doesn't go away prematurely, as long as this
+        _dependent_objects[result] = arr
+          # to ensure it doesn't go away prematurely, as long as this
           # ImageSurface object exists.
         return \
             result
@@ -4812,8 +4822,11 @@ class ScriptDevice(Device) :
         if not isinstance(target, Surface) :
             raise TypeError("target must be a Surface")
         #end if
+        result = Surface(cairo.cairo_script_surface_create_for_target(self._cairobj, target._cairobj))
+        _dependent_objects[result] = _dependent_objects.get(target)
+          # to ensure any storage attached to it doesn't go away prematurely
         return \
-            Surface(cairo.cairo_script_surface_create_for_target(self._cairobj, target._cairobj))
+            result
     #end surface_create_for_target
 
     def write_comment(self, comment) :
@@ -5251,7 +5264,7 @@ class Pattern :
     "a Cairo Pattern object. Do not instantiate directly; use one of the create methods."
     # <http://cairographics.org/manual/cairo-cairo-pattern-t.html>
 
-    __slots__ = ("_cairobj", "_user_data", "_surface", "__weakref__") # to forestall typos
+    __slots__ = ("_cairobj", "_user_data", "__weakref__") # to forestall typos
 
     _instances = WeakValueDictionary()
     _ud_refs = WeakValueDictionary()
@@ -5286,6 +5299,7 @@ class Pattern :
         if self._cairobj != None :
             cairo.cairo_pattern_destroy(self._cairobj)
             self._cairobj = None
+            _dependent_objects.pop(self, None)
         #end if
     #end __del__
 
@@ -5356,7 +5370,8 @@ class Pattern :
             raise TypeError("surface is not a Surface")
         #end if
         result = celf(cairo.cairo_pattern_create_for_surface(surface._cairobj))
-        result._surface = surface # to ensure any storage attached to it doesn't go away prematurely
+        _dependent_objects[result] = _dependent_objects.get(surface)
+          # to ensure any storage attached to it doesn't go away prematurely
         return \
             result
     #end create_for_surface
