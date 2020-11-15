@@ -2576,7 +2576,8 @@ default_tolerance = 0.1 # for flattening paths
 # (base) classes, which is updated by the constructors.
 #-
 
-_dependent_objects = WeakKeyDictionary()
+_dependent_src = WeakKeyDictionary()
+_dependent_target = WeakKeyDictionary()
   # for propagating dependencies on Python objects that must not go
   # away even if caller forgets them, as long as depending object exists.
   # Currently this is just array.array objects used to hold ImageSurface pixels.
@@ -2636,7 +2637,7 @@ class Context :
         #end if
         result = celf(cairo.cairo_create(surface._cairobj))
           # might raise exception on _check() call
-        _dependent_objects[result] = _dependent_objects.get(surface)
+        _dependent_target[result] = _dependent_src.get(surface)
           # to ensure any storage attached to it doesn't go away prematurely
         return \
             result
@@ -2746,7 +2747,7 @@ class Context :
         #end if
         cairo.cairo_set_source(self._cairobj, source._cairobj)
         self._check()
-        _dependent_objects[self] = _dependent_objects.get(source)
+        _dependent_src[self] = _dependent_src.get(source)
           # to ensure any storage attached to it doesn't go away prematurely
         return \
             self
@@ -2771,7 +2772,7 @@ class Context :
         " more convenient to assign to the source_colour property."
         cairo.cairo_set_source_rgba(*((self._cairobj,) + tuple(Colour.from_rgba(c))))
         self._check()
-        _dependent_objects[self] = None # remove dependency on any previous source
+        _dependent_src[self] = None # remove dependency on any previous source
         return \
             self
     #end set_source_colour
@@ -2784,7 +2785,7 @@ class Context :
         x, y = Vector.from_tuple(origin)
         cairo.cairo_set_source_surface(self._cairobj, surface._cairobj, x, y)
         self._check()
-        _dependent_objects[self] = _dependent_objects.get(surface)
+        _dependent_src[self] = _dependent_src.get(surface)
           # to ensure any storage attached to it doesn't go away prematurely
         return \
             self
@@ -4084,7 +4085,7 @@ class ImageSurface(Surface) :
         address, length = arr.buffer_info()
         assert height * stride <= length * arr.itemsize
         result = celf(cairo.cairo_image_surface_create_for_data(ct.c_void_p(address), format, width, height, stride))
-        _dependent_objects[result] = arr
+        _dependent_src[result] = arr
           # to ensure it doesn't go away prematurely, as long as this
           # ImageSurface object exists.
         return \
@@ -4822,7 +4823,7 @@ class ScriptDevice(Device) :
             raise TypeError("target must be a Surface")
         #end if
         result = Surface(cairo.cairo_script_surface_create_for_target(self._cairobj, target._cairobj))
-        _dependent_objects[result] = _dependent_objects.get(target)
+        _dependent_src[result] = _dependent_src.get(target)
           # to ensure any storage attached to it doesn't go away prematurely
         return \
             result
@@ -5368,7 +5369,7 @@ class Pattern :
             raise TypeError("surface is not a Surface")
         #end if
         result = celf(cairo.cairo_pattern_create_for_surface(surface._cairobj))
-        _dependent_objects[result] = _dependent_objects.get(surface)
+        _dependent_src[result] = _dependent_src.get(surface)
           # to ensure any storage attached to it doesn't go away prematurely
         return \
             result
