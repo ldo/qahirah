@@ -2529,6 +2529,11 @@ class Glyph :
         self.pos = pos
     #end __init__
 
+    def __eq__(g1, g2) :
+        return \
+            g1.index == g2.index and g1.pos == g2.pos
+    #end __eq__
+
     def __repr__(self) :
         return \
             "Glyph(%d, %s)" % (self.index, repr(self.pos))
