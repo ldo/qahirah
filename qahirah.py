@@ -2526,7 +2526,7 @@ class Glyph :
     def __init__(self, index, pos) :
         pos = Vector.from_tuple(pos)
         self.index = index
-        self.pos = pos
+        self.pos = Vector.from_tuple(pos)
     #end __init__
 
     def __eq__(g1, g2) :
