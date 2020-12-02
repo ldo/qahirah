@@ -56,6 +56,12 @@ LIBNAME = \
                 "freetype" : "libfreetype.so.28",
                 "fontconfig" : "libfontconfig.so.11",
             },
+        "darwin" :
+            {
+                "cairo" : "libcairo.dylib",
+                "freetype" : "libfreetype.dylib",
+                "fontconfig" : "libfontconfig.dylib",
+            },
     }[sys.platform]
 
 cairo = ct.cdll.LoadLibrary(LIBNAME["cairo"])
