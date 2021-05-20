@@ -25,6 +25,7 @@ import io
 import colorsys
 import array
 import ctypes as ct
+import ctypes.util as ctu
 from weakref import \
     WeakKeyDictionary, \
     WeakValueDictionary
@@ -42,29 +43,13 @@ except ImportError :
     freetype2 = None
 #end try
 
-LIBNAME = \
-    {
-        "linux" :
-            {
-                "cairo" : "libcairo.so.2",
-                "freetype" : "libfreetype.so.6",
-                "fontconfig" : "libfontconfig.so.1",
-            },
-        "openbsd6" :
-            {
-                "cairo" : "libcairo.so.12",
-                "freetype" : "libfreetype.so.28",
-                "fontconfig" : "libfontconfig.so.11",
-            },
-    }[sys.platform]
-
-cairo = ct.cdll.LoadLibrary(LIBNAME["cairo"])
+cairo = ct.cdll.LoadLibrary(ctu.find_library("cairo"))
 if freetype2 == None :
-    _ft = ct.cdll.LoadLibrary(LIBNAME["freetype"])
+    _ft = ct.cdll.LoadLibrary(ctu.find_library("freetype"))
 #end if
 if fontconfig == None :
     try :
-        _fc = ct.cdll.LoadLibrary(LIBNAME["fontconfig"])
+        _fc = ct.cdll.LoadLibrary(ctu.find_library("fontconfig"))
     except OSError as fail :
         if True : # if fail.errno == 2 : # ENOENT
           # no point checking, because it is None! (Bug?)
