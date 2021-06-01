@@ -10,7 +10,7 @@ and Context.set_line_width() calls, there is a Context.line_width property
 that may be read and written.
 """
 #+
-# Copyright 2015-2020 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
+# Copyright 2015-2021 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 # Licensed under the GNU Lesser General Public License v2.1 or later.
 #-
 
@@ -21,6 +21,8 @@ from numbers import \
     Complex
 from collections import \
     namedtuple
+from contextlib import \
+    contextmanager
 import io
 import colorsys
 import array
@@ -2684,6 +2686,28 @@ class Context :
         return \
             self
     #end restore
+
+    @contextmanager
+    def save_state(self) :
+        "returns a context manager which puts .save()/.restore() calls around" \
+        " a drawing sequence. Instead of\n" \
+        "\n" \
+        "    ctx.save()\n" \
+        "    ... do some drawing ...\n" \
+        "    ctx.restore()\n" \
+        "\n" \
+        "you can do\n" \
+        "\n" \
+        "    with ctx.save_state()\n" \
+        "        ... do some drawing ...\n" \
+        "    #end with"
+        self.save()
+        try :
+            yield self
+        finally :
+            self.restore()
+        #end try
+    #end save_state
 
     @property
     def target(self) :
