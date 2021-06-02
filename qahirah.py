@@ -28,6 +28,7 @@ import colorsys
 import array
 import ctypes as ct
 from weakref import \
+    ref as weak_ref, \
     WeakKeyDictionary, \
     WeakValueDictionary
 import atexit
