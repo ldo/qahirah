@@ -7511,7 +7511,9 @@ class UserFontFace(FontFace) :
         " just assign to the text_to_glyphs_func property."
         temp = self._wrap_text_to_glyphs_func # so the old value doesn't disappear until it's no longer needed
         if text_to_glyphs != None :
+            w_self = weak_ref(self)
             def wrap_text_to_glyphs_func(c_scaled_font, c_utf8, utf8_len, c_glyphs, c_num_glyphs, c_clusters, c_num_clusters, c_cluster_flags) :
+                self = w_self() # avoid reference circularity
                 scaled_font = ScaledFont(cairo.cairo_scaled_font_reference(c_scaled_font))
                 text = bytes(c_utf8[i] for i in range(utf8_len))
                 if self.pass_unicode :
