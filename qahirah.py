@@ -4737,7 +4737,7 @@ class Device :
 
         @property
         def xcb_connection(self) :
-            "note this returns a raw ctypes.c_void_p value."
+            "note this returns a raw integer address value."
             result = cairo.cairo_xcb_device_get_connection(self._cairobj)
             self._check()
             return \
