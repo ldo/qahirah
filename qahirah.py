@@ -6615,7 +6615,7 @@ class FontOptions :
     @classmethod
     def create(celf, **kwargs) :
         "creates a new FontOptions object. See FontOptions.props for valid arg keywords."
-        leftover = set(kwargs.keys()) - set(FontOptions.props)
+        leftover = set(kwargs.keys()) - set(celf.props)
         if len(leftover) != 0 :
             raise TypeError("unexpected arguments %s" % ", ".join(leftover))
         #end if
