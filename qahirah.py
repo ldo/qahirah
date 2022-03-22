@@ -5119,8 +5119,9 @@ class Colour :
 
         #end NamedColour
 
-        def __init__(self) :
+        def __init__(self, Colour) :
             self._colours = None
+            self.Colour = Colour # for easier subclassing
         #end __init__
 
         class DictView :
@@ -5200,7 +5201,7 @@ class Colour :
                             colours[lc_name] = NamedColour \
                               (
                                 name = name,
-                                colour = Colour.from_rgba((r / 255, g / 255, b / 255))
+                                colour = self.Colour.from_rgba((r / 255, g / 255, b / 255))
                               )
                             seen.add(lc_name)
                         #end if
@@ -5286,9 +5287,9 @@ class Colour :
 
     #end X11_Colours
 
-    x11 = X11_Colours()
-
 #end Colour
+Colour.x11 = Colour.X11_Colours(Colour)
+  # subclasses can repeat this same assignment to get subclassed Colours
 
 class Pattern :
     "a Cairo Pattern object. Do not instantiate directly; use one of the create methods."
