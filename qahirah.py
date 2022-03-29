@@ -6581,6 +6581,17 @@ class Path :
             )
     #end contains
 
+    def on_edge(self, v, line_width) :
+        "does the specified Vector point lie on the edge of this Path" \
+        " if it were stroked with the specified line width."
+        return \
+            (Context.create_for_dummy()
+                .append_path(self)
+                .set_line_width(line_width)
+                .in_stroke(Vector.from_tuple(v))
+            )
+    #end on_edge
+
 #end Path
 
 class FontOptions :
