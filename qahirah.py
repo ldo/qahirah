@@ -10,7 +10,7 @@ and Context.set_line_width() calls, there is a Context.line_width property
 that may be read and written.
 """
 #+
-# Copyright 2015-2021 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
+# Copyright 2015-2022 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 # Licensed under the GNU Lesser General Public License v2.1 or later.
 #-
 
@@ -6571,6 +6571,15 @@ class Path :
                 .path_extents
             )
     #end extents
+
+    def contains(self, v) :
+        "does the Path contain the specified Vector point."
+        return \
+            (Context.create_for_dummy()
+                .append_path(self)
+                .in_fill(Vector.from_tuple(v))
+            )
+    #end contains
 
 #end Path
 
