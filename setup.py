@@ -1,6 +1,7 @@
 #+
-# Distutils script to install qahirah. Invoke from the command line
-# in this directory as follows:
+# Setuptools script to install qahirah. Make sure setuptools
+# <https://setuptools.pypa.io/en/latest/index.html> is installed.
+# Invoke from the command line in this directory as follows:
 #
 #     python3 setup.py build
 #     sudo python3 setup.py install
@@ -9,11 +10,11 @@
 #-
 
 import sys
-import distutils.core
-from distutils.command.build import \
-    build as std_build
+import setuptools
+from setuptools.command.build_py import \
+    build_py as std_build_py
 
-class my_build(std_build) :
+class my_build_py(std_build_py) :
     "customization of build to perform additional validation."
 
     def run(self) :
@@ -29,9 +30,9 @@ class my_build(std_build) :
         super().run()
     #end run
 
-#end my_build
+#end my_build_py
 
-distutils.core.setup \
+setuptools.setup \
   (
     name = "Qahirah",
     version = "1.1",
@@ -42,6 +43,6 @@ distutils.core.setup \
     py_modules = ["qahirah"],
     cmdclass =
         {
-            "build" : my_build,
+            "build_py" : my_build_py,
         },
   )
