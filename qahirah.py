@@ -2268,6 +2268,95 @@ def distribute(nrdivs, p1 = 0.0, p2 = 1.0, endincl = False) :
       )
 #end distribute
 
+class VecRange :
+    "like range but for Vectors. Instantiate as\n" \
+    "\n" \
+    "    VecRange(«start», «end»[, «step»[, «y-major»]])\n" \
+    "\n" \
+    "where «start», «end» and «step» are Vectors with all-integer coordinates. The" \
+    " result can be used to iterate over all combinations of coordinates in sequence" \
+    " with x in the range between «start».x and «end».x, including «start».x but not" \
+    " «end».x, and y in the range between «start».y and «end».y, including «start».y" \
+    " but not «end».y. If «step».x is positive, then the set of positions is nonempty" \
+    " iff «start».x < «end».x; if «step».x is negative, then the set is nonempty" \
+    " iff «start».x > «end».x. Correspondingly if «step».y is positive, then the set" \
+    " of positions is nonempty iff «start».y < «end».y; if «step».y is negative, then" \
+    " the set is nonempty iff «start».y > «end».y. Both nonemptiness conditions must" \
+    " be satisfied for the set of positions to be nonempty.\n" \
+    "\n" \
+    "If «y-major» is False (the default), then the x-coordinate is varied most rapidly." \
+    " If it is True, then the y-coordinate is varied most rapidly.\n" \
+    "\n" \
+    "If «step» is omitted, then it is taken as Vector(1, 1)."
+
+    __slots__ = ("start", "end", "step", "y_major")
+
+    class VecIter :
+        "an iterator created by VecRange.__iter__()."
+
+        __slots__ = ("restart", "cur", "test_end", "step", "axis_1", "axis_2")
+
+        def __init__(self, parent) :
+            self.restart = parent.start[parent.y_major] # only need this for 1 axis
+            self.cur = list(parent.start)
+            self.step = list(parent.step)
+            self.test_end = \
+                [
+                    (lambda end : lambda x : x >= end, lambda end : lambda x : x <= end) \
+                        [self.step[0] < 0] \
+                        (parent.end.x + int(parent.y_major) * (-1, 1)[self.step[0] < 0]),
+                    (lambda end : lambda y : y >= end, lambda end : lambda y : y <= end) \
+                        [self.step[1] < 0] \
+                        (parent.end.y + int(not parent.y_major) * (-1, 1)[self.step[1] < 0]),
+                ]
+            self.axis_1 = (0, 1)[parent.y_major]
+            self.axis_2 = (1, 0)[parent.y_major]
+        #end __init__
+
+        def __next__(self) :
+            if self.test_end[self.axis_1](self.cur[self.axis_1]) :
+                if self.test_end[self.axis_2](self.cur[self.axis_2]) :
+                    raise StopIteration("end of VecRange reached")
+                #end if
+                self.cur[self.axis_2] += self.step[self.axis_2]
+                self.cur[self.axis_1] = self.restart
+            #end if
+            result = Vector(*self.cur)
+            self.cur[self.axis_1] += self.step[self.axis_1]
+            return \
+                result
+        #end __next__
+
+    #end VecIter
+
+    def __init__(self, start, end, step = None, y_major = False) :
+        self.start = Vector.from_tuple(start).assert_isint()
+        self.end = Vector.from_tuple(end).assert_isint()
+        if step != None :
+            self.step = Vector.from_tuple(step).assert_isint()
+            assert self.step.x != 0 and self.step.y != 0
+        else :
+            self.step = Vector(1, 1)
+        #end if
+        self.y_major = y_major
+    #end __init
+
+    def __iter__(self) :
+        return \
+            type(self).VecIter(self)
+    #end __iter__
+
+    def __repr__(self) :
+        return \
+            (
+                "%s(%s, %s, step = %s, y_major = %s)"
+            %
+                (type(self).__name__, self.start, self.end, self.step, self.y_major)
+            )
+    #end __repr__
+
+#end VecRange
+
 class Rect :
     "an axis-aligned rectangle. The constructor takes the left and top coordinates," \
     " and the width and height. Or use from_corners to construct one from two Vectors" \
