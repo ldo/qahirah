@@ -36,7 +36,7 @@ class my_build_py(std_build_py) :
 setuptools.setup \
   (
     name = "Qahirah",
-    version = "1.1",
+    version = "1.2",
     description = "language bindings for the Cairo graphics library, for Python 3.4 or later",
     author = "Lawrence D'Oliveiro",
     author_email = "ldo@geek-central.gen.nz",
