@@ -19,12 +19,13 @@ class my_build_py(std_build_py) :
 
     def run(self) :
         try :
+            import enum
             class dummy :
                 pass
             #end dummy
             dummy.__doc__ = "something"
-        except AttributeError :
-            sys.stderr.write("This module requires Python 3.3 or later.\n")
+        except (ImportError, AttributeError) :
+            sys.stderr.write("This module requires Python 3.4 or later.\n")
             sys.exit(-1)
         #end try
         super().run()
@@ -36,7 +37,7 @@ setuptools.setup \
   (
     name = "Qahirah",
     version = "1.1",
-    description = "language bindings for the Cairo graphics library, for Python 3.3 or later",
+    description = "language bindings for the Cairo graphics library, for Python 3.4 or later",
     author = "Lawrence D'Oliveiro",
     author_email = "ldo@geek-central.gen.nz",
     url = "https://github.com/ldo/qahirah",

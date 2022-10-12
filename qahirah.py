@@ -16,6 +16,7 @@ that may be read and written.
 
 import sys
 import math
+import enum
 from numbers import \
     Real, \
     Complex
@@ -1727,6 +1728,35 @@ def int_fits_bits(val, bits) :
         )
 #end int_fits_bits
 
+class OPERATOR(enum.IntEnum) :
+    "convenient wrapper around CAIRO.OPERATOR_xxx values, with additional" \
+    " attributes. Currently this is just the unbounded property, which indicates" \
+    " whether drawing affects the entire (clipped) destination."
+
+    _ignore_ = "names n prefix"
+    names = vars()
+    prefix = "OPERATOR_"
+    for n in sorted(dir(CAIRO), key = lambda n : ("", "x")["COLOR" in n] + n) :
+        if n.startswith(prefix) :
+            names[n[len(prefix):]] = getattr(CAIRO, n)
+        #end if
+    #end for
+
+    @property
+    def unbounded(self) :
+        return \
+            self in type(self)._unbounded
+    #end unbounded
+
+#end OPERATOR
+OPERATOR._unbounded = \
+    {
+        OPERATOR.IN,
+        OPERATOR.OUT,
+        OPERATOR.DEST_IN,
+        OPERATOR.DEST_ATOP,
+    }
+
 class Vector :
     "something missing from Cairo itself, a representation of a 2D point."
 
@@ -3263,9 +3293,9 @@ class Context :
 
     @property
     def operator(self) :
-        "the current drawing operator, as a CAIRO.OPERATOR_xxx code."
+        "the current drawing operator, as an OPERATOR.xxx value."
         return \
-            cairo.cairo_get_operator(self._cairobj)
+            OPERATOR(cairo.cairo_get_operator(self._cairobj))
     #end operator
 
     @operator.setter
@@ -3274,7 +3304,8 @@ class Context :
     #end operator
 
     def set_operator(self, op) :
-        "sets a new drawing operator. Use for method chaining; otherwise, it’s" \
+        "sets a new drawing operator. Expects either a CAIRO.OPERATOR_xxx or" \
+        " OPERATOR.xxx value. Use for method chaining; otherwise, it’s" \
         " probably more convenient to assign to the operator property."
         cairo.cairo_set_operator(self._cairobj, op)
         self._check()

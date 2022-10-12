@@ -1,5 +1,5 @@
 **Qahirah** is yet another Python language binding for the [Cairo graphics
-library](http://cairographics.org/), for use with Python 3.3 or later.
+library](http://cairographics.org/), for use with Python 3.4 or later.
 It is modelled to some extent on [Pycairo](http://cairographics.org/pycairo/),
 but differs from it in important ways:
 
@@ -283,4 +283,4 @@ repositories:
 * GrainyPy: [GitLab](https://gitlab.com/ldo/grainypy), [GitHub](https://github.com/ldo/grainypy)
 
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
-2017 October 26
+2022 October 12
