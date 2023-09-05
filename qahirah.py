@@ -35,13 +35,13 @@ from weakref import \
 import atexit
 try :
     import fontconfig
-      # my Fontconfig wrapper, get from <https://github.com/ldo/python_fontconfig>
+      # my Fontconfig wrapper, get from <https://gitlab.com/ldo/python_fontconfig>
 except ImportError :
     fontconfig = None
 #end try
 try :
     import freetype2
-      # my FreeType wrapper, get from <https://github.com/ldo/python_freetype>
+      # my FreeType wrapper, get from <https://gitlab.com/ldo/python_freetype>
 except ImportError :
     freetype2 = None
 #end try

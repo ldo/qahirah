@@ -40,7 +40,7 @@ setuptools.setup \
     description = "language bindings for the Cairo graphics library, for Python 3.4 or later",
     author = "Lawrence D'Oliveiro",
     author_email = "ldo@geek-central.gen.nz",
-    url = "https://github.com/ldo/qahirah",
+    url = "https://gitlab.com/ldo/qahirah",
     py_modules = ["qahirah"],
     cmdclass =
         {
